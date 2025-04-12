@@ -1,0 +1,377 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */; };
+		F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA72DA907E700A47FEE /* ContentView.swift */; };
+		F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B34AA92DA907E900A47FEE /* Assets.xcassets */; };
+		F5B34AAD2DA907E900A47FEE /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B34AAC2DA907E900A47FEE /* Preview Assets.xcassets */; };
+		F5B34AB42DA9083900A47FEE /* CBLEScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB32DA9083900A47FEE /* CBLEScanner.swift */; };
+		F5B34AB62DAA1C8F00A47FEE /* CBLEBroadcaster.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB52DAA1C8F00A47FEE /* CBLEBroadcaster.swift */; };
+		F5B34AB82DAA1D8E00A47FEE /* BLEScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */; };
+		F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */; };
+		F5B34ABD2DAA84CA00A47FEE /* BLEPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F5B34AA22DA907E700A47FEE /* BLE_Scanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BLE_Scanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLE_ScannerApp.swift; sourceTree = "<group>"; };
+		F5B34AA72DA907E700A47FEE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F5B34AA92DA907E900A47FEE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F5B34AAC2DA907E900A47FEE /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		F5B34AB32DA9083900A47FEE /* CBLEScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CBLEScanner.swift; sourceTree = "<group>"; };
+		F5B34AB52DAA1C8F00A47FEE /* CBLEBroadcaster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CBLEBroadcaster.swift; sourceTree = "<group>"; };
+		F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerView.swift; sourceTree = "<group>"; };
+		F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEBroadcasterView.swift; sourceTree = "<group>"; };
+		F5B34ABB2DAA626900A47FEE /* BLE-Scanner-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "BLE-Scanner-Info.plist"; sourceTree = SOURCE_ROOT; };
+		F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEPacket.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F5B34A9F2DA907E700A47FEE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F5B34A992DA907E700A47FEE = {
+			isa = PBXGroup;
+			children = (
+				F5B34AA42DA907E700A47FEE /* BLE_Scanner */,
+				F5B34AA32DA907E700A47FEE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F5B34AA32DA907E700A47FEE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F5B34AA22DA907E700A47FEE /* BLE_Scanner.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F5B34AA42DA907E700A47FEE /* BLE_Scanner */ = {
+			isa = PBXGroup;
+			children = (
+				F5B34ABB2DAA626900A47FEE /* BLE-Scanner-Info.plist */,
+				F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */,
+				F5B34AA72DA907E700A47FEE /* ContentView.swift */,
+				F5B34AB32DA9083900A47FEE /* CBLEScanner.swift */,
+				F5B34AB52DAA1C8F00A47FEE /* CBLEBroadcaster.swift */,
+				F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */,
+				F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */,
+				F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */,
+				F5B34AA92DA907E900A47FEE /* Assets.xcassets */,
+				F5B34AAB2DA907E900A47FEE /* Preview Content */,
+			);
+			path = BLE_Scanner;
+			sourceTree = "<group>";
+		};
+		F5B34AAB2DA907E900A47FEE /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				F5B34AAC2DA907E900A47FEE /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F5B34AA12DA907E700A47FEE /* BLE_Scanner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F5B34AB02DA907E900A47FEE /* Build configuration list for PBXNativeTarget "BLE_Scanner" */;
+			buildPhases = (
+				F5B34A9E2DA907E700A47FEE /* Sources */,
+				F5B34A9F2DA907E700A47FEE /* Frameworks */,
+				F5B34AA02DA907E700A47FEE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BLE_Scanner;
+			productName = BLE_Scanner;
+			productReference = F5B34AA22DA907E700A47FEE /* BLE_Scanner.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F5B34A9A2DA907E700A47FEE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					F5B34AA12DA907E700A47FEE = {
+						CreatedOnToolsVersion = 15.4;
+					};
+				};
+			};
+			buildConfigurationList = F5B34A9D2DA907E700A47FEE /* Build configuration list for PBXProject "BLE_Scanner" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F5B34A992DA907E700A47FEE;
+			productRefGroup = F5B34AA32DA907E700A47FEE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F5B34AA12DA907E700A47FEE /* BLE_Scanner */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F5B34AA02DA907E700A47FEE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5B34AAD2DA907E900A47FEE /* Preview Assets.xcassets in Resources */,
+				F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F5B34A9E2DA907E700A47FEE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */,
+				F5B34ABD2DAA84CA00A47FEE /* BLEPacket.swift in Sources */,
+				F5B34AB82DAA1D8E00A47FEE /* BLEScannerView.swift in Sources */,
+				F5B34AB62DAA1C8F00A47FEE /* CBLEBroadcaster.swift in Sources */,
+				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
+				F5B34AB42DA9083900A47FEE /* CBLEScanner.swift in Sources */,
+				F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F5B34AAE2DA907E900A47FEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F5B34AAF2DA907E900A47FEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F5B34AB12DA907E900A47FEE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BLE_Scanner/Preview Content\"";
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BLE-Scanner-Info.plist";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Open Bluetooth to use the service.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Open Bluetooth to use the service.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Joanne.BLE-Scanner";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F5B34AB22DA907E900A47FEE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"BLE_Scanner/Preview Content\"";
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BLE-Scanner-Info.plist";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Open Bluetooth to use the service.";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Open Bluetooth to use the service.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Joanne.BLE-Scanner";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F5B34A9D2DA907E700A47FEE /* Build configuration list for PBXProject "BLE_Scanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5B34AAE2DA907E900A47FEE /* Debug */,
+				F5B34AAF2DA907E900A47FEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F5B34AB02DA907E900A47FEE /* Build configuration list for PBXNativeTarget "BLE_Scanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5B34AB12DA907E900A47FEE /* Debug */,
+				F5B34AB22DA907E900A47FEE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F5B34A9A2DA907E700A47FEE /* Project object */;
+}
