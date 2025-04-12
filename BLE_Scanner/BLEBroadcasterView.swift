@@ -36,8 +36,8 @@ struct BLEBroadcasterView: View {
             }
             .buttonStyle(.borderedProminent)
 
-            if broadcaster.currentPayload != "N/A" {
-                Text("Payload: \(broadcaster.currentPayload)")
+            if broadcaster.nameStr != "N/A" {
+                Text("Payload: \(broadcaster.nameStr)")
                     .padding()
             }
         }

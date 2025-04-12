@@ -11,7 +11,7 @@ import CoreBluetooth
 class CBLEBroadcaster: NSObject, ObservableObject {
     private var peripheralManager: CBPeripheralManager!
     private let mask: [UInt8] = [0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF]
-    @Published var currentPayload = "N/A"
+    @Published var nameStr = "N/A"
 
     override init() {
         super.init()
@@ -26,22 +26,29 @@ class CBLEBroadcaster: NSObject, ObservableObject {
             }
         
         let payload: [UInt8] = mask + customData + [id]  // 中間加自定資料
-        if payload.count > 31 {
-            print("廣播資料超過限制：\(payload.count) bytes（最多 31）")
+        if payload.count > 29 {
+            print("廣播資料超過限制：\(payload.count) bytes（最多 29）")
             return
         }
-        let data = Data(payload)
-        currentPayload = payload.map { String(format: "%02X", $0) }.joined(separator: " ")
+        let nameStr = payload.map { String(format: "%02X", $0) }.joined()
+        
+//        let data = Data(payload)
+//        currentPayload = payload.map { String(format: "%02X", $0) }.joined(separator: " ")
 
         let advData: [String: Any] = [
-            CBAdvertisementDataManufacturerDataKey: data,
-            CBAdvertisementDataLocalNameKey: "m"
+//            CBAdvertisementDataManufacturerDataKey: data,
+            CBAdvertisementDataLocalNameKey: nameStr
         ]
         
         print("Advertising Data: \(advData)")
         
         peripheralManager.stopAdvertising()
         peripheralManager.startAdvertising(advData)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            self.peripheralManager.stopAdvertising()
+            print("廣播已自動停止")
+        }
     }
     
     func parseHexInput(_ input: String) -> [UInt8]? {

@@ -19,8 +19,12 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     }
 
     func startScanning() {
-        if centralManager.state == .poweredOn {
-            centralManager.scanForPeripherals(withServices: nil, options: nil)
+        allPackets.removeAll()
+        centralManager.stopScan()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            if self.centralManager.state == .poweredOn {
+                self.centralManager.scanForPeripherals(withServices: nil, options: nil)
+            }
         }
     }
 
@@ -47,26 +51,51 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             for (key, value) in advertisementData {
                 print("\(key): \(value)")
             }
-        if let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String {
-            print("收到裝置名稱：\(name)")
-        }
-           
-        if let mData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
-            print("有收到 Manufacturer Data")
-            let bytes = [UInt8](mData)
-            rawDataStr = bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
+        print(allPackets)
+        if let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String {
+            print("收到裝置名稱：\(localName)")
+            rawDataStr = localName
+            var bytes: [UInt8] = []
+            var index = localName.startIndex
+            while index < localName.endIndex {
+                let nextIndex = localName.index(index, offsetBy: 2)
+                if nextIndex <= localName.endIndex {
+                    let hexStr = String(localName[index..<nextIndex])
+                    if let byte = UInt8(hexStr, radix: 16) {
+                        bytes.append(byte)
+                    }
+                }
+                index = localName.index(index, offsetBy: 2)
+            }
 
             if bytes.count >= 7 {
                 let mask = Array(bytes.prefix(6))
-                _ = bytes.last ?? 0
+                let id = bytes[6]
                 if mask == expectedMask {
                     isMatched = true
+                    print("成功配對，ID: \(id)")
                 }
             }
+            
+            
         }
-        else {
-            print("沒有收到 Manufacturer Data")
-        }
+           
+//        if let mData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
+//            print("有收到 Manufacturer Data")
+//            let bytes = [UInt8](mData)
+//            rawDataStr = bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
+//
+//            if bytes.count >= 7 {
+//                let mask = Array(bytes.prefix(6))
+//                _ = bytes.last ?? 0
+//                if mask == expectedMask {
+//                    isMatched = true
+//                }
+//            }
+//        }
+//        else {
+//            print("沒有收到 Manufacturer Data")
+//        }
 
         DispatchQueue.main.async {
             let packet = BLEPacket(identifier: identifier,
