@@ -11,7 +11,11 @@ import CoreBluetooth
 class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     private var centralManager: CBCentralManager!
     @Published var allPackets: [String: BLEPacket] = [:]
-    let expectedMask: [UInt8] = [0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF]
+    @Published var expectedMaskText: String = ""
+    @Published var expectedIDText: String = ""
+    @Published var noMatchFound = false
+    private var matchedCount = 0
+    private var scanTimeoutTask: DispatchWorkItem?
 
     override init() {
         super.init()
@@ -20,12 +24,40 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 
     func startScanning() {
         allPackets.removeAll()
+        matchedCount = 0
+        noMatchFound = false
         centralManager.stopScan()
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if self.centralManager.state == .poweredOn {
                 self.centralManager.scanForPeripherals(withServices: nil, options: nil)
+                print("開始掃描中...")
+
+                // 開始倒數幾秒後檢查是否有匹配
+                self.scanTimeoutTask?.cancel()
+                self.scanTimeoutTask = DispatchWorkItem {
+                    if self.matchedCount == 0 {
+                        print("找不到符合條件的裝置，停止掃描。")
+                        self.stopScanning()
+                        
+                        DispatchQueue.main.async {
+                            self.noMatchFound = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            self.noMatchFound = false
+                        }
+                    }
+                }
+                if let task = self.scanTimeoutTask {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: task)
+                }
             }
         }
+    }
+    
+    func stopScanning() {
+        centralManager.stopScan()
+        allPackets.removeAll()
     }
 
 
@@ -40,62 +72,65 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                         advertisementData: [String: Any],
                         rssi RSSI: NSNumber) {
         let identifier = peripheral.identifier.uuidString
-        let deviceName = peripheral.name ?? "Unknown"
+        var deviceName = peripheral.name ?? "Unknown"
         let rssiValue = RSSI.intValue
 
         var isMatched = false
         var rawDataStr = ""
         
-        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
-            print("廣播封包內容：")
-            for (key, value) in advertisementData {
-                print("\(key): \(value)")
-            }
-        print(allPackets)
+//        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
+//            print("廣播封包內容：")
+//            for (key, value) in advertisementData {
+//                print("\(key): \(value)")
+//            }
+//        print(allPackets)
         if let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String {
             print("收到裝置名稱：\(localName)")
             rawDataStr = localName
-            var bytes: [UInt8] = []
-            var index = localName.startIndex
-            while index < localName.endIndex {
-                let nextIndex = localName.index(index, offsetBy: 2)
-                if nextIndex <= localName.endIndex {
-                    let hexStr = String(localName[index..<nextIndex])
-                    if let byte = UInt8(hexStr, radix: 16) {
-                        bytes.append(byte)
+            deviceName = localName
+            // 解析expectedMask和expectedID
+            let expectedMask = parseHexInput(expectedMaskText)
+            let expectedID: UInt8? = expectedIDText.isEmpty ? nil : UInt8(expectedIDText, radix: 16)
+            
+//            var bytes: [UInt8] = []
+//            var index = localName.startIndex
+//            while index < localName.endIndex {
+//                let nextIndex = localName.index(index, offsetBy: 2, limitedBy: localName.endIndex) ?? localName.endIndex
+//                if nextIndex <= localName.endIndex {
+//                    let hexStr = String(localName[index..<nextIndex])
+//                    if let byte = UInt8(hexStr, radix: 16) {
+//                        bytes.append(byte)
+//                    }
+//                }
+//                index = nextIndex
+//            }
+//
+//            let expectedMask = expectedMaskText.uppercased().chunks(of: 2).compactMap { UInt8($0, radix: 16) }
+//            let expectedID = UInt8(expectedIDText.uppercased(), radix: 16)
+//
+//            if bytes.count >= expectedMask.count + 1 {
+//                let mask = Array(bytes.prefix(expectedMask.count))
+//                let id = bytes[expectedMask.count]
+//                if mask == expectedMask && (expectedIDText.isEmpty || id == expectedID) {
+//                    isMatched = true
+//                    matchedCount += 1
+//                }
+//            }
+            if let bytesFromName = parseHexInput(localName) {
+                if bytesFromName.count >= (expectedMask?.count ?? 0) + 1 {
+                    let receivedMask = Array(bytesFromName.prefix(expectedMask?.count ?? 0))
+                    let receivedID = bytesFromName.count > (expectedMask?.count ?? 0) ? bytesFromName[expectedMask?.count ?? 0] : nil
+                    print("in")
+                    if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID) {
+                        isMatched = true
+                        matchedCount += 1
+                        print("Is Match！")
                     }
-                }
-                index = localName.index(index, offsetBy: 2)
-            }
-
-            if bytes.count >= 7 {
-                let mask = Array(bytes.prefix(6))
-                let id = bytes[6]
-                if mask == expectedMask {
-                    isMatched = true
-                    print("成功配對，ID: \(id)")
                 }
             }
             
             
         }
-           
-//        if let mData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
-//            print("有收到 Manufacturer Data")
-//            let bytes = [UInt8](mData)
-//            rawDataStr = bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
-//
-//            if bytes.count >= 7 {
-//                let mask = Array(bytes.prefix(6))
-//                _ = bytes.last ?? 0
-//                if mask == expectedMask {
-//                    isMatched = true
-//                }
-//            }
-//        }
-//        else {
-//            print("沒有收到 Manufacturer Data")
-//        }
 
         DispatchQueue.main.async {
             let packet = BLEPacket(identifier: identifier,
@@ -105,6 +140,38 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                    isMatched: isMatched)
             self.allPackets[identifier] = packet
         }
+        
+        func parseHexInput(_ input: String) -> [UInt8]? {
+            let cleaned = input.replacingOccurrences(of: " ", with: "")  // 如果有空格也先清掉
+            guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
 
+            var result: [UInt8] = []
+            var index = cleaned.startIndex
+
+            while index < cleaned.endIndex {
+                let nextIndex = cleaned.index(index, offsetBy: 2)
+                let hexPair = String(cleaned[index..<nextIndex])
+                if let byte = UInt8(hexPair, radix: 16) {
+                    result.append(byte)
+                } else {
+                    return nil  // 只要其中一組轉換失敗就整體失敗
+                }
+                index = nextIndex
+            }
+            return result
+        }
+
+    }
+}
+extension String {
+    func chunks(of length: Int) -> [String] {
+        var result: [String] = []
+        var index = startIndex
+        while index < endIndex {
+            let next = self.index(index, offsetBy: length, limitedBy: endIndex) ?? endIndex
+            result.append(String(self[index..<next]))
+            index = next
+        }
+        return result
     }
 }
