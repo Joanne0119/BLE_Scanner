@@ -12,32 +12,36 @@ class CBLEBroadcaster: NSObject, ObservableObject {
     private var peripheralManager: CBPeripheralManager!
 //    private let mask: [UInt8] = [0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF]
     @Published var nameStr = "N/A"
+    @Published var isAdvertising = false
 
     override init() {
         super.init()
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
     }
 
-    func startAdvertising(mask: [UInt8], id: UInt8, customData: [UInt8]) {
+    func startAdvertising(mask: [UInt8], id: [UInt8], customData: [UInt8]) {
         print("開始廣播成功")
         guard peripheralManager.state == .poweredOn else {
                 print("Peripheral 尚未準備好，請稍後再試")
                 return
             }
         
-        let payload: [UInt8] = mask + customData + [id]  // 中間加自定資料
-        if payload.count > 29 {
-            print("廣播資料超過限制：\(payload.count) bytes（最多 29）")
+        let payload: [UInt8] = mask + customData + id  // 中間加自定資料
+        if payload.count > 26 {
+            print("廣播資料超過限制：\(payload.count) bytes（最多 26）")
             return
         }
-        let nameStr = payload.map { String(format: "%02X", $0) }.joined()
+        nameStr = payload.map { String(format: "%02X", $0) }.joined()
+        print(nameStr)
+        let nameASCII = hexBytesToASCIIString(payload)
+        print(nameASCII)
         
 //        let data = Data(payload)
 //        currentPayload = payload.map { String(format: "%02X", $0) }.joined(separator: " ")
 
         let advData: [String: Any] = [
 //            CBAdvertisementDataManufacturerDataKey: data,
-            CBAdvertisementDataLocalNameKey: nameStr
+            CBAdvertisementDataLocalNameKey: nameASCII
         ]
         
         print("Advertising Data: \(advData)")
@@ -49,23 +53,21 @@ class CBLEBroadcaster: NSObject, ObservableObject {
 //            self.peripheralManager.stopAdvertising()
 //            print("廣播已自動停止")
 //        }
-    }
-    
-    var isAdvertising: Bool {
-        return peripheralManager.isAdvertising
+        self.isAdvertising = true
     }
     
     func stopAdervtising() {
         peripheralManager.stopAdvertising()
+        self.isAdvertising = false
     }
     
     func parseHexInput(_ input: String) -> [UInt8]? {
-        let cleaned = input.replacingOccurrences(of: " ", with: "")  // 如果有空格也先清掉
+        let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
         guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
-
+        print("cleaned: \(cleaned)")
         var result: [UInt8] = []
         var index = cleaned.startIndex
-
+        
         while index < cleaned.endIndex {
             let nextIndex = cleaned.index(index, offsetBy: 2)
             let hexPair = String(cleaned[index..<nextIndex])
@@ -75,9 +77,24 @@ class CBLEBroadcaster: NSObject, ObservableObject {
                 return nil  // 只要其中一組轉換失敗就整體失敗
             }
             index = nextIndex
+            print("result: \(result)")
         }
         return result
     }
+    
+    func hexBytesToASCIIString(_ bytes: [UInt8]) -> String {
+        return String(bytes: bytes, encoding: .ascii) ?? ""
+    }
+    
+    func isAsciiSafe(_ data: [UInt8]) -> Bool {
+        for byte in data {
+            if byte > 0x7A {
+                return false
+            }
+        }
+        return true
+    }
+    
 }
 
 extension CBLEBroadcaster: CBPeripheralManagerDelegate {

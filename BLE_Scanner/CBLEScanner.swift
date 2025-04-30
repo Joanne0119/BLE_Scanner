@@ -11,9 +11,12 @@ import CoreBluetooth
 class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     private var centralManager: CBCentralManager!
     @Published var allPackets: [String: BLEPacket] = [:]
+    @Published var matchedPackets: [String: BLEPacket] = [:]
     @Published var expectedMaskText: String = ""
     @Published var expectedIDText: String = ""
+    @Published var expectedRSSI: Double = 0
     @Published var noMatchFound = false
+    @Published var isScanning = false
     private var matchedCount = 0
     private var scanTimeoutTask: DispatchWorkItem?
 
@@ -24,6 +27,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 
     func startScanning() {
         allPackets.removeAll()
+        matchedPackets.removeAll()
         matchedCount = 0
         noMatchFound = false
         centralManager.stopScan()
@@ -53,11 +57,13 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                 }
             }
         }
+        isScanning = true
     }
     
     func stopScanning() {
         centralManager.stopScan()
-        allPackets.removeAll()
+        isScanning = false
+        print("停止掃描")
     }
 
 
@@ -86,48 +92,34 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 //        print(allPackets)
         if let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String {
             print("收到裝置名稱：\(localName)")
-            rawDataStr = localName
+            let nameBytes = asciiStringToBytes(localName)
+            rawDataStr = bytesToHexString(nameBytes)
             deviceName = localName
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
-            let expectedID: UInt8? = expectedIDText.isEmpty ? nil : UInt8(expectedIDText, radix: 16)
-            
-//            var bytes: [UInt8] = []
-//            var index = localName.startIndex
-//            while index < localName.endIndex {
-//                let nextIndex = localName.index(index, offsetBy: 2, limitedBy: localName.endIndex) ?? localName.endIndex
-//                if nextIndex <= localName.endIndex {
-//                    let hexStr = String(localName[index..<nextIndex])
-//                    if let byte = UInt8(hexStr, radix: 16) {
-//                        bytes.append(byte)
-//                    }
-//                }
-//                index = nextIndex
-//            }
-//
-//            let expectedMask = expectedMaskText.uppercased().chunks(of: 2).compactMap { UInt8($0, radix: 16) }
-//            let expectedID = UInt8(expectedIDText.uppercased(), radix: 16)
-//
-//            if bytes.count >= expectedMask.count + 1 {
-//                let mask = Array(bytes.prefix(expectedMask.count))
-//                let id = bytes[expectedMask.count]
-//                if mask == expectedMask && (expectedIDText.isEmpty || id == expectedID) {
-//                    isMatched = true
-//                    matchedCount += 1
-//                }
-//            }
-            if let bytesFromName = parseHexInput(localName) {
-                if bytesFromName.count >= (expectedMask?.count ?? 0) + 1 {
-                    let receivedMask = Array(bytesFromName.prefix(expectedMask?.count ?? 0))
-                    let receivedID = bytesFromName.count > (expectedMask?.count ?? 0) ? bytesFromName[expectedMask?.count ?? 0] : nil
-                    print("in")
-                    if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID) {
-                        isMatched = true
-                        matchedCount += 1
-                        print("Is Match！")
+            let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
+            if nameBytes.count >= (expectedMask?.count ?? 0) + (expectedID?.count ?? 0) {
+                let receivedMask = Array(nameBytes.prefix(expectedMask?.count ?? 0))
+                let receivedID = Array(nameBytes.suffix(expectedID?.count ?? 0))
+                print("expectedMaskText\(expectedMaskText),expectedIDText\(expectedIDText)")
+                print("receivedMask\(receivedMask),receivedID\(receivedID)")
+                if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID!) {
+                    isMatched = true
+                    matchedCount += 1
+                    print("Is Match！")
+                    let matchedPacket = BLEPacket(identifier: identifier,
+                                                      deviceName: deviceName,
+                                                      rssi: rssiValue,
+                                                      rawData: rawDataStr,
+                                                      isMatched: true)
+                    if matchedPackets[identifier] == nil {
+                        matchedPackets[identifier] = matchedPacket
                     }
+                    print(matchedPackets)
+                   
                 }
             }
+            
             
             
         }
@@ -139,29 +131,44 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                    rawData: rawDataStr,
                                    isMatched: isMatched)
             self.allPackets[identifier] = packet
-        }
-        
-        func parseHexInput(_ input: String) -> [UInt8]? {
-            let cleaned = input.replacingOccurrences(of: " ", with: "")  // 如果有空格也先清掉
-            guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
-
-            var result: [UInt8] = []
-            var index = cleaned.startIndex
-
-            while index < cleaned.endIndex {
-                let nextIndex = cleaned.index(index, offsetBy: 2)
-                let hexPair = String(cleaned[index..<nextIndex])
-                if let byte = UInt8(hexPair, radix: 16) {
-                    result.append(byte)
-                } else {
-                    return nil  // 只要其中一組轉換失敗就整體失敗
-                }
-                index = nextIndex
+            
+            if isMatched {
+                self.matchedPackets[identifier] = packet
             }
-            return result
         }
 
     }
+    func parseHexInput(_ input: String) -> [UInt8]? {
+        let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
+        guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
+
+        var result: [UInt8] = []
+        var index = cleaned.startIndex
+
+        while index < cleaned.endIndex {
+            let nextIndex = cleaned.index(index, offsetBy: 2)
+            let hexPair = String(cleaned[index..<nextIndex])
+            if let byte = UInt8(hexPair, radix: 16) {
+                result.append(byte)
+            } else {
+                return nil  // 只要其中一組轉換失敗就整體失敗
+            }
+            index = nextIndex
+        }
+        return result
+    }
+    
+    func asciiStringToBytes(_ input: String) -> [UInt8] {
+        print("asciiStringToBytes: \(input)")
+        return Array(input.utf8)
+    }
+
+    func bytesToHexString(_ bytes: [UInt8]) -> String {
+        print("bytesToHexString: \(bytes)")
+        return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
+    }
+
+    
 }
 extension String {
     func chunks(of length: Int) -> [String] {
