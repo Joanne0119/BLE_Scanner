@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後建立 2025/5/02
+//  最後更新 2025/05/03
 //
 
 import Foundation
@@ -65,7 +65,6 @@ class CBLEBroadcaster: NSObject, ObservableObject {
     func parseHexInput(_ input: String) -> [UInt8]? {
         let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
         guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
-        print("cleaned: \(cleaned)")
         var result: [UInt8] = []
         var index = cleaned.startIndex
         
@@ -78,7 +77,6 @@ class CBLEBroadcaster: NSObject, ObservableObject {
                 return nil  // 只要其中一組轉換失敗就整體失敗
             }
             index = nextIndex
-            print("result: \(result)")
         }
         return result
     }

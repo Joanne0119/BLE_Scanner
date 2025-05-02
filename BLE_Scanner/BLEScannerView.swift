@@ -3,22 +3,27 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後建立 2025/5/02
+//  最後更新 2025/05/03
 //
 
 import SwiftUI
 import CoreBluetooth
 
 struct BLEScannerView: View {
-    @StateObject private var scanner = CBLEScanner()
+    enum Field: Hashable {
+        case mask
+        case id
+    }
     
+    @StateObject private var scanner = CBLEScanner()
     @State private var maskText: String = ""
     @State private var idText: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 100
-
+    @FocusState private var focusedField: Field?
+    
         var filteredPackets: [BLEPacket] {
             scanner.matchedPackets.values.filter { packet in
                 _ = packet.rawData.uppercased().replacingOccurrences(of: " ", with: "")
@@ -30,73 +35,100 @@ struct BLEScannerView: View {
         }
 
         var body: some View {
-            VStack(spacing: 20) {
-                Text("掃描端").font(.largeTitle).bold()
-                DisclosureGroup("篩選封包", isExpanded: $isExpanded){
-                    VStack(alignment: .leading) {
-                        Text("請輸入 00 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: AA BB, CC）\n也可以不隔開（ex: AABBCC）")
-                            .font(.system(size: 12, weight: .light, design: .serif))
-                            .padding(.vertical)
-                        HStack {
-                            Text("遮罩: ")
-                            TextField("ex：01 02 03", text: $maskText)
-                               .textFieldStyle(RoundedBorderTextFieldStyle())
-                               .onChange(of: maskText) { scanner.expectedMaskText = maskText }
-                               .id("MaskScanner")
+            ZStack {
+                Color.white.opacity(0.01)
+                    .onTapGesture {
+                        if focusedField != nil{
+                            focusedField = nil
                         }
-                        HStack {
-                            Text("ID: ")
-                            TextField("ex：01", text: $idText)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .onChange(of: idText) { scanner.expectedIDText = idText }
-                                .id("IdScanner")
+                    }
+                VStack(spacing: 20) {
+                    Text("掃描端").font(.largeTitle).bold()
+                    DisclosureGroup(
+                        isExpanded: $isExpanded,
+                        content: {
+                            VStack(alignment: .leading) {
+                                Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                    .font(.system(size: 12, weight: .light, design: .serif))
+                                    .padding(.vertical)
+                                HStack {
+                                    Text("遮罩: ")
+                                    TextField("ex：01 02 03", text: $maskText)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .onChange(of: maskText) { scanner.expectedMaskText = maskText }
+                                        .id("MaskScanner")
+                                        .focused($focusedField, equals: .mask)
+                                }
+                                HStack {
+                                    Text("ID: ")
+                                    TextField("ex：01", text: $idText)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .onChange(of: idText) { scanner.expectedIDText = idText }
+                                        .id("IdScanner")
+                                        .focused($focusedField, equals: .id)
+                                }
+                                HStack {
+                                    Text("RSSI: ")
+                                    Text("-\(round(rssiValue).formatted()) dBm")
+                                    Slider(value: $rssiValue, in: 30...100)
+                                        .onChange(of: idText) { scanner.expectedRSSI = rssiValue }
+                                        .id("RSSIScanner")
+                                }
+                                
+                            }
+                            .padding()
+                            
+                        }, label: {
+                            HStack {
+                                Image(systemName: "slider.horizontal.3")
+                                Text("篩選封包")
+                            }
+                            .font(.system(size: 17, weight: .bold))
                         }
-                        HStack {
-                            Text("RSSI: ")
-                            Text("-\(round(rssiValue).formatted()) dBm")
-                            Slider(value: $rssiValue, in: 30...100)
-                                .onChange(of: idText) { scanner.expectedRSSI = rssiValue }
-                                .id("RSSIScanner")
+                                
+                    )
+                    .padding()
+                    
+                    HStack {
+                        Button("開始掃描") {
+                            handleStartScan()
                         }
-                       
-                   }
-                   .padding()
+                        .buttonStyle(.borderedProminent)
+                        .alert(alertMessage, isPresented: $showAlert) {
+                            Button("知道了", role: .cancel) { }
+                        }
+                        .disabled(scanner.isScanning)
+                        
+                        Button("停止掃描") {
+                            scanner.stopScanning()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!scanner.isScanning)
+                    }
+                    
+                    if scanner.noMatchFound {
+                        Text("找不到符合條件的裝置")
+                            .foregroundColor(.red)
+                    }
+                    
+                    List(filteredPackets) { packet in
+                        VStack(alignment: .leading, spacing: 4) {
+                            //                        Text("Name：\(packet.deviceName)")
+                            Text("ID：\(packet.deviceID)")
+                            Text("RSSI：\(packet.rssi) dBm")
+                            Text("Data：\(packet.rawData)")
+                        }
+                        .padding()
+                        .cornerRadius(8)
+                    }
                 }
                 .padding()
-                
-                HStack {
-                    Button("開始掃描") {
-                        handleStartScan()
+                .onTapGesture {
+                    if focusedField != nil{
+                        focusedField = nil
                     }
-                    .buttonStyle(.borderedProminent)
-                    .alert(alertMessage, isPresented: $showAlert) {
-                        Button("知道了", role: .cancel) { }
-                    }
-                    .disabled(scanner.isScanning)
-
-                    Button("停止掃描") {
-                        scanner.stopScanning()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!scanner.isScanning)
-                }
-                
-                if scanner.noMatchFound {
-                    Text("找不到符合條件的裝置")
-                        .foregroundColor(.red)
-                }
-
-                List(filteredPackets) { packet in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Name：\(packet.deviceName)")
-                        Text("RSSI：\(packet.rssi)")
-                        Text("Data：\(packet.rawData)")
-                    }
-                    .padding()
-                    .cornerRadius(8)
                 }
             }
-            .padding()
         }
     
     private func parseHexInput(_ input: String) -> [UInt8]? {
@@ -167,6 +199,10 @@ struct BLEScannerView: View {
         scanner.expectedIDText = idText
         scanner.startScanning()
     }
+    
+    private func hideKeyboard() {
+       UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+   }
 
 }
 

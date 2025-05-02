@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12
-//  最後建立 2025/5/02
+//  最後更新 2025/05/03
 //
 
 import Foundation
@@ -18,6 +18,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     @Published var expectedRSSI: Double = 0
     @Published var noMatchFound = false
     @Published var isScanning = false
+    private var lastUpdateTimes: [String: Date] = [:]
     private var matchedCount = 0
     private var scanTimeoutTask: DispatchWorkItem?
 
@@ -35,7 +36,9 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if self.centralManager.state == .poweredOn {
-                self.centralManager.scanForPeripherals(withServices: nil, options: nil)
+                self.centralManager.scanForPeripherals(withServices: nil, options:[
+                    CBCentralManagerScanOptionAllowDuplicatesKey: true
+                ])
                 print("開始掃描中...")
 
                 // 開始倒數幾秒後檢查是否有匹配
@@ -70,7 +73,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         if central.state == .poweredOn {
-            print("centralManager: \(central.state.rawValue)");
+//            print("centralManager: \(central.state.rawValue)");
+//            startScanning()
         }
     }
 
@@ -81,9 +85,18 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         let identifier = peripheral.identifier.uuidString
         var deviceName = peripheral.name ?? "Unknown"
         let rssiValue = RSSI.intValue
+        var deviceId = ""
 
         var isMatched = false
         var rawDataStr = ""
+        
+        let now = Date()
+        if let lastUpdate = lastUpdateTimes[identifier],
+           now.timeIntervalSince(lastUpdate) < 1.0 {
+            // 如果距離上次更新不到 1 秒，就不處理
+            return
+        }
+        lastUpdateTimes[identifier] = now
         
 //        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
 //            print("廣播封包內容：")
@@ -96,6 +109,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             let nameBytes = asciiStringToBytes(localName)
             rawDataStr = bytesToHexString(nameBytes)
             deviceName = localName
+            deviceId = bytesToHexString( Array(nameBytes.suffix(1)))
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
             let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
@@ -108,15 +122,16 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                     isMatched = true
                     matchedCount += 1
                     print("Is Match！")
-                    let matchedPacket = BLEPacket(identifier: identifier,
-                                                      deviceName: deviceName,
-                                                      rssi: rssiValue,
-                                                      rawData: rawDataStr,
-                                                      isMatched: true)
+                    let matchedPacket = BLEPacket(deviceID: deviceId,
+                                                  identifier: identifier,
+                                                  deviceName: deviceName,
+                                                  rssi: rssiValue,
+                                                  rawData: rawDataStr,
+                                                  isMatched: true)
                     if matchedPackets[identifier] == nil {
                         matchedPackets[identifier] = matchedPacket
                     }
-                    print(matchedPackets)
+//                    print(matchedPackets)
                    
                 }
             }
@@ -126,7 +141,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         }
 
         DispatchQueue.main.async {
-            let packet = BLEPacket(identifier: identifier,
+            let packet = BLEPacket(deviceID: deviceId,
+                                   identifier: identifier,
                                    deviceName: deviceName,
                                    rssi: rssiValue,
                                    rawData: rawDataStr,
