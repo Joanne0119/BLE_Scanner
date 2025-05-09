@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-// 最後更新 2025/05/07
+// 最後更新 2025/05/10
 //
 
 import SwiftUI
@@ -24,6 +24,10 @@ struct BLEBroadcasterView: View {
     @State private var buttonDisabled = false
     @State private var currentByte: Int = 0
     @FocusState private var focusedField: Field?
+    
+    @Binding var maskSuggestions: [String]
+    @Binding var dataSuggestions: [String]
+
     
     var body: some View {
         ZStack {
@@ -66,30 +70,100 @@ struct BLEBroadcasterView: View {
                 
                 
                 VStack(alignment: .leading) {
-                    HStack {
-                        Text("遮罩：")
-                        TextField("ex: 7A 00 01", text: $inputMask)
-                            .keyboardType(.asciiCapable)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("遮罩：")
+                            TextField("ex: 7A 00 01", text: $inputMask)
+                                .keyboardType(.asciiCapable)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding(.horizontal)
+                                .id("MaskBroadcast")
+                                .focused($focusedField, equals: .mask)
+                                .onChange(of: inputMask) { _ in updateByteCount() }
+                        }
+                        .padding()
+                        if focusedField == .mask {
+                            VStack {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
+                                            Text("沒有自訂遮罩！").foregroundColor(.black)
+                                        } else{
+                                            ForEach(maskSuggestions, id: \.self) { suggestion in
+                                                Button(action: {
+                                                    inputMask = suggestion
+                                                    updateByteCount()
+                                                    focusedField = nil // 選擇後取消焦點
+                                                }) {
+                                                    Text(suggestion)
+                                                        .padding(.vertical, 5)
+                                                        .padding(.horizontal, 10)
+                                                        .background(Color.blue.opacity(0.2))
+                                                        .foregroundColor(.primary)
+                                                        .cornerRadius(8)
+                                                }
+                                                .buttonStyle(PlainButtonStyle())
+                                            }
+                                        }
+                                    }
+                                    .padding(8)
+                                }
+                                .frame(height: 40)
+                                .background(Color.gray.opacity(0.1))
+                                .cornerRadius(8)
+                            }
                             .padding(.horizontal)
-                            .id("MaskBroadcast")
-                            .focused($focusedField, equals: .mask)
-                            .onChange(of: inputMask) { _ in updateByteCount() }
+                        }
                     }
-                    .padding()
-                    HStack {
-                        Text("內容：")
-                        TextField("ex: 01 ,03 0F3E, 00", text: $inputData)
-                            .keyboardType(.asciiCapable)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.horizontal)
-                            .id("DataBroadcast")
-                            .focused($focusedField, equals: .data)
-                            .onChange(of: inputData) { _ in updateByteCount() }
-                        
-                        
+                    VStack(alignment: .leading){
+                        HStack {
+                            Text("內容：")
+                            TextField("ex: 01 ,03 0F3E, 00", text: $inputData)
+                                .keyboardType(.asciiCapable)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding(.horizontal)
+                                .id("DataBroadcast")
+                                .focused($focusedField, equals: .data)
+                                .onChange(of: inputData) { _ in updateByteCount() }
+                            
+                            
+                        }
+                        .padding()
+                        if focusedField == .data {
+                                VStack {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 10) {
+                                            if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
+                                                Text("沒有自訂內容！").foregroundColor(.black)
+                                            }
+                                            else{
+                                                ForEach(dataSuggestions, id: \.self) { suggestion in
+                                                    Button(action: {
+                                                        inputData = suggestion
+                                                        updateByteCount()
+                                                        focusedField = nil // 選擇後取消焦點
+                                                    }) {
+                                                        Text(suggestion)
+                                                            .padding(.vertical, 5)
+                                                            .padding(.horizontal, 10)
+                                                            .background(Color.blue.opacity(0.2))
+                                                            .foregroundColor(.primary)
+                                                            .cornerRadius(8)
+                                                    }
+                                                    .buttonStyle(PlainButtonStyle())
+                                                }
+                                            }
+                                        }
+                                        .padding(8)
+                                    }
+                                    .frame(height: 40)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(8)
+                                }
+                                .padding(.horizontal)
+                            }
                     }
-                    .padding()
+                    
                     HStack {
                         Text("ID：")
                         TextField("ex: 01", text: $inputID)
@@ -233,6 +307,3 @@ struct BLEBroadcasterView: View {
    }
 }
 
-#Preview {
-    BLEBroadcasterView()
-}

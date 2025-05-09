@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/05/07
+//  最後更新 2025/05/10
 //
 
 import SwiftUI
@@ -23,10 +23,10 @@ struct BLEScannerView: View {
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 100
     @FocusState private var focusedField: Field?
+    @Binding var maskSuggestions: [String]
     
         var filteredPackets: [BLEPacket] {
             scanner.matchedPackets.values.filter { packet in
-                _ = packet.rawData.uppercased().replacingOccurrences(of: " ", with: "")
                 
                 let rssiMatch = packet.rssi >= -Int(rssiValue)
                 return rssiMatch
@@ -59,6 +59,38 @@ struct BLEScannerView: View {
                                         .id("MaskScanner")
                                         .focused($focusedField, equals: .mask)
                                 }
+                                if focusedField == .mask {
+                                    VStack {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack(spacing: 10) {
+                                                if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
+                                                    Text("沒有自訂遮罩！")
+                                                        .foregroundColor(.gray)
+                                                } else{
+                                                    ForEach(maskSuggestions, id: \.self) { suggestion in
+                                                        Button(action: {
+                                                            maskText = suggestion
+                                                            focusedField = nil // 選擇後取消焦點
+                                                        }) {
+                                                            Text(suggestion)
+                                                                .padding(.vertical, 5)
+                                                                .padding(.horizontal, 10)
+                                                                .background(Color.blue.opacity(0.2))
+                                                                .foregroundColor(.primary)
+                                                                .cornerRadius(8)
+                                                        }
+                                                        .buttonStyle(PlainButtonStyle())
+                                                    }
+                                                }
+                                            }
+                                            .padding(8)
+                                        }
+                                        .frame(height: 40)
+                                        .background(Color.gray.opacity(0.1))
+                                        .cornerRadius(8)
+                                    }
+                                    .padding(.horizontal)
+                                }
                                 HStack {
                                     Text("ID: ")
                                     TextField("ex：01", text: $idText)
@@ -71,7 +103,7 @@ struct BLEScannerView: View {
                                     Text("RSSI: ")
                                     Text("-\(round(rssiValue).formatted()) dBm")
                                     Slider(value: $rssiValue, in: 30...100)
-                                        .onChange(of: idText) { scanner.expectedRSSI = rssiValue }
+                                        .onChange(of: rssiValue) { scanner.expectedRSSI = rssiValue }
                                         .id("RSSIScanner")
                                 }
                                 
@@ -195,6 +227,10 @@ struct BLEScannerView: View {
             idByte = parsedID
         }
         
+        if !maskText.isEmpty && !maskSuggestions.contains(maskText) {
+            maskSuggestions.append(maskText)
+        }
+        
         scanner.expectedMaskText = maskText
         scanner.expectedIDText = idText
         scanner.startScanning()
@@ -206,7 +242,3 @@ struct BLEScannerView: View {
 
 }
 
-
-#Preview {
-    BLEScannerView()
-}

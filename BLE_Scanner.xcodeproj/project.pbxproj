@@ -16,6 +16,7 @@
 		F5B34AB82DAA1D8E00A47FEE /* BLEScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */; };
 		F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */; };
 		F5B34ABD2DAA84CA00A47FEE /* BLEPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */; };
+		F5CB0FC62DCDE74000B7C152 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5CB0FC52DCDE71500B7C152 /* SettingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEBroadcasterView.swift; sourceTree = "<group>"; };
 		F5B34ABB2DAA626900A47FEE /* BLE-Scanner-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "BLE-Scanner-Info.plist"; sourceTree = SOURCE_ROOT; };
 		F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEPacket.swift; sourceTree = "<group>"; };
+		F5CB0FC52DCDE71500B7C152 /* SettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +71,7 @@
 				F5B34AB52DAA1C8F00A47FEE /* CBLEBroadcaster.swift */,
 				F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */,
 				F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */,
+				F5CB0FC52DCDE71500B7C152 /* SettingView.swift */,
 				F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */,
 				F5B34AA92DA907E900A47FEE /* Assets.xcassets */,
 				F5B34AAB2DA907E900A47FEE /* Preview Content */,
@@ -156,6 +159,7 @@
 			files = (
 				F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */,
 				F5B34ABD2DAA84CA00A47FEE /* BLEPacket.swift in Sources */,
+				F5CB0FC62DCDE74000B7C152 /* SettingView.swift in Sources */,
 				F5B34AB82DAA1D8E00A47FEE /* BLEScannerView.swift in Sources */,
 				F5B34AB62DAA1C8F00A47FEE /* CBLEBroadcaster.swift in Sources */,
 				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
