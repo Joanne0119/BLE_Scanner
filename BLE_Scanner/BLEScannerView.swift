@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/05/10
+//  最後更新 2025/05/13
 //
 
 import SwiftUI
@@ -55,7 +55,8 @@ struct BLEScannerView: View {
                                     Text("遮罩: ")
                                     TextField("ex：01 02 03", text: $maskText)
                                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .onChange(of: maskText) { scanner.expectedMaskText = maskText }
+                                        .onChange(of: maskText) {
+                                            _ in scanner.expectedMaskText = maskText }
                                         .id("MaskScanner")
                                         .focused($focusedField, equals: .mask)
                                 }
@@ -95,7 +96,7 @@ struct BLEScannerView: View {
                                     Text("ID: ")
                                     TextField("ex：01", text: $idText)
                                         .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .onChange(of: idText) { scanner.expectedIDText = idText }
+                                        .onChange(of: idText) { _ in scanner.expectedIDText = idText }
                                         .id("IdScanner")
                                         .focused($focusedField, equals: .id)
                                 }
@@ -103,7 +104,7 @@ struct BLEScannerView: View {
                                     Text("RSSI: ")
                                     Text("-\(round(rssiValue).formatted()) dBm")
                                     Slider(value: $rssiValue, in: 30...100)
-                                        .onChange(of: rssiValue) { scanner.expectedRSSI = rssiValue }
+                                        .onChange(of: rssiValue) { _ in scanner.expectedRSSI = rssiValue }
                                         .id("RSSIScanner")
                                 }
                                 

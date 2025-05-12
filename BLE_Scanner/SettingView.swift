@@ -1,4 +1,4 @@
-// 最後更新 2025/05/10
+// 最後更新 2025/05/13
 
 import SwiftUI
 
@@ -10,6 +10,7 @@ struct SettingView: View {
 
     @State private var selectedType: SuggestionType = .mask
     @State private var isExpanded: Bool = false
+    @FocusState private var focusState: Bool
 
     @State private var maskInput = ""
     @State private var dataInput = ""
@@ -20,99 +21,107 @@ struct SettingView: View {
     @Binding var dataSuggestions: [String]
 
     var body: some View {
-        VStack {
-            Text("自訂輸入").font(.largeTitle).bold()
-
-            Picker("選擇類型", selection: $selectedType) {
-                ForEach(SuggestionType.allCases, id: \.self) { type in
-                    Text(type.rawValue).tag(type)
+        ZStack {
+            Color.white.opacity(0.01)
+                .onTapGesture {
+                    if focusState != false{
+                        focusState = false
+                    }
                 }
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding(.horizontal)
-
-            DisclosureGroup(
-                isExpanded: $isExpanded,
-                content: {
-                    HStack{
-                        VStack(alignment: .leading) {
-                            Text("自訂遮罩與內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方")
-                                .font(.system(size: 12, weight: .light, design: .serif))
-                            Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                .font(.system(size: 12, weight: .light, design: .serif))
-                                .padding()
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(20)
-                            Text("* 不要使用 00，可能會導致00後的資料遺失")
-                                .font(.system(size: 12, weight: .light, design: .serif))
-                                .foregroundStyle(.red)
+            VStack {
+                Text("自訂輸入").font(.largeTitle).bold()
+                
+                Picker("選擇類型", selection: $selectedType) {
+                    ForEach(SuggestionType.allCases, id: \.self) { type in
+                        Text(type.rawValue).tag(type)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding(.horizontal)
+                
+                DisclosureGroup(
+                    isExpanded: $isExpanded,
+                    content: {
+                        HStack{
+                            VStack(alignment: .leading) {
+                                Text("自訂遮罩與內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方")
+                                    .font(.system(size: 12, weight: .light, design: .serif))
+                                Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                    .font(.system(size: 12, weight: .light, design: .serif))
+                                    .padding()
+                                    .background(Color.gray.opacity(0.2))
+                                    .cornerRadius(20)
+                                Text("* 不要使用 00，可能會導致00後的資料遺失")
+                                    .font(.system(size: 12, weight: .light, design: .serif))
+                                    .foregroundStyle(.red)
+                            }
+                            .padding()
+                            
+                            Spacer()
                         }
-                        .padding()
-                        
-                        Spacer()
+                    }, label: {
+                        Text("說明")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.secondary)
                     }
-                }, label: {
-                    Text("說明")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .font(.system(size: 17, weight: .regular))
-                        .foregroundColor(.black)
-                }
-            )
-            .padding()
-
-            
-            
-
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("目前Byte數: ")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.blue)
-                    let currentInput = binding(for: selectedType).wrappedValue
-                    let cleanedInput = currentInput.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
-
-                    if cleanedInput.count % 2 != 0 {
-                        Text("輸入不完整")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.blue)
-                    } else {
-                        let bytes = parseHexInput(currentInput) ?? []
-                        Text("\(bytes.count) byte")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.blue)
-                    }
-                }
+                )
                 .padding()
                 
                 
-                Text("自訂\(selectedType.rawValue)")
-                    .font(.system(size: 18, weight: .bold))
-                    .padding(.horizontal)
-
-                HStack {
-                    TextField("輸入自訂\(selectedType.rawValue)", text: binding(for: selectedType))
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+                
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("目前Byte數: ")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(.blue)
+                        let currentInput = binding(for: selectedType).wrappedValue
+                        let cleanedInput = currentInput.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
                         
-                    Button("新增") {
-                        addSuggestion(for: selectedType)
+                        if cleanedInput.count % 2 != 0 {
+                            Text("輸入不完整")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(.blue)
+                        } else {
+                            let bytes = parseHexInput(currentInput) ?? []
+                            Text("\(bytes.count) byte")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(.blue)
+                        }
                     }
-                    .alert(alertMessage, isPresented: $showAlert) {
-                        Button("知道了", role: .cancel) { }
+                    .padding()
+                    
+                    
+                    Text("自訂\(selectedType.rawValue)")
+                        .font(.system(size: 18, weight: .bold))
+                        .padding(.horizontal)
+                    
+                    HStack {
+                        TextField("輸入自訂\(selectedType.rawValue)", text: binding(for: selectedType))
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .focused($focusState)
+                        
+                        Button("新增") {
+                            addSuggestion(for: selectedType)
+                        }
+                        .alert(alertMessage, isPresented: $showAlert) {
+                            Button("知道了", role: .cancel) { }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                
+                List {
+                    ForEach(suggestions(for: selectedType), id: \.self) { suggestion in
+                        Text(suggestion)
+                    }
+                    .onDelete { indices in
+                        deleteSuggestion(for: selectedType, at: indices)
                     }
                 }
-                .padding(.horizontal)
             }
-
-            List {
-                ForEach(suggestions(for: selectedType), id: \.self) { suggestion in
-                    Text(suggestion)
-                }
-                .onDelete { indices in
-                    deleteSuggestion(for: selectedType, at: indices)
-                }
-            }
+            .padding()
         }
-        .padding()
     }
 
     // MARK: - Helper Functions
