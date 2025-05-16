@@ -1,4 +1,4 @@
-// 最後更新 2025/05/13
+// 最後更新 2025/05/16
 
 import SwiftUI
 
@@ -19,6 +19,11 @@ struct SettingView: View {
 
     @Binding var maskSuggestions: [String]
     @Binding var dataSuggestions: [String]
+    
+    @State private var isEditing = false
+    @State private var editingText = ""
+    @State private var editingIndex: Int? = nil
+    @State private var editingByteStatus: String = ""
 
     var body: some View {
         ZStack {
@@ -114,13 +119,58 @@ struct SettingView: View {
                 List {
                     ForEach(suggestions(for: selectedType), id: \.self) { suggestion in
                         Text(suggestion)
-                    }
-                    .onDelete { indices in
-                        deleteSuggestion(for: selectedType, at: indices)
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                            Button {
+                                                editSuggestion(suggestion)
+                                            } label: {
+                                                Label("編輯", systemImage: "pencil")
+                                            }
+                                            .tint(.blue)
+                                        }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    if let index = suggestions(for: selectedType).firstIndex(of: suggestion) {
+                                        deleteSuggestion(for: selectedType, at: IndexSet(integer: index))
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")
+                                }
+                            }
                     }
                 }
             }
             .padding()
+            .sheet(isPresented: $isEditing) {
+                NavigationView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("編輯\(selectedType.rawValue)")
+                            .font(.headline)
+                        
+                        TextField("輸入內容", text: $editingText)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .autocapitalization(.allCharacters)
+
+                        Spacer()
+                    }
+                    .padding()
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("取消") {
+                                isEditing = false
+                            }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("儲存") {
+                                saveEditedSuggestion()
+                                isEditing = false
+                            }
+                        }
+                    }
+                }
+            }
+
+
         }
     }
 
@@ -180,6 +230,49 @@ struct SettingView: View {
         case .data: dataSuggestions.remove(atOffsets: offsets)
         }
     }
+    
+    func editSuggestion(_ suggestion: String) {
+        if let index = suggestions(for: selectedType).firstIndex(of: suggestion) {
+            editingIndex = index
+            editingText = suggestion
+            isEditing = true
+        }
+    }
+    
+    func saveEditedSuggestion() {
+        guard let index = editingIndex else { return }
+        let trimmed = editingText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else { return }
+
+        // 格式檢查
+        guard let bytes = parseHexInput(trimmed) else {
+            alertMessage = "格式錯誤，請確保是有效的十六進位"
+            showAlert = true
+            return
+        }
+        
+        if !isAsciiSafe(bytes) {
+            alertMessage = "格式錯誤，請確保是介於00至7F之間的有效十六進位"
+            showAlert = true
+            return
+        }
+        
+        if bytes.contains(0x00) {
+            alertMessage = "遮罩裡有 0x00，有可能會導致部分封包遺失！"
+            showAlert = true
+            return
+        }
+
+        // 寫回資料
+        switch selectedType {
+        case .mask:
+            maskSuggestions[index] = trimmed
+        case .data:
+            dataSuggestions[index] = trimmed
+        }
+    }
+
     
     private func parseHexInput(_ input: String) -> [UInt8]? {
         let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined().uppercased()
