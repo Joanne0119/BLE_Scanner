@@ -3,10 +3,12 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-// 最後更新 2025/05/16
+// 最後更新 2025/05/18
 //
 
 import SwiftUI
+import AVFoundation
+import UIKit
 
 struct BLEBroadcasterView: View {
     enum Field: Hashable {
@@ -24,9 +26,14 @@ struct BLEBroadcasterView: View {
     @State private var buttonDisabled = false
     @State private var currentByte: Int = 0
     @FocusState private var focusedField: Field?
+    @State private var isExpanded: Bool = false
     
     @Binding var maskSuggestions: [String]
     @Binding var dataSuggestions: [String]
+    
+    @State private var maskError: String?
+    @State private var dataError: String?
+    @State private var idError: String?
 
     
     var body: some View {
@@ -36,27 +43,45 @@ struct BLEBroadcasterView: View {
                     if focusedField != nil{
                         focusedField = nil
                     }
+                    if isExpanded {
+                        withAnimation {
+                            isExpanded = false
+                        }
+                    }
                 }
             VStack(spacing: 20) {
                 Text("廣播端").font(.largeTitle).bold()
-                Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                    .font(.system(size: 12, weight: .light, design: .serif))
-                    .multilineTextAlignment(.center)
-                Text("* 不要使用 00，可能會導致00後的資料遺失")
-                    .font(.system(size: 12, weight: .light, design: .serif))
-                    .foregroundStyle(.red)
-                Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
-                    .font(.system(size: 20, weight: .bold))
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(20)
+                DisclosureGroup(
+                    isExpanded: $isExpanded.animation(.easeInOut(duration: 0.3)),
+                    content: {
+                        VStack(alignment: .center) {
+                            Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                .font(.system(size: 15, weight: .light, design: .serif))
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(20)
+                            Text("* 不要使用 00，可能會導致00後的資料遺失")
+                                .font(.system(size: 15, weight: .light, design: .serif))
+                                .foregroundStyle(.red)
+                            Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
+                                .font(.system(size: 18, weight: .bold))
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(20)
+                        }
+                        
+                    }, label: {
+                        Text("說明")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.secondary)
+                    }
+                )
+                .padding()
                 HStack {
-                    if inputID.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined().count % 2 != 0
-                        || inputData.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined().count % 2 != 0
-                        || inputMask.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined().count % 2 != 0 {
-                        Text("輸入不完整")
+                    if let error = combinedError  {
+                        Text(error)
                             .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(.red)
                     }
                     else {
                         Text("\(currentByte) byte")
@@ -68,22 +93,46 @@ struct BLEBroadcasterView: View {
                         .font(.system(size: 20, weight: .bold))
                 }
                 
-                
+//MARK: - 遮罩輸入
                 VStack(alignment: .leading) {
                     VStack(alignment: .leading) {
                         HStack {
                             Text("遮罩：")
+                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                .frame(width: 60, alignment: .leading)
                             TextField("ex: 7A 00 01", text: $inputMask)
+                                .font(.system(size: 18, weight: .bold, design: .serif))
                                 .keyboardType(.asciiCapable)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .padding(.horizontal)
                                 .id("MaskBroadcast")
                                 .focused($focusedField, equals: .mask)
-                                .onChange(of: inputMask) { _ in updateByteCount() }
+                                .onChange(of: inputMask) { newValue in
+                                    enforceMaxLength(
+                                        originalInput: newValue,
+                                        input: &inputMask,
+                                        otherInputs: [inputData, inputID],
+                                        parseHex: broadcaster.parseHexInput,
+                                        updateByteCount: updateByteCount
+                                    )
+                                    validateField(
+                                        originalInput: newValue,
+                                        errorBinding: &maskError,
+                                        fieldName: "遮罩",
+                                        parseHex: broadcaster.parseHexInput,
+                                        isAsciiSafe: broadcaster.isAsciiSafe){corrected in
+                                        inputMask = corrected
+                                    }
+                                }
+                                .padding(.vertical)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(maskError == nil ? Color.secondary : Color.red, lineWidth: 2)
+                                )
                         }
-                        .padding()
                         if focusedField == .mask {
-                            VStack {
+                            HStack {
+                                Spacer()
+                                    .frame(width: 80, alignment: .leading)
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 10) {
                                         if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
@@ -108,32 +157,56 @@ struct BLEBroadcasterView: View {
                                     }
                                     .padding(8)
                                 }
+                                .padding(5)
                                 .frame(height: 40)
                                 .background(Color.gray.opacity(0.1))
                                 .cornerRadius(8)
                             }
-                            .padding(.horizontal)
+                            .padding(.bottom)
                         }
                     }
+//MARK: - 內容輸入
                     VStack(alignment: .leading){
                         HStack {
                             Text("內容：")
+                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                .frame(width: 60, alignment: .leading)
                             TextField("ex: 01 ,03 0F3E, 00", text: $inputData)
+                                .font(.system(size: 18, weight: .bold, design: .serif))
                                 .keyboardType(.asciiCapable)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .padding(.horizontal)
                                 .id("DataBroadcast")
                                 .focused($focusedField, equals: .data)
-                                .onChange(of: inputData) { _ in updateByteCount() }
-                            
-                            
+                                .onChange(of: inputData) { newValue in
+                                    enforceMaxLength(
+                                        originalInput: newValue,
+                                        input: &inputData,
+                                        otherInputs: [inputMask, inputID],
+                                        parseHex: broadcaster.parseHexInput,
+                                        updateByteCount: updateByteCount
+                                    )
+                                    validateField(
+                                        originalInput:  newValue,
+                                        errorBinding: &dataError,
+                                        fieldName: "內容",
+                                        parseHex: broadcaster.parseHexInput,
+                                        isAsciiSafe: broadcaster.isAsciiSafe){ corrected in
+                                        inputData = corrected
+                                    }
+                                }
+                                .padding(.vertical)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(dataError == nil ? Color.secondary : Color.red, lineWidth: 2)
+                                )
                         }
-                        .padding()
                         if focusedField == .data {
-                                VStack {
+                                HStack {
+                                    Spacer()
+                                        .frame(width: 80, alignment: .leading)
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 10) {
-                                            if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
+                                            if dataSuggestions.filter({ !$0.isEmpty }).isEmpty {
                                                 Text("沒有自訂內容！").foregroundColor(.black)
                                             }
                                             else{
@@ -156,102 +229,70 @@ struct BLEBroadcasterView: View {
                                         }
                                         .padding(8)
                                     }
+                                    .padding(5)
                                     .frame(height: 40)
                                     .background(Color.gray.opacity(0.1))
                                     .cornerRadius(8)
                                 }
-                                .padding(.horizontal)
+                                .padding(.bottom)
                             }
                     }
-                    
+//MARK: - ID輸入
                     HStack {
                         Text("ID：")
+                            .font(.system(size: 18, weight: .bold, design: .serif))
+                            .frame(width: 60, alignment: .leading)
                         TextField("ex: 01", text: $inputID)
+                            .font(.system(size: 18, weight: .bold, design: .serif))
                             .keyboardType(.asciiCapable)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
                             .padding(.horizontal)
                             .id("IdBroadcast")
                             .focused($focusedField, equals: .id)
-                            .onChange(of: inputID) { _ in updateByteCount() }
+                            .onChange(of: inputID) { newValue in
+                                enforceMaxLength(
+                                    originalInput: newValue,
+                                    input: &inputID,
+                                    otherInputs: [inputMask, inputData],
+                                    parseHex: broadcaster.parseHexInput,
+                                    updateByteCount: updateByteCount
+                                )
+                                validateField(
+                                    originalInput: newValue,
+                                    errorBinding: &idError,
+                                    fieldName: "ID",
+                                    parseHex: broadcaster.parseHexInput,
+                                    isAsciiSafe: broadcaster.isAsciiSafe){ corrected in
+                                    inputID = corrected
+                                }
+                            }
+                            .padding(.vertical)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18)
+                                    .stroke(idError == nil ? Color.secondary : Color.red, lineWidth: 2)
+                            )
+                        
                     }
-                    .padding()
                 }
                 .padding()
+//MARK: - 按鈕
                 HStack{
                     Button("開始廣播") {
-                        
                         // 解析遮罩
-                        guard let maskBytes = broadcaster.parseHexInput(inputMask) else {
-                            alertMessage = "遮罩格式錯誤，請確保是有效的十六進位"
-                            showAlert = true
-                            return
-                        }
-                        
-                        if(!broadcaster.isAsciiSafe(maskBytes)){
-                            alertMessage = "遮罩格式錯誤，請確保是介於00至7F之間的有效十六進位"
-                            showAlert = true
-                            return
-                        }
-                        
-                        
+                        guard let maskBytes = broadcaster.parseHexInput(inputMask) else {return}
                         // 解析ID (一個位元組)
-                        guard let idByte = broadcaster.parseHexInput(inputID) else {
-                            alertMessage = "ID 格式錯誤，請確保是有效的十六進位"
-                            showAlert = true
-                            return
-                        }
-                        
-                        if(!broadcaster.isAsciiSafe(idByte)){
-                            alertMessage = "ID格式錯誤，請確保是介於00至7F之間的有效十六進位"
-                            showAlert = true
-                            return
-                        }
-                        
-                        // 解析自定義資料
-                        guard let dataBytes = broadcaster.parseHexInput(inputData) else {
-                            alertMessage = "廣播內容格式錯誤，請確保是有效的十六進位"
-                            showAlert = true
-                            return
-                        }
-                        
-                        if(!broadcaster.isAsciiSafe(dataBytes)) {
-                            alertMessage = "廣播內容格式錯誤，請確保是介於00至7F之間的有效十六進位"
-                            showAlert = true
-                            return
-                        }
-                        
-                        if(maskBytes.contains(0x00) ){
-                            alertMessage = "遮罩裡有 0x00，有可能會導致部分封包遺失！"
-                            showAlert = true
-                            return
-                        }
-                        if(idByte.contains(0x00) ){
-                            alertMessage = "ID裡有 0x00，有可能會導致部分封包遺失！"
-                            showAlert = true
-                            return
-                        }
-                        if(dataBytes.contains(0x00) ){
-                            alertMessage = "內容裡有 0x00，有可能會導致部分封包遺失！"
-                            showAlert = true
-                            return
-                        }
-                        // 計算總長度
-                        let totalLength = maskBytes.count + dataBytes.count + idByte.count
-                        
-                        if totalLength > 26 {
-                            alertMessage = "封包大小加總需小於等於 26 byte，目前為 \(totalLength) byte"
-                            showAlert = true
-                        } else {
-                            // 執行廣播
-                            broadcaster.startAdvertising(mask: maskBytes, id: idByte, customData: dataBytes)
-                        }
+                        guard let idByte = broadcaster.parseHexInput(inputID) else {return}
+                      // 解析自定義資料
+                        guard let dataBytes = broadcaster.parseHexInput(inputData) else {return}
+                        // 執行廣播
+                        broadcaster.startAdvertising(mask: maskBytes, id: idByte, customData: dataBytes)
                         print("isAdv: \(broadcaster.isAdvertising)")
                     }
+                    .font(.system(size: 18, weight: .light, design: .serif))
                     .buttonStyle(.borderedProminent)
                     .alert(alertMessage, isPresented: $showAlert) {
                         Button("知道了", role: .cancel) { }
                     }
-                    .disabled(broadcaster.isAdvertising)
+                    .disabled(broadcaster.isAdvertising || maskError != nil || dataError != nil || idError != nil)
                     
                     Button("停止廣播"){
                         if(broadcaster.isAdvertising){
@@ -263,6 +304,7 @@ struct BLEBroadcasterView: View {
                         }
                         print("isAdv: \(broadcaster.isAdvertising)")
                     }
+                    .font(.system(size: 18, weight: .light, design: .serif))
                     .buttonStyle(.borderedProminent)
                     .alert(alertMessage, isPresented: $showAlert) {
                         Button("知道了", role: .cancel) { }
@@ -272,14 +314,16 @@ struct BLEBroadcasterView: View {
                 
                 if broadcaster.nameStr != "N/A" && broadcaster.isAdvertising{
                     Text("廣播中...")
+                        .font(.system(size: 15, weight: .light, design: .serif))
                     Text("Payload: \(broadcaster.nameStr)")
-                        .font(.system(size: 12, weight: .light, design: .serif))
+                        .font(.system(size: 15, weight: .light, design: .serif))
                         .foregroundStyle(.primary)
-                        .padding()
+                        .padding(.bottom)
+                        .padding(.top, 6)
                 }
                 else {
                     Text("Ex: Payload: 7A000101030F3E0001")
-                        .font(.system(size: 12, weight: .light, design: .serif))
+                        .font(.system(size: 15, weight: .light, design: .serif))
                         .foregroundStyle(.secondary)
                         .padding()
                 }
@@ -294,6 +338,48 @@ struct BLEBroadcasterView: View {
         
     }
 
+//MARK: - 格式錯誤檢查
+    func validateField(
+        originalInput: String,
+        errorBinding: inout String?,
+        fieldName: String,
+        parseHex: (String) -> [UInt8]?,
+        isAsciiSafe: ([UInt8]) -> Bool,
+        setInput: @escaping (String) -> Void
+    ) {
+        print("使用者輸入原始值：\(originalInput)")
+
+        let cleanedHex = originalInput.cleanedHex
+        guard let bytes = parseHex(cleanedHex) else {
+            errorBinding = "\(fieldName)格式錯誤"
+            return
+        }
+
+        if !isAsciiSafe(bytes) {
+            errorBinding = "\(fieldName)應在 01~7F 內"
+            triggerInputLimitFeedback()
+            AudioServicesPlaySystemSound(1102)
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // 保留格式，只刪掉最後兩個字元（避免跳動感太重）
+                let trimmed = String(originalInput.dropLast(2))
+                setInput(trimmed)
+            }
+
+        } else if bytes.contains(0x00) {
+            errorBinding = "\(fieldName)不能包含 00"
+            triggerInputLimitFeedback()
+            AudioServicesPlaySystemSound(1102)
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let trimmed = String(originalInput.dropLast(2))
+                setInput(trimmed)
+            }
+
+        } else {
+            errorBinding = nil
+        }
+    }
     
     func updateByteCount() {
         let mask = broadcaster.parseHexInput(inputMask) ?? []
@@ -301,9 +387,63 @@ struct BLEBroadcasterView: View {
         let id = broadcaster.parseHexInput(inputID) ?? []
         currentByte = mask.count + data.count + id.count
     }
+    
+    var combinedError: String? {
+        if let maskError = maskError {
+            return maskError
+        }
+        if let dataError = dataError {
+            return dataError
+        }
+        if let idError = idError {
+            return idError
+        }
+        return nil
+    }
+    
+    func enforceMaxLength(
+        originalInput: String,
+        input: inout String,
+        otherInputs: [String],
+        parseHex: (String) -> [UInt8]?,
+        updateByteCount: () -> Void
+    ) {
+        let cleanedHex = originalInput.cleanedHex
+        guard let inputBytes = parseHex(cleanedHex) else {
+            return
+        }
+
+        let otherBytesCount = otherInputs
+            .compactMap { parseHex($0.cleanedHex)?.count }
+            .reduce(0, +)
+
+        let totalBytes = otherBytesCount + inputBytes.count
+
+        if totalBytes > 26 {
+            // 超過最大長度，刪掉原始輸入尾端兩個字元（不破壞空白或逗號格式）
+            input = String(originalInput.dropLast(2))
+            triggerInputLimitFeedback()
+            AudioServicesPlaySystemSound(1103)
+        } else {
+            input = originalInput
+        }
+
+        updateByteCount()
+    }
+
 
     private func hideKeyboard() {
        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
    }
+    
+    func triggerInputLimitFeedback() {
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+    }
+}
+extension String {
+    var cleanedHex: String {
+        return self.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
+    }
 }
 

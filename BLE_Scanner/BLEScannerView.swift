@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/05/16
+//  最後更新 2025/05/18
 //
 
 import SwiftUI
@@ -49,16 +49,22 @@ struct BLEScannerView: View {
                         content: {
                             VStack(alignment: .leading) {
                                 Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                    .font(.system(size: 12, weight: .light, design: .serif))
+                                    .font(.system(size: 15, weight: .light, design: .serif))
                                     .padding(.vertical)
                                 HStack {
-                                    Text("遮罩: ")
+                                    Text("遮罩： ")
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
                                     TextField("ex：01 02 03", text: $maskText)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
                                         .onChange(of: maskText) {
                                             _ in scanner.expectedMaskText = maskText }
                                         .id("MaskScanner")
                                         .focused($focusedField, equals: .mask)
+                                        .padding()
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 18)
+                                                .stroke(Color.secondary, lineWidth: 2)
+                                        )
                                 }
                                 if focusedField == .mask {
                                     VStack {
@@ -93,17 +99,26 @@ struct BLEScannerView: View {
                                     .padding(.horizontal)
                                 }
                                 HStack {
-                                    Text("ID: ")
+                                    Text("ID： ")
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
                                     TextField("ex：01", text: $idText)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
                                         .onChange(of: idText) { _ in scanner.expectedIDText = idText }
                                         .id("IdScanner")
                                         .focused($focusedField, equals: .id)
+                                        .padding()
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 18)
+                                                .stroke(Color.secondary, lineWidth: 2)
+                                        )
                                 }
                                 HStack {
                                     Text("RSSI: ")
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
                                     Text("-\(round(rssiValue).formatted()) dBm")
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
                                     Slider(value: $rssiValue, in: 30...100)
+                                        
                                         .onChange(of: rssiValue) { _ in scanner.expectedRSSI = rssiValue }
                                         .id("RSSIScanner")
                                 }
@@ -115,6 +130,7 @@ struct BLEScannerView: View {
                             HStack {
                                 Image(systemName: "slider.horizontal.3")
                                 Text("篩選封包")
+                                    .font(.system(size: 18, weight: .bold, design: .serif))
                             }
                             .font(.system(size: 17, weight: .bold))
                         }
@@ -141,6 +157,7 @@ struct BLEScannerView: View {
                     
                     if scanner.noMatchFound {
                         Text("找不到符合條件的裝置")
+                            .font(.system(size: 18, weight: .bold, design: .serif))
                             .foregroundColor(.red)
                     }
                     
@@ -148,8 +165,11 @@ struct BLEScannerView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             //                        Text("Name：\(packet.deviceName)")
                             Text("ID：\(packet.deviceID)")
+                                .font(.system(size: 18, weight: .regular, design: .serif))
                             Text("RSSI：\(packet.rssi) dBm")
+                                .font(.system(size: 18, weight: .regular, design: .serif))
                             Text("Data：\(packet.rawData)")
+                                .font(.system(size: 18, weight: .regular, design: .serif))
                         }
                         .padding()
                         .cornerRadius(8)
