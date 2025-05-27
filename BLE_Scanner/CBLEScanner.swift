@@ -89,7 +89,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 
         var isMatched = false
         var rawDataStr = ""
-        
+        var maskStr = ""
+        var dataStr = ""
         let now = Date()
         if let lastUpdate = lastUpdateTimes[identifier],
            now.timeIntervalSince(lastUpdate) < 1.0 {
@@ -113,9 +114,17 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
             let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
-            if nameBytes.count >= (expectedMask?.count ?? 0) + (expectedID?.count ?? 0) {
+            let maskLength = expectedMask?.count ?? 0
+            let idLength = expectedID?.count ?? 0
+            if nameBytes.count >= (maskLength) + (idLength) {
                 let receivedMask = Array(nameBytes.prefix(expectedMask?.count ?? 0))
                 let receivedID = Array(nameBytes.suffix(expectedID?.count ?? 0))
+                let dataRange = maskLength..<max(maskLength, (nameBytes.count - idLength - 1))
+                let dataBytes = Array(nameBytes[dataRange])
+                
+                maskStr = bytesToHexString(receivedMask)
+                dataStr = bytesToHexString(dataBytes)
+                
                 print("expectedMaskText\(expectedMaskText),expectedIDText\(expectedIDText)")
                 print("receivedMask\(receivedMask),receivedID\(receivedID)")
                 if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID!) {
@@ -127,6 +136,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                                   deviceName: deviceName,
                                                   rssi: rssiValue,
                                                   rawData: rawDataStr,
+                                                  mask: maskStr,
+                                                  data: dataStr,
                                                   isMatched: true)
                     if matchedPackets[identifier] == nil {
                         matchedPackets[identifier] = matchedPacket
@@ -146,6 +157,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                    deviceName: deviceName,
                                    rssi: rssiValue,
                                    rawData: rawDataStr,
+                                   mask: maskStr,
+                                   data: dataStr,
                                    isMatched: isMatched)
             self.allPackets[identifier] = packet
             

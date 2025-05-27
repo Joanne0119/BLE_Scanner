@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/05/18
+//  最後更新 2025/05/23
 //
 import Foundation
 
@@ -14,5 +14,7 @@ struct BLEPacket: Identifiable {
     let deviceName: String
     let rssi: Int
     let rawData: String
+    let mask: String
+    let data: String
     let isMatched: Bool
 }

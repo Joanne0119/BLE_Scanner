@@ -284,7 +284,7 @@ struct BLEBroadcasterView: View {
                       // 解析自定義資料
                         guard let dataBytes = broadcaster.parseHexInput(inputData) else {return}
                         // 執行廣播
-                        broadcaster.startAdvertising(mask: maskBytes, id: idByte, customData: dataBytes)
+                        broadcaster.startRepeatingAdvertising(mask: maskBytes, id: idByte, customData: dataBytes)
                         print("isAdv: \(broadcaster.isAdvertising)")
                     }
                     .font(.system(size: 18, weight: .light, design: .serif))
@@ -292,27 +292,27 @@ struct BLEBroadcasterView: View {
                     .alert(alertMessage, isPresented: $showAlert) {
                         Button("知道了", role: .cancel) { }
                     }
-                    .disabled(broadcaster.isAdvertising || maskError != nil || dataError != nil || idError != nil)
+                    .disabled(broadcaster.isRepeatAdv || maskError != nil || dataError != nil || idError != nil)
                     
                     Button("停止廣播"){
-                        if(broadcaster.isAdvertising){
-                            broadcaster.stopAdervtising()
+                        if(broadcaster.isRepeatAdv){
+                            broadcaster.stopRepeatingAdvertising()
                         }
                         else {
                             alertMessage = "請先開始廣播"
                             showAlert = true
                         }
-                        print("isAdv: \(broadcaster.isAdvertising)")
+                        print("isAdv: \(broadcaster.isRepeatAdv)")
                     }
                     .font(.system(size: 18, weight: .light, design: .serif))
                     .buttonStyle(.borderedProminent)
                     .alert(alertMessage, isPresented: $showAlert) {
                         Button("知道了", role: .cancel) { }
                     }
-                    .disabled(!broadcaster.isAdvertising)
+                    .disabled(!broadcaster.isRepeatAdv)
                 }
                 
-                if broadcaster.nameStr != "N/A" && broadcaster.isAdvertising{
+                if broadcaster.nameStr != "N/A" && broadcaster.isRepeatAdv{
                     Text("廣播中...")
                         .font(.system(size: 15, weight: .light, design: .serif))
                     Text("Payload: \(broadcaster.nameStr)")

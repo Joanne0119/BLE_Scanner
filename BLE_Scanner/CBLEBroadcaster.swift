@@ -14,6 +14,11 @@ class CBLEBroadcaster: NSObject, ObservableObject {
 //    private let mask: [UInt8] = [0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF]
     @Published var nameStr = "N/A"
     @Published var isAdvertising = false
+    @Published var isRepeatAdv = false
+    private var lastMask: [UInt8] = []
+    private var lastID: [UInt8] = []
+    private var lastCustomData: [UInt8] = []
+    
 
     override init() {
         super.init()
@@ -36,12 +41,8 @@ class CBLEBroadcaster: NSObject, ObservableObject {
         print(nameStr)
         let nameASCII = hexBytesToASCIIString(payload)
         print(nameASCII)
-        
-//        let data = Data(payload)
-//        currentPayload = payload.map { String(format: "%02X", $0) }.joined(separator: " ")
 
         let advData: [String: Any] = [
-//            CBAdvertisementDataManufacturerDataKey: data,
             CBAdvertisementDataLocalNameKey: nameASCII
         ]
         
@@ -50,16 +51,40 @@ class CBLEBroadcaster: NSObject, ObservableObject {
         peripheralManager.stopAdvertising()
         peripheralManager.startAdvertising(advData)
         
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-//            self.peripheralManager.stopAdvertising()
-//            print("廣播已自動停止")
-//        }
         self.isAdvertising = true
     }
     
-    func stopAdervtising() {
+    func stopAdvertising() {
         peripheralManager.stopAdvertising()
         self.isAdvertising = false
+    }
+    
+    func startRepeatingAdvertising(mask: [UInt8], id: [UInt8], customData: [UInt8], interval: TimeInterval = 30.0) {
+        isRepeatAdv = true
+        lastMask = mask
+        lastID = id
+        lastCustomData = customData
+
+        advertiseCycle(interval: interval)
+    }
+    
+    func stopRepeatingAdvertising() {
+        isRepeatAdv = false
+        stopAdvertising()
+    }
+    
+    private func advertiseCycle(interval: TimeInterval) {
+        if !isRepeatAdv { return }
+
+        startAdvertising(mask: lastMask, id: lastID, customData: lastCustomData)
+        print("Repeat Advertising...")
+        DispatchQueue.main.asyncAfter(deadline: .now() + interval) {
+            self.stopAdvertising()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {  // 停止後等 1 秒再啟動（可調整）
+                self.advertiseCycle(interval: interval)
+            }
+        }
     }
     
     func parseHexInput(_ input: String) -> [UInt8]? {

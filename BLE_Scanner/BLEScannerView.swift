@@ -168,7 +168,9 @@ struct BLEScannerView: View {
                                 .font(.system(size: 18, weight: .regular, design: .serif))
                             Text("RSSI：\(packet.rssi) dBm")
                                 .font(.system(size: 18, weight: .regular, design: .serif))
-                            Text("Data：\(packet.rawData)")
+                            Text("Mask：\(packet.mask)")
+                                .font(.system(size: 18, weight: .regular, design: .serif))
+                            Text("Data：\(packet.data)")
                                 .font(.system(size: 18, weight: .regular, design: .serif))
                         }
                         .padding()
