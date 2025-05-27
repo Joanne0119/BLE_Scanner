@@ -16,6 +16,7 @@ struct BLEScannerView: View {
     }
     
     @StateObject private var scanner = CBLEScanner()
+    @ObservedObject var packetStore: SavedPacketsStore
     @State private var maskText: String = ""
     @State private var idText: String = ""
     @State private var showAlert = false
@@ -150,6 +151,13 @@ struct BLEScannerView: View {
                         
                         Button("停止掃描") {
                             scanner.stopScanning()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!scanner.isScanning)
+                        
+                        Button("儲存掃描結果") {
+                            scanner.stopScanning()
+                            packetStore.append(filteredPackets)
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(!scanner.isScanning)

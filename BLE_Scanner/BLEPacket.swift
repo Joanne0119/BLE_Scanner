@@ -7,14 +7,14 @@
 //
 import Foundation
 
-struct BLEPacket: Identifiable {
-    let id = UUID()
-    let deviceID: String
-    let identifier: String
-    let deviceName: String
-    let rssi: Int
-    let rawData: String
-    let mask: String
-    let data: String
-    let isMatched: Bool
+struct BLEPacket: Identifiable, Codable, Equatable {
+    var id: UUID = UUID()
+    var deviceID: String
+    var identifier: String
+    var deviceName: String
+    var rssi: Int
+    var rawData: String
+    var mask: String
+    var data: String
+    var isMatched: Bool
 }
