@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12
-//  最後更新 2025/05/23
+//  最後更新 2025/05/29
 //
 
 import Foundation
@@ -138,7 +138,9 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                                   rawData: rawDataStr,
                                                   mask: maskStr,
                                                   data: dataStr,
-                                                  isMatched: true)
+                                                  isMatched: true,
+                                                  timestamp: now
+                                                    )
                     if matchedPackets[identifier] == nil {
                         matchedPackets[identifier] = matchedPacket
                     }
@@ -159,7 +161,9 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                    rawData: rawDataStr,
                                    mask: maskStr,
                                    data: dataStr,
-                                   isMatched: isMatched)
+                                   isMatched: isMatched,
+                                   timestamp: now
+                                )
             self.allPackets[identifier] = packet
             
             if isMatched {

@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/05/23
+//  最後更新 2025/05/29
 //
 import Foundation
 
@@ -17,4 +17,5 @@ struct BLEPacket: Identifiable, Codable, Equatable {
     var mask: String
     var data: String
     var isMatched: Bool
+    var timestamp: Date
 }

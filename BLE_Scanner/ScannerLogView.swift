@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/5/27.
-//
+//  最後更新 2025/05/29
 
 import SwiftUI
 import Foundation
@@ -73,6 +73,7 @@ struct ScannerLogView: View {
                                 Text("RSSI：\(packet.rssi) dBm")
                                 Text("Mask：\(packet.mask)")
                                 Text("Data：\(packet.data)")
+                                Text("Timestamp：\(packet.timestamp)")
                             }
                         }
                         .padding()
