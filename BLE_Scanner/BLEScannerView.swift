@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/05/29
+//  最後更新 2025/06/03
 //
 
 import SwiftUI
@@ -21,6 +21,8 @@ struct BLEScannerView: View {
     @State private var idText: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var maskTextEmpty = false
+    @State private var idTextEmpty = false
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 100
     @FocusState private var focusedField: Field?
@@ -57,14 +59,15 @@ struct BLEScannerView: View {
                                         .font(.system(size: 18, weight: .bold, design: .serif))
                                     TextField("ex：01 02 03", text: $maskText)
                                         .font(.system(size: 18, weight: .bold, design: .serif))
-                                        .onChange(of: maskText) {
-                                            _ in scanner.expectedMaskText = maskText }
+                                        .onChange(of: maskText) {_ in
+                                            scanner.expectedMaskText = maskText
+                                        }
                                         .id("MaskScanner")
                                         .focused($focusedField, equals: .mask)
                                         .padding()
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 18)
-                                                .stroke(Color.secondary, lineWidth: 2)
+                                                .stroke(maskTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
                                         )
                                 }
                                 if focusedField == .mask {
@@ -104,13 +107,15 @@ struct BLEScannerView: View {
                                         .font(.system(size: 18, weight: .bold, design: .serif))
                                     TextField("ex：01", text: $idText)
                                         .font(.system(size: 18, weight: .bold, design: .serif))
-                                        .onChange(of: idText) { _ in scanner.expectedIDText = idText }
+                                        .onChange(of: idText) { _ in
+                                            scanner.expectedIDText = idText
+                                        }
                                         .id("IdScanner")
                                         .focused($focusedField, equals: .id)
                                         .padding()
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 18)
-                                                .stroke(Color.secondary, lineWidth: 2)
+                                                .stroke(idTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
                                         )
                                 }
                                 HStack {
@@ -141,6 +146,19 @@ struct BLEScannerView: View {
                     
                     HStack {
                         Button("開始掃描") {
+                            let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            let isIdEmpty = idText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            
+                            // 設定錯誤狀態
+                            maskTextEmpty = isMaskEmpty
+                            idTextEmpty = isIdEmpty
+                            
+                            if isMaskEmpty || isIdEmpty {
+                                withAnimation {
+                                    isExpanded = true // 展開區塊
+                                }
+                                return
+                            }
                             handleStartScan()
                         }
                         .buttonStyle(.borderedProminent)
@@ -227,36 +245,36 @@ struct BLEScannerView: View {
     }
     
     func handleStartScan() {
-        var maskByte: [UInt8] = []
-        var idByte: [UInt8] = []
-        
-        if !maskText.isEmpty {
-            guard let parsedMask = parseHexInput(maskText) else {
-                alertMessage = "遮罩格式錯誤，請確保是有效的十六進位"
-                showAlert = true
-                return
-            }
-            if (!isAsciiSafe(parsedMask)) {
-                alertMessage = "遮罩格式錯誤，請確保是介於00至7F之間的有效十六進位"
-                showAlert = true
-                return
-            }
-            maskByte = parsedMask
-        }
-        
-        if !idText.isEmpty {
-            guard let parsedID = parseHexInput(idText) else {
-                alertMessage = "ID 格式錯誤，請確保是有效的十六進位"
-                showAlert = true
-                return
-            }
-            if (!isAsciiSafe(parsedID)) {
-                alertMessage = "ID 格式錯誤，請確保是介於00至7F之間的有效十六進位"
-                showAlert = true
-                return
-            }
-            idByte = parsedID
-        }
+//        var maskByte: [UInt8] = []
+//        var idByte: [UInt8] = []
+//        
+//        if !maskText.isEmpty {
+//            guard let parsedMask = parseHexInput(maskText) else {
+//                alertMessage = "遮罩格式錯誤，請確保是有效的十六進位"
+//                showAlert = true
+//                return
+//            }
+//            if (!isAsciiSafe(parsedMask)) {
+//                alertMessage = "遮罩格式錯誤，請確保是介於00至7F之間的有效十六進位"
+//                showAlert = true
+//                return
+//            }
+//            maskByte = parsedMask
+//        }
+//        
+//        if !idText.isEmpty {
+//            guard let parsedID = parseHexInput(idText) else {
+//                alertMessage = "ID 格式錯誤，請確保是有效的十六進位"
+//                showAlert = true
+//                return
+//            }
+//            if (!isAsciiSafe(parsedID)) {
+//                alertMessage = "ID 格式錯誤，請確保是介於00至7F之間的有效十六進位"
+//                showAlert = true
+//                return
+//            }
+//            idByte = parsedID
+//        }
         
         if !maskText.isEmpty && !maskSuggestions.contains(maskText) {
             maskSuggestions.append(maskText)

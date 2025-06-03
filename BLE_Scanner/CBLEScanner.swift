@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12
-//  最後更新 2025/05/29
+//  最後更新 2025/06/03
 //
 
 import Foundation
@@ -110,23 +110,25 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             let nameBytes = asciiStringToBytes(localName)
             rawDataStr = bytesToHexString(nameBytes)
             deviceName = localName
-            deviceId = bytesToHexString( Array(nameBytes.suffix(1)))
+            let idLength = 1
+            let deviceIdBytes = Array(nameBytes.suffix(idLength))
+            deviceId = bytesToHexString(deviceIdBytes)
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
-            let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
             let maskLength = expectedMask?.count ?? 0
-            let idLength = expectedID?.count ?? 0
             if nameBytes.count >= (maskLength) + (idLength) {
-                let receivedMask = Array(nameBytes.prefix(expectedMask?.count ?? 0))
-                let receivedID = Array(nameBytes.suffix(expectedID?.count ?? 0))
-                let dataRange = maskLength..<max(maskLength, (nameBytes.count - idLength - 1))
+                let receivedMask = Array(nameBytes.prefix(maskLength))
+                let receivedID = deviceIdBytes
+                let dataRange = maskLength..<(nameBytes.count - idLength)
                 let dataBytes = Array(nameBytes[dataRange])
                 
                 maskStr = bytesToHexString(receivedMask)
                 dataStr = bytesToHexString(dataBytes)
                 
-                print("expectedMaskText\(expectedMaskText),expectedIDText\(expectedIDText)")
-                print("receivedMask\(receivedMask),receivedID\(receivedID)")
+                print("expectedMaskText \(expectedMaskText), expectedIDText \(expectedIDText)")
+                print("receivedMask \(receivedMask), receivedID \(receivedID), dataStr \(dataStr)")
+                
+                let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
                 if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID!) {
                     isMatched = true
                     matchedCount += 1
