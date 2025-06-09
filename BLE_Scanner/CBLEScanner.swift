@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12
-//  最後更新 2025/06/03
+//  最後更新 2025/06/09
 //
 
 import Foundation
@@ -107,11 +107,13 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 //        print(allPackets)
         if let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String {
             print("收到裝置名稱：\(localName)")
+            print("full packet: ")
             let nameBytes = asciiStringToBytes(localName)
             rawDataStr = bytesToHexString(nameBytes)
             deviceName = localName
             let idLength = 1
             let deviceIdBytes = Array(nameBytes.suffix(idLength))
+            print("id: ")
             deviceId = bytesToHexString(deviceIdBytes)
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
@@ -125,10 +127,12 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                 maskStr = bytesToHexString(receivedMask)
                 dataStr = bytesToHexString(dataBytes)
                 
+                let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
+                
                 print("expectedMaskText \(expectedMaskText), expectedIDText \(expectedIDText)")
+                print("expectedMask \(String(describing: expectedMask)), expectedID \(String(describing: expectedID))")
                 print("receivedMask \(receivedMask), receivedID \(receivedID), dataStr \(dataStr)")
                 
-                let expectedID: [UInt8]? = expectedIDText.isEmpty ? nil : parseHexInput(expectedIDText)
                 if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID!) {
                     isMatched = true
                     matchedCount += 1
@@ -195,12 +199,12 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     }
     
     func asciiStringToBytes(_ input: String) -> [UInt8] {
-        print("asciiStringToBytes: \(input)")
+        print("asciiStringToBytes Input: \(input)")
         return Array(input.utf8)
     }
 
     func bytesToHexString(_ bytes: [UInt8]) -> String {
-        print("bytesToHexString: \(bytes)")
+        print("bytesToHexString Input: \(bytes)")
         return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
     }
 

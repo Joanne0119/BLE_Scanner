@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-// 最後更新 2025/06/03
+// 最後更新 2025/06/09
 //
 
 import SwiftUI
@@ -100,34 +100,50 @@ struct BLEBroadcasterView: View {
                             Text("遮罩：")
                                 .font(.system(size: 18, weight: .bold, design: .serif))
                                 .frame(width: 60, alignment: .leading)
-                            TextField("ex: 7A 00 01", text: $inputMask)
-                                .font(.system(size: 18, weight: .bold, design: .serif))
-                                .keyboardType(.asciiCapable)
-                                .padding(.horizontal)
-                                .id("MaskBroadcast")
-                                .focused($focusedField, equals: .mask)
-                                .onChange(of: inputMask) { newValue in
-                                    enforceMaxLength(
-                                        originalInput: newValue,
-                                        input: &inputMask,
-                                        otherInputs: [inputData, inputID],
-                                        parseHex: broadcaster.parseHexInput,
-                                        updateByteCount: updateByteCount
-                                    )
-                                    validateField(
-                                        originalInput: newValue,
-                                        errorBinding: &maskError,
-                                        fieldName: "遮罩",
-                                        parseHex: broadcaster.parseHexInput,
-                                        isAsciiSafe: broadcaster.isAsciiSafe){corrected in
-                                        inputMask = corrected
+                            ZStack {
+                                HStack {
+                                    TextField("ex: 7A 00 01", text: $inputMask)
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
+                                        .keyboardType(.asciiCapable)
+                                        .padding(.horizontal)
+                                        .id("MaskBroadcast")
+                                        .focused($focusedField, equals: .mask)
+                                        .onChange(of: inputMask) { newValue in
+                                            enforceMaxLength(
+                                                originalInput: newValue,
+                                                input: &inputMask,
+                                                otherInputs: [inputData, inputID],
+                                                parseHex: broadcaster.parseHexInput,
+                                                updateByteCount: updateByteCount
+                                            )
+                                            validateField(
+                                                originalInput: newValue,
+                                                errorBinding: &maskError,
+                                                fieldName: "遮罩",
+                                                parseHex: broadcaster.parseHexInput,
+                                                isAsciiSafe: broadcaster.isAsciiSafe) { corrected in
+                                                    inputMask = corrected
+                                                }
+                                        }
+                                        .padding(.vertical)
+                                    
+                                    // 清除按鈕
+                                    if !inputMask.isEmpty {
+                                        Button(action: {
+                                            inputMask = ""
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.gray)
+                                        }
+                                        .padding(.trailing, 12)
+                                        .transition(.opacity)
                                     }
                                 }
-                                .padding(.vertical)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(maskError == nil ? Color.secondary : Color.red, lineWidth: 2)
-                                )
+                            }
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18)
+                                    .stroke(maskError == nil ? Color.secondary : Color.red, lineWidth: 2)
+                            )
                         }
                         if focusedField == .mask {
                             HStack {
@@ -171,34 +187,49 @@ struct BLEBroadcasterView: View {
                             Text("內容：")
                                 .font(.system(size: 18, weight: .bold, design: .serif))
                                 .frame(width: 60, alignment: .leading)
-                            TextField("ex: 01 ,03 0F3E, 00", text: $inputData)
-                                .font(.system(size: 18, weight: .bold, design: .serif))
-                                .keyboardType(.asciiCapable)
-                                .padding(.horizontal)
-                                .id("DataBroadcast")
-                                .focused($focusedField, equals: .data)
-                                .onChange(of: inputData) { newValue in
-                                    enforceMaxLength(
-                                        originalInput: newValue,
-                                        input: &inputData,
-                                        otherInputs: [inputMask, inputID],
-                                        parseHex: broadcaster.parseHexInput,
-                                        updateByteCount: updateByteCount
-                                    )
-                                    validateField(
-                                        originalInput:  newValue,
-                                        errorBinding: &dataError,
-                                        fieldName: "內容",
-                                        parseHex: broadcaster.parseHexInput,
-                                        isAsciiSafe: broadcaster.isAsciiSafe){ corrected in
-                                        inputData = corrected
+                            ZStack(){
+                                HStack(){
+                                    TextField("ex: 01 ,03 0F3E, 00", text: $inputData)
+                                        .font(.system(size: 18, weight: .bold, design: .serif))
+                                        .keyboardType(.asciiCapable)
+                                        .padding(.horizontal)
+                                        .id("DataBroadcast")
+                                        .focused($focusedField, equals: .data)
+                                        .onChange(of: inputData) { newValue in
+                                            enforceMaxLength(
+                                                originalInput: newValue,
+                                                input: &inputData,
+                                                otherInputs: [inputMask, inputID],
+                                                parseHex: broadcaster.parseHexInput,
+                                                updateByteCount: updateByteCount
+                                            )
+                                            validateField(
+                                                originalInput:  newValue,
+                                                errorBinding: &dataError,
+                                                fieldName: "內容",
+                                                parseHex: broadcaster.parseHexInput,
+                                                isAsciiSafe: broadcaster.isAsciiSafe){ corrected in
+                                                    inputData = corrected
+                                                }
+                                        }
+                                        .padding(.vertical)
+                                    if !inputData.isEmpty {
+                                        Button(action: {
+                                            inputData = ""
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.gray)
+                                        }
+                                        .padding(.trailing, 12)
+                                        .transition(.opacity)
                                     }
                                 }
-                                .padding(.vertical)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 18)
                                         .stroke(dataError == nil ? Color.secondary : Color.red, lineWidth: 2)
                                 )
+                            }
+                            
                         }
                         if focusedField == .data {
                                 HStack {
@@ -242,34 +273,48 @@ struct BLEBroadcasterView: View {
                         Text("ID：")
                             .font(.system(size: 18, weight: .bold, design: .serif))
                             .frame(width: 60, alignment: .leading)
-                        TextField("ex: 01", text: $inputID)
-                            .font(.system(size: 18, weight: .bold, design: .serif))
-                            .keyboardType(.asciiCapable)
-                            .padding(.horizontal)
-                            .id("IdBroadcast")
-                            .focused($focusedField, equals: .id)
-                            .onChange(of: inputID) { newValue in
-                                enforceMaxLength(
-                                    originalInput: newValue,
-                                    input: &inputID,
-                                    otherInputs: [inputMask, inputData],
-                                    parseHex: broadcaster.parseHexInput,
-                                    updateByteCount: updateByteCount
-                                )
-                                validateField(
-                                    originalInput: newValue,
-                                    errorBinding: &idError,
-                                    fieldName: "ID",
-                                    parseHex: broadcaster.parseHexInput,
-                                    isAsciiSafe: broadcaster.isAsciiSafe){ corrected in
-                                    inputID = corrected
+                        ZStack(){
+                            HStack(){
+                                TextField("ex: 01", text: $inputID)
+                                    .font(.system(size: 18, weight: .bold, design: .serif))
+                                    .keyboardType(.asciiCapable)
+                                    .padding(.horizontal)
+                                    .id("IdBroadcast")
+                                    .focused($focusedField, equals: .id)
+                                    .onChange(of: inputID) { newValue in
+                                        enforceMaxLength(
+                                            originalInput: newValue,
+                                            input: &inputID,
+                                            otherInputs: [inputMask, inputData],
+                                            parseHex: broadcaster.parseHexInput,
+                                            updateByteCount: updateByteCount
+                                        )
+                                        validateField(
+                                            originalInput: newValue,
+                                            errorBinding: &idError,
+                                            fieldName: "ID",
+                                            parseHex: broadcaster.parseHexInput,
+                                            isAsciiSafe: broadcaster.isAsciiSafe){ corrected in
+                                                inputID = corrected
+                                            }
+                                    }
+                                    .padding(.vertical)
+                                if !inputID.isEmpty {
+                                    Button(action: {
+                                        inputID = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.trailing, 12)
+                                    .transition(.opacity)
                                 }
                             }
-                            .padding(.vertical)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18)
                                     .stroke(idError == nil ? Color.secondary : Color.red, lineWidth: 2)
                             )
+                        }
                         
                     }
                 }

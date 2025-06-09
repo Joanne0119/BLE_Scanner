@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/06/03
+//  最後更新 2025/06/09
 //
 
 import SwiftUI
@@ -57,18 +57,32 @@ struct BLEScannerView: View {
                                 HStack {
                                     Text("遮罩： ")
                                         .font(.system(size: 18, weight: .bold, design: .serif))
-                                    TextField("ex：01 02 03", text: $maskText)
-                                        .font(.system(size: 18, weight: .bold, design: .serif))
-                                        .onChange(of: maskText) {_ in
-                                            scanner.expectedMaskText = maskText
+                                    ZStack(){
+                                        HStack(){
+                                            TextField("ex：01 02 03", text: $maskText)
+                                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                                .onChange(of: maskText) {_ in
+                                                    scanner.expectedMaskText = maskText
+                                                }
+                                                .id("MaskScanner")
+                                                .focused($focusedField, equals: .mask)
+                                                .padding()
+                                            if !maskText.isEmpty {
+                                                Button(action: {
+                                                    maskText = ""
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.gray)
+                                                }
+                                                .padding(.trailing, 12)
+                                                .transition(.opacity)
+                                            }
                                         }
-                                        .id("MaskScanner")
-                                        .focused($focusedField, equals: .mask)
-                                        .padding()
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 18)
                                                 .stroke(maskTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
                                         )
+                                    }
                                 }
                                 if focusedField == .mask {
                                     VStack {
@@ -105,18 +119,33 @@ struct BLEScannerView: View {
                                 HStack {
                                     Text("ID： ")
                                         .font(.system(size: 18, weight: .bold, design: .serif))
-                                    TextField("ex：01", text: $idText)
-                                        .font(.system(size: 18, weight: .bold, design: .serif))
-                                        .onChange(of: idText) { _ in
-                                            scanner.expectedIDText = idText
+                                    ZStack(){
+                                        HStack(){
+                                            TextField("ex：01", text: $idText)
+                                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                                .onChange(of: idText) { _ in
+                                                    scanner.expectedIDText = idText
+                                                }
+                                                .id("IdScanner")
+                                                .focused($focusedField, equals: .id)
+                                                .padding()
+                                            if !idText.isEmpty {
+                                                Button(action: {
+                                                    idText = ""
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.gray)
+                                                }
+                                                .padding(.trailing, 12)
+                                                .transition(.opacity)
+                                            }
                                         }
-                                        .id("IdScanner")
-                                        .focused($focusedField, equals: .id)
-                                        .padding()
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 18)
                                                 .stroke(idTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
                                         )
+                                    }
+                                    
                                 }
                                 HStack {
                                     Text("RSSI: ")
@@ -147,13 +176,13 @@ struct BLEScannerView: View {
                     HStack {
                         Button("開始掃描") {
                             let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            let isIdEmpty = idText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+//                            let isIdEmpty = idText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                             
                             // 設定錯誤狀態
                             maskTextEmpty = isMaskEmpty
-                            idTextEmpty = isIdEmpty
+//                            idTextEmpty = isIdEmpty
                             
-                            if isMaskEmpty || isIdEmpty {
+                            if isMaskEmpty {
                                 withAnimation {
                                     isExpanded = true // 展開區塊
                                 }
