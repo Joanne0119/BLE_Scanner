@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/11.
-//  最後更新 2025/06/09
+//  最後更新 2025/06/14
 //
 
 import SwiftUI
@@ -23,13 +23,13 @@ struct ContentView: View {
                 .tabItem {
                     Label("掃描", systemImage: "wave.3.right")
                 }
-            SettingView(maskSuggestions: $maskSuggestions, dataSuggestions: $dataSuggestions)
-                .tabItem {
-                    Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
-                }
             ScannerLogView(packetStore: packetStore)
                 .tabItem {
                     Label("掃描Log", systemImage: "text.document")
+                }
+            SettingView(maskSuggestions: $maskSuggestions, dataSuggestions: $dataSuggestions)
+                .tabItem {
+                    Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
                 }
             PressureCorrectionView(maskSuggestions: $maskSuggestions)
                 .tabItem {
