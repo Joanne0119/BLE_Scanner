@@ -31,6 +31,10 @@ struct ContentView: View {
                 .tabItem {
                     Label("掃描Log", systemImage: "text.document")
                 }
+            PressureCorrectionView(maskSuggestions: $maskSuggestions)
+                .tabItem {
+                    Label("大氣壓力校正", systemImage: "checkmark.circle.badge.questionmark")
+                }
         }
         .onChange(of: maskSuggestions) { newValue in
            UserDefaults.standard.savedMaskSuggestions = newValue

@@ -19,8 +19,6 @@ struct BLEScannerView: View {
     @ObservedObject var packetStore: SavedPacketsStore
     @State private var maskText: String = ""
     @State private var idText: String = ""
-    @State private var showAlert = false
-    @State private var alertMessage = ""
     @State private var maskTextEmpty = false
     @State private var idTextEmpty = false
     @State private var isExpanded: Bool = false
@@ -174,40 +172,33 @@ struct BLEScannerView: View {
                     .padding()
                     
                     HStack {
-                        Button("開始掃描") {
-                            let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-//                            let isIdEmpty = idText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            
-                            // 設定錯誤狀態
-                            maskTextEmpty = isMaskEmpty
-//                            idTextEmpty = isIdEmpty
-                            
-                            if isMaskEmpty {
-                                withAnimation {
-                                    isExpanded = true // 展開區塊
+                        Button(scanner.isScanning ? "停止掃描" : "開始掃描") {
+                            if scanner.isScanning {
+                                scanner.stopScanning()
+                            } else {
+                                let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                // 設定錯誤狀態
+                                maskTextEmpty = isMaskEmpty
+                                
+                                if isMaskEmpty {
+                                    withAnimation {
+                                        isExpanded = true // 展開區塊
+                                    }
+                                    return
                                 }
-                                return
+                                handleStartScan()
                             }
-                            handleStartScan()
                         }
                         .buttonStyle(.borderedProminent)
-                        .alert(alertMessage, isPresented: $showAlert) {
-                            Button("知道了", role: .cancel) { }
-                        }
-                        .disabled(scanner.isScanning)
-                        
-                        Button("停止掃描") {
-                            scanner.stopScanning()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(!scanner.isScanning)
+                        .tint(scanner.isScanning ? .red : .blue)
                         
                         Button("儲存掃描結果") {
                             scanner.stopScanning()
                             packetStore.append(filteredPackets)
                         }
                         .buttonStyle(.borderedProminent)
-                        .disabled(!scanner.isScanning)
+                        .tint(.brown)
+                        
                     }
                     
                     if scanner.noMatchFound {
@@ -218,19 +209,65 @@ struct BLEScannerView: View {
                     
                     List(filteredPackets) { packet in
                         VStack(alignment: .leading, spacing: 4) {
-                            //                        Text("Name：\(packet.deviceName)")
-                            Text("ID：\(packet.deviceID)")
-                                .font(.system(size: 18, weight: .regular, design: .serif))
-                            Text("RSSI：\(packet.rssi) dBm")
-                                .font(.system(size: 18, weight: .regular, design: .serif))
-                            Text("Mask：\(packet.mask)")
-                                .font(.system(size: 18, weight: .regular, design: .serif))
-                            Text("Data：\(packet.data)")
-                                .font(.system(size: 18, weight: .regular, design: .serif))
+                            if let parsedData = packet.parsedData {
+                               
+                               VStack(alignment: .leading, spacing: 4) {
+                                   Text("ID：\(packet.deviceID)")
+                                       .font(.system(size: 16, weight: .regular, design: .serif))
+                                   Text("RSSI：\(packet.rssi) dBm")
+                                       .font(.system(size: 16, weight: .regular, design: .serif))
+                                   HStack {
+                                       Text("⏱️ 時間：\(parsedData.seconds) 秒")
+                                           .font(.system(size: 15, weight: .medium, design: .serif))
+                                       Spacer()
+                                       if parsedData.hasReachedTarget {
+                                           Text("已達標")
+                                               .font(.system(size: 14, weight: .bold, design: .serif))
+                                               .foregroundColor(.green)
+                                               .padding(.horizontal, 8)
+                                               .padding(.vertical, 2)
+                                               .background(Color.green.opacity(0.2))
+                                               .cornerRadius(4)
+                                       }
+                                   }
+                                   
+                                   Text("🌡️ 大氣壓力：\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa")
+                                       .font(.system(size: 15, weight: .medium, design: .serif))
+                                   
+                                   Text("📱 裝置接收狀況：")
+                                       .font(.system(size: 15, weight: .medium, design: .serif))
+                                       .padding(.top, 4)
+                                   
+                                   VStack(alignment: .leading, spacing: 2) {
+                                       ForEach(Array(parsedData.devices.enumerated()), id: \.offset) { index, device in
+                                           HStack {
+                                               
+                                               Text("ID: \(String(format: "%02X", device.deviceId))")
+                                                   .font(.system(size: 14, weight: .regular, design: .serif))
+                                                   .frame(width: 50, alignment: .leading)
+                                               
+                                               Text("次數: \(device.count)")
+                                                   .font(.system(size: 14, weight: .regular, design: .serif))
+                                                   .frame(width: 60, alignment: .leading)
+                                               
+                                               Spacer()
+                                               
+                                               Text("\(String(format: "%.1f", device.receptionRate)) 次/秒")
+                                                   .font(.system(size: 14, weight: .bold, design: .serif))
+                                                   .foregroundColor(device.count >= 100 ? .green : .primary)
+                                           }
+                                       }
+                                   }
+                                   .padding(.leading, 8)
+                               }
+                               .padding(.top, 8)
+                           }
+                            
                         }
                         .padding()
                         .cornerRadius(8)
                     }
+                    .cornerRadius(8)
                 }
                 .padding()
                 .onTapGesture {
@@ -274,41 +311,7 @@ struct BLEScannerView: View {
     }
     
     func handleStartScan() {
-//        var maskByte: [UInt8] = []
-//        var idByte: [UInt8] = []
-//        
-//        if !maskText.isEmpty {
-//            guard let parsedMask = parseHexInput(maskText) else {
-//                alertMessage = "遮罩格式錯誤，請確保是有效的十六進位"
-//                showAlert = true
-//                return
-//            }
-//            if (!isAsciiSafe(parsedMask)) {
-//                alertMessage = "遮罩格式錯誤，請確保是介於00至7F之間的有效十六進位"
-//                showAlert = true
-//                return
-//            }
-//            maskByte = parsedMask
-//        }
-//        
-//        if !idText.isEmpty {
-//            guard let parsedID = parseHexInput(idText) else {
-//                alertMessage = "ID 格式錯誤，請確保是有效的十六進位"
-//                showAlert = true
-//                return
-//            }
-//            if (!isAsciiSafe(parsedID)) {
-//                alertMessage = "ID 格式錯誤，請確保是介於00至7F之間的有效十六進位"
-//                showAlert = true
-//                return
-//            }
-//            idByte = parsedID
-//        }
-        
-        if !maskText.isEmpty && !maskSuggestions.contains(maskText) {
-            maskSuggestions.append(maskText)
-        }
-        
+        scanner.shouldStopScan = true
         scanner.expectedMaskText = maskText
         scanner.expectedIDText = idText
         scanner.startScanning()

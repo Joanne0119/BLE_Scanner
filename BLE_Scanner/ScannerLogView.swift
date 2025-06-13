@@ -68,13 +68,61 @@ struct ScannerLogView: View {
                 } else {
                     List(filteredPackets) { packet in
                         VStack(alignment: .leading, spacing: 4) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("ID：\(packet.deviceID)")
-                                Text("RSSI：\(packet.rssi) dBm")
-                                Text("Mask：\(packet.mask)")
-                                Text("Data：\(packet.data)")
-                                Text("Timestamp：\(packet.timestamp)")
-                            }
+                            if let parsedData = packet.parsedData {
+                               
+                               VStack(alignment: .leading, spacing: 4) {
+                                   Text("ID：\(packet.deviceID)")
+                                       .font(.system(size: 16, weight: .regular, design: .serif))
+                                   Text("RSSI：\(packet.rssi) dBm")
+                                       .font(.system(size: 16, weight: .regular, design: .serif))
+                                   Text("Timestamp：\(formatTime(packet.timestamp))")
+                                       .font(.system(size: 16, weight: .regular, design: .serif))
+                                   HStack {
+                                       Text("⏱️ 時間：\(parsedData.seconds) 秒")
+                                           .font(.system(size: 15, weight: .medium, design: .serif))
+                                       Spacer()
+                                       if parsedData.hasReachedTarget {
+                                           Text("已達標")
+                                               .font(.system(size: 14, weight: .bold, design: .serif))
+                                               .foregroundColor(.green)
+                                               .padding(.horizontal, 8)
+                                               .padding(.vertical, 2)
+                                               .background(Color.green.opacity(0.2))
+                                               .cornerRadius(4)
+                                       }
+                                   }
+                                   
+                                   Text("🌡️ 大氣壓力：\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa")
+                                       .font(.system(size: 15, weight: .medium, design: .serif))
+                                   
+                                   Text("📱 裝置接收狀況：")
+                                       .font(.system(size: 15, weight: .medium, design: .serif))
+                                       .padding(.top, 4)
+                                   
+                                   VStack(alignment: .leading, spacing: 2) {
+                                       ForEach(Array(parsedData.devices.enumerated()), id: \.offset) { index, device in
+                                           HStack {
+                                               
+                                               Text("ID: \(String(format: "%02X", device.deviceId))")
+                                                   .font(.system(size: 14, weight: .regular, design: .serif))
+                                                   .frame(width: 50, alignment: .leading)
+                                               
+                                               Text("次數: \(device.count)")
+                                                   .font(.system(size: 14, weight: .regular, design: .serif))
+                                                   .frame(width: 60, alignment: .leading)
+                                               
+                                               Spacer()
+                                               
+                                               Text("\(String(format: "%.1f", device.receptionRate)) 次/秒")
+                                                   .font(.system(size: 14, weight: .bold, design: .serif))
+                                                   .foregroundColor(device.count >= 100 ? .green : .primary)
+                                           }
+                                       }
+                                   }
+                                   .padding(.leading, 8)
+                               }
+                               .padding(.top, 8)
+                           }
                         }
                         .padding()
                         .cornerRadius(8)
@@ -100,6 +148,11 @@ struct ScannerLogView: View {
     }
     private func loadSavedPackets() {
         packetStore.reload()
+    }
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        return formatter.string(from: date)
     }
 }
 extension Notification.Name {

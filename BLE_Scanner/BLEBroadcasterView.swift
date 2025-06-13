@@ -320,41 +320,30 @@ struct BLEBroadcasterView: View {
                 }
                 .padding()
 //MARK: - 按鈕
-                HStack{
-                    Button("開始廣播") {
-                        // 解析遮罩
-                        guard let maskBytes = broadcaster.parseHexInput(inputMask) else {return}
-                        // 解析ID (一個位元組)
-                        guard let idByte = broadcaster.parseHexInput(inputID) else {return}
-                      // 解析自定義資料
-                        guard let dataBytes = broadcaster.parseHexInput(inputData) else {return}
-                        // 執行廣播
-                        broadcaster.startRepeatingAdvertising(mask: maskBytes, id: idByte, customData: dataBytes)
-                        print("isAdv: \(broadcaster.isAdvertising)")
-                    }
-                    .font(.system(size: 18, weight: .light, design: .serif))
-                    .buttonStyle(.borderedProminent)
-                    .alert(alertMessage, isPresented: $showAlert) {
-                        Button("知道了", role: .cancel) { }
-                    }
-                    .disabled(broadcaster.isRepeatAdv || maskError != nil || dataError != nil || idError != nil)
-                    
-                    Button("停止廣播"){
-                        if(broadcaster.isRepeatAdv){
+                HStack {
+                    Button(broadcaster.isRepeatAdv ? "停止廣播" : "開始廣播") {
+                        if broadcaster.isRepeatAdv {
                             broadcaster.stopRepeatingAdvertising()
+                            print("isAdv: \(broadcaster.isRepeatAdv)")
+                        } else {
+                            // 解析遮罩
+                            guard let maskBytes = broadcaster.parseHexInput(inputMask) else { return }
+                            // 解析ID (一個位元組)
+                            guard let idByte = broadcaster.parseHexInput(inputID) else { return }
+                            // 解析自定義資料
+                            guard let dataBytes = broadcaster.parseHexInput(inputData) else { return }
+                            // 執行廣播
+                            broadcaster.startRepeatingAdvertising(mask: maskBytes, id: idByte, customData: dataBytes)
+                            print("isAdv: \(broadcaster.isAdvertising)")
                         }
-                        else {
-                            alertMessage = "請先開始廣播"
-                            showAlert = true
-                        }
-                        print("isAdv: \(broadcaster.isRepeatAdv)")
                     }
                     .font(.system(size: 18, weight: .light, design: .serif))
                     .buttonStyle(.borderedProminent)
+                    .tint(broadcaster.isRepeatAdv ? .red : .blue)
                     .alert(alertMessage, isPresented: $showAlert) {
                         Button("知道了", role: .cancel) { }
                     }
-                    .disabled(!broadcaster.isRepeatAdv)
+                    .disabled((!broadcaster.isRepeatAdv) && (maskError != nil || dataError != nil || idError != nil))
                 }
                 
                 if broadcaster.nameStr != "N/A" && broadcaster.isRepeatAdv{

@@ -18,4 +18,5 @@ struct BLEPacket: Identifiable, Codable, Equatable {
     var data: String
     var isMatched: Bool
     var timestamp: Date
+    var parsedData: ParsedBLEData?
 }

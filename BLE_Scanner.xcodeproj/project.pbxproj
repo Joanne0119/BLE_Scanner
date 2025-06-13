@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		F5202E392DE58CC500257750 /* ScannerLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5202E382DE58CB900257750 /* ScannerLogView.swift */; };
 		F5202E3B2DE5962B00257750 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5202E3A2DE5962100257750 /* StorageManager.swift */; };
+		F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */; };
+		F55A69CC2DFBE9FB00095DF4 /* BLEParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A69CB2DFBE9ED00095DF4 /* BLEParser.swift */; };
 		F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */; };
 		F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA72DA907E700A47FEE /* ContentView.swift */; };
 		F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B34AA92DA907E900A47FEE /* Assets.xcassets */; };
@@ -24,6 +26,8 @@
 /* Begin PBXFileReference section */
 		F5202E382DE58CB900257750 /* ScannerLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerLogView.swift; sourceTree = "<group>"; };
 		F5202E3A2DE5962100257750 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
+		F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressureCorrectionView.swift; sourceTree = "<group>"; };
+		F55A69CB2DFBE9ED00095DF4 /* BLEParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEParser.swift; sourceTree = "<group>"; };
 		F5B34AA22DA907E700A47FEE /* BlueAdv.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlueAdv.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLE_ScannerApp.swift; sourceTree = "<group>"; };
 		F5B34AA72DA907E700A47FEE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -77,7 +81,9 @@
 				F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */,
 				F5CB0FC52DCDE71500B7C152 /* SettingView.swift */,
 				F5202E382DE58CB900257750 /* ScannerLogView.swift */,
+				F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */,
 				F5B34ABC2DAA84CA00A47FEE /* BLEPacket.swift */,
+				F55A69CB2DFBE9ED00095DF4 /* BLEParser.swift */,
 				F5202E3A2DE5962100257750 /* StorageManager.swift */,
 				F5B34AA92DA907E900A47FEE /* Assets.xcassets */,
 				F5B34AAB2DA907E900A47FEE /* Preview Content */,
@@ -167,11 +173,13 @@
 				F5B34ABD2DAA84CA00A47FEE /* BLEPacket.swift in Sources */,
 				F5CB0FC62DCDE74000B7C152 /* SettingView.swift in Sources */,
 				F5B34AB82DAA1D8E00A47FEE /* BLEScannerView.swift in Sources */,
+				F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */,
 				F5B34AB62DAA1C8F00A47FEE /* CBLEBroadcaster.swift in Sources */,
 				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
 				F5B34AB42DA9083900A47FEE /* CBLEScanner.swift in Sources */,
 				F5202E3B2DE5962B00257750 /* StorageManager.swift in Sources */,
 				F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */,
+				F55A69CC2DFBE9FB00095DF4 /* BLEParser.swift in Sources */,
 				F5202E392DE58CC500257750 /* ScannerLogView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

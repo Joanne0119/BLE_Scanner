@@ -18,9 +18,11 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     @Published var expectedRSSI: Double = 0
     @Published var noMatchFound = false
     @Published var isScanning = false
+    @Published var shouldStopScan = false
     private var lastUpdateTimes: [String: Date] = [:]
     private var matchedCount = 0
     private var scanTimeoutTask: DispatchWorkItem?
+    private let dataParser = BLEDataParser()
 
     override init() {
         super.init()
@@ -92,6 +94,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         var maskStr = ""
         var dataStr = ""
         let now = Date()
+        var parsedData: ParsedBLEData? = nil
         if let lastUpdate = lastUpdateTimes[identifier],
            now.timeIntervalSince(lastUpdate) < 1.0 {
             // 如果距離上次更新不到 1 秒，就不處理
@@ -117,7 +120,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             deviceId = bytesToHexString(deviceIdBytes)
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
-            let maskLength = expectedMask?.count ?? 0
+            let maskLength = expectedMask?.count ?? 11
             if nameBytes.count >= (maskLength) + (idLength) {
                 let receivedMask = Array(nameBytes.prefix(maskLength))
                 let receivedID = deviceIdBytes
@@ -135,6 +138,20 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                 
                 if receivedMask == expectedMask && (expectedID == nil || receivedID == expectedID!) {
                     isMatched = true
+                    
+                    
+                    // 解析數據
+                    if let result = dataParser.parseDataString(dataStr) {
+                        parsedData = result  // 直接賦值給變數
+                        print(dataParser.formatParseResult(result))
+                        
+                        // 檢查是否需要停止掃描
+                        if result.hasReachedTarget && shouldStopScan {
+                            print("檢測到裝置接收次數達到100次，停止掃描")
+                            stopScanning()
+                        }
+                    }
+                    
                     matchedCount += 1
                     print("Is Match！")
                     let matchedPacket = BLEPacket(deviceID: deviceId,
@@ -145,7 +162,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                                   mask: maskStr,
                                                   data: dataStr,
                                                   isMatched: true,
-                                                  timestamp: now
+                                                  timestamp: now,
+                                                  parsedData: parsedData
                                                     )
                     if matchedPackets[identifier] == nil {
                         matchedPackets[identifier] = matchedPacket
@@ -168,7 +186,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                    mask: maskStr,
                                    data: dataStr,
                                    isMatched: isMatched,
-                                   timestamp: now
+                                   timestamp: now,
+                                   parsedData: parsedData
                                 )
             self.allPackets[identifier] = packet
             
