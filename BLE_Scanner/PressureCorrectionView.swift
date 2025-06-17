@@ -1,4 +1,4 @@
-//  最後更新 2025/06/14
+//  最後更新 2025/06/17
 
 import SwiftUI
 import Foundation
@@ -19,6 +19,15 @@ struct PressureCorrectionView: View {
     @State private var isCalibrationMode = false
     @State private var showingCalibrationAlert = false
     @State private var calibrationMessage = ""
+    
+    @State private var showingMQTTAlert = false
+    @State private var mqttAlertMessage = ""
+    @State private var isLoadingMQTTData = false
+    
+    // MQTT Debug
+    @StateObject private var mqttdebugManager = MQTTManager()
+    @State private var showDebugView = false
+
 
     var blePackets: [BLEPacket] {
         Array(scanner.matchedPackets.values)
@@ -35,6 +44,16 @@ struct PressureCorrectionView: View {
             VStack(spacing: 20) {
                 Text("大氣壓力校正")
                     .font(.largeTitle).bold()
+                HStack{
+                    mqttStatusSection
+                    mqttControlSection
+                    Button("", systemImage: "ladybug") {
+                        showDebugView = true
+                    }
+                    .tint(.gray)
+                    .padding(.trailing)
+                }
+                .padding()
                 
                 toggleSection
                 
@@ -48,15 +67,78 @@ struct PressureCorrectionView: View {
                 dataTableView
             }
             .padding()
+            
+            if isLoadingMQTTData {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                VStack {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("同步 MQTT 資料中...")
+                        .font(.system(size: 16, weight: .medium))
+                        .padding(.top, 10)
+                }
+                .padding()
+                .background(Color.white)
+                .cornerRadius(10)
+            }
+
         }
         .onAppear {
-            offsetManager.loadOffsets()
+//            offsetManager.loadOffsets()
+            loadOffsetsAndConnectMQTT()
+            mqttdebugManager.connect()
         }
         .alert("校準結果", isPresented: $showingCalibrationAlert) {
             Button("確定", role: .cancel) { }
         } message: {
             Text(calibrationMessage)
         }
+        .alert("MQTT 通知", isPresented: $showingMQTTAlert) {
+            Button("確定", role: .cancel) { }
+        } message: {
+            Text(mqttAlertMessage)
+        }
+        .sheet(isPresented: $showDebugView) {
+            MQTTDebugView(mqttManager: mqttdebugManager)
+        }
+    }
+    
+    // MARK: - MQTT View Components
+    private var mqttStatusSection: some View {
+        HStack {
+            Circle()
+                .fill(offsetManager.mqttStatus == "已連接" ? Color.green : Color.red)
+                .frame(width: 10, height: 10)
+            
+            Text("MQTT: \(offsetManager.mqttStatus)")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(offsetManager.mqttStatus == "已連接" ? .green : .red)
+            
+            Spacer()
+            
+            if isLoadingMQTTData {
+                ProgressView()
+                    .scaleEffect(0.8)
+            }
+        }
+        .padding(.horizontal)
+    }
+    
+    private var mqttControlSection: some View {
+        HStack(spacing: 15) {
+            Button("", systemImage: "arrow.trianglehead.2.clockwise") {
+                syncFromServer()
+            }
+            .disabled(offsetManager.mqttStatus != "已連接")
+            
+            Button("", systemImage: "link") {
+                reconnectMQTT()
+            }
+            .tint(.orange)
+        }
+
     }
     
     // MARK: - View Components
@@ -260,6 +342,62 @@ struct PressureCorrectionView: View {
         }
         .padding(.vertical, 8)
         .background(Color.gray.opacity(0.2))
+    }
+    
+    //MARK: - MQTT Methods
+    private func loadOffsetsAndConnectMQTT() {
+        isLoadingMQTTData = true
+        
+        // 載入本地偏差值
+        offsetManager.loadOffsets()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.offsetManager.connectMQTT()
+        }
+        
+        // 監聽 MQTT 連接狀態變化
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            self.isLoadingMQTTData = false
+            
+            if self.offsetManager.mqttStatus == "已連接" {
+                self.mqttAlertMessage = "MQTT 連接成功，已同步伺服器資料"
+                self.showingMQTTAlert = true
+            } else {
+                self.mqttAlertMessage = "MQTT 連接失敗，僅使用本地資料"
+                self.showingMQTTAlert = true
+            }
+        }
+    }
+    
+    private func syncFromServer() {
+        guard offsetManager.mqttStatus == "已連接" else {
+            mqttAlertMessage = "MQTT 未連接，無法同步資料"
+            showingMQTTAlert = true
+            return
+        }
+        
+        isLoadingMQTTData = true
+        
+        // 請求伺服器所有偏差值
+        offsetManager.requestAllOffsetsFromServer()
+        
+        // 模擬同步過程
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.isLoadingMQTTData = false
+            self.mqttAlertMessage = "資料同步完成"
+            self.showingMQTTAlert = true
+        }
+    }
+    
+    private func reconnectMQTT() {
+        mqttAlertMessage = "正在重新連接 MQTT..."
+        showingMQTTAlert = true
+        
+        offsetManager.disconnectMQTT()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.offsetManager.connectMQTT()
+        }
     }
     
     // MARK: - Helper Methods

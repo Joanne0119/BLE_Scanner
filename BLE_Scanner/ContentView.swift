@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/11.
-//  最後更新 2025/06/14
+//  最後更新 2025/06/17
 //
 
 import SwiftUI
@@ -12,6 +12,8 @@ struct ContentView: View {
     @State private var maskSuggestions: [String] = UserDefaults.standard.savedMaskSuggestions
     @State private var dataSuggestions: [String] = UserDefaults.standard.savedDataSuggestions
     @StateObject var packetStore = SavedPacketsStore()
+    
+    
     var body: some View {
         TabView {
             BLEBroadcasterView(maskSuggestions: $maskSuggestions, dataSuggestions: $dataSuggestions)
