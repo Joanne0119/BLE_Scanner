@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/13.
-//  最後更新 2025/06/17
+//  最後更新 2025/06/19
 //
 import SwiftUI
 import Foundation
@@ -12,6 +12,7 @@ import Combine
 
 // 解析後的數據結構
 struct ParsedBLEData: Codable, Equatable {
+    let temperature: UInt8            // 1 byte 溫度
     let atmosphericPressure: Double  // 3 bytes 大氣壓力
     let seconds: UInt8                // 1 byte 秒數
     let devices: [DeviceInfo]         // 5個裝置資訊
@@ -49,9 +50,9 @@ class BLEDataParser {
             return nil
         }
         
-        // 檢查數據長度是否正確 (3 + 1 + 10 = 14 bytes)
-        guard dataBytes.count == 14 else {
-            print("數據長度錯誤，期望14 bytes，實際: \(dataBytes.count)")
+        // 檢查數據長度是否正確 (1 + 3 + 1 + 10 = 14 bytes)
+        guard dataBytes.count == 15 else {
+            print("數據長度錯誤，期望15 bytes，實際: \(dataBytes.count)")
             return nil
         }
         
@@ -60,23 +61,26 @@ class BLEDataParser {
     
     // 解析位元組數據
     func parseDataBytes(_ dataBytes: [UInt8]) -> ParsedBLEData? {
-        guard dataBytes.count == 14 else {
+        guard dataBytes.count == 15 else {
             return nil
         }
         
-        // 解析大氣壓力 (前3 bytes)
-        let pressureBytes = Array(dataBytes[0..<3])
+        //溫度（第1 byte)
+        let temperature = dataBytes[0]
+        
+        // 解析大氣壓力 (前2到4bytes)
+        let pressureBytes = Array(dataBytes[1..<4])
         let atmosphericPressure = calculateAtmosphericPressure(pressureBytes)
         
-        // 解析秒數 (第4 byte)
-        let seconds = dataBytes[3]
+        // 解析秒數 (第5byte)
+        let seconds = dataBytes[4]
         
         // 解析5個裝置資訊 (後10 bytes)
         var devices: [DeviceInfo] = []
         var hasReachedTarget = false
         
         for i in 0..<5 {
-            let baseIndex = 4 + (i * 2)  // 從第5個byte開始，每個裝置佔2 bytes
+            let baseIndex = 5 + (i * 2)  // 從第5個byte開始，每個裝置佔2 bytes
             let deviceId = dataBytes[baseIndex]
             let count = dataBytes[baseIndex + 1]
             
@@ -97,6 +101,7 @@ class BLEDataParser {
         }
         
         return ParsedBLEData(
+            temperature: temperature,
             atmosphericPressure: atmosphericPressure,
             seconds: seconds,
             devices: devices,
@@ -132,6 +137,7 @@ class BLEDataParser {
     // 格式化輸出解析結果
     func formatParseResult(_ parsedData: ParsedBLEData) -> String {
         var result = "=== BLE 數據解析結果 ===\n"
+        result += "溫度: \(parsedData.temperature) °C\n"
         result += "大氣壓力: \(String(format: "%.2f", parsedData.atmosphericPressure)) hPa\n"
         result += "時間: \(parsedData.seconds) 秒\n"
         result += "裝置資訊:\n"

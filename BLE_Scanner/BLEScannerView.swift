@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/06/17
+//  最後更新 2025/06/19
 //
 
 import SwiftUI
@@ -231,7 +231,10 @@ struct BLEScannerView: View {
                                        }
                                    }
                                    
-                                   Text("🌡️ 大氣壓力：\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa")
+                                   Text("🌡️ 溫度：\(parsedData.temperature) °C")
+                                       .font(.system(size: 15, weight: .medium, design: .serif))
+                                   
+                                   Text("🎚️ 大氣壓力：\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa")
                                        .font(.system(size: 15, weight: .medium, design: .serif))
                                    
                                    Text("📱 裝置接收狀況：")
