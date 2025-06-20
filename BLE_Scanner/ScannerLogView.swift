@@ -103,7 +103,7 @@ struct ScannerLogView: View {
                                        ForEach(Array(parsedData.devices.enumerated()), id: \.offset) { index, device in
                                            HStack {
                                                
-                                               Text("ID: \(String(format: "%02X", device.deviceId))")
+                                               Text("ID: \(device.deviceId)")
                                                    .font(.system(size: 14, weight: .regular, design: .serif))
                                                    .frame(width: 50, alignment: .leading)
                                                

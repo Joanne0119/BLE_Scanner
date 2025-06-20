@@ -11,22 +11,47 @@ import UIKit
 import NIOCore
 import NIOPosix
 
-// MQTT 訊息結構
+// MARK: - Message Structures
+
+// MQTT 壓力校正訊息結構
 struct MQTTOffsetMessage: Codable {
     let deviceId: String
     let offset: Double
     let baseAltitude: Double
-    let calibrationTime: String
-    let action: String // "update", "delete", "request"
-    
+    let timestamp: String
+    let action: String // "update", "delete", "request", "response"
+
     init(from pressureOffset: PressureOffset, action: String = "update") {
         self.deviceId = pressureOffset.deviceId
         self.offset = pressureOffset.offset
         self.baseAltitude = pressureOffset.baseAltitude
-        self.calibrationTime = ISO8601DateFormatter().string(from: pressureOffset.calibrationTime)
+        self.timestamp = ISO8601DateFormatter().string(from: pressureOffset.timestamp)
         self.action = action
     }
 }
+
+// MQTT 掃描 Log 訊息結構 (包含解析後的資料)
+struct MQTTLogMessage: Codable {
+    let id: String
+    let deviceID: String
+    let rssi: Int
+    let rawData: String
+    let timestamp: String
+    let action: String // "upload", "delete", "request", "response"
+    let parsedData: ParsedBLEData? // 包含解析後的資料
+    
+    // 從 BLEPacket 初始化
+    init(from packet: BLEPacket, action: String = "upload") {
+        self.id = packet.id.uuidString
+        self.deviceID = packet.deviceID
+        self.rssi = packet.rssi
+        self.rawData = packet.rawData
+        self.timestamp = ISO8601DateFormatter().string(from: packet.timestamp)
+        self.action = action
+        self.parsedData = packet.parsedData // 賦值
+    }
+}
+
 
 class MQTTManager: ObservableObject {
     @Published var isConnected = false
@@ -42,19 +67,58 @@ class MQTTManager: ObservableObject {
     private let username = "root"     // 用戶名
     private let password = "RwWq2LB-^^JR%+s"     // 密碼
     
-    // 主題設定
+    // MARK: - 主題設定
+    // 壓力校正主題
     private let uploadTopic = "pressure/offset/upload"
     private let downloadTopic = "pressure/offset/download"
     private let requestTopic = "pressure/offset/request"
     
-    // 回調函數
+    // 掃描 Log 主題
+    private let logUploadTopic = "log/scanner/upload"
+    private let logDownloadTopic = "log/scanner/download"
+    private let logRequestTopic = "log/scanner/request"
+    
+    // Suggestion 主題
+    private let suggestionUploadTopic = "suggestion/{type}/upload"
+    private let suggestionDeleteTopic = "suggestion/{type}/delete"
+    private let suggestionDownloadTopic = "suggestion/{type}/download"
+    private let suggestionRequestTopic = "suggestion/{type}/request"
+    
+    // MARK: - UserDefaults Keys
+    private enum UserDefaultsKeys {
+        static let maskSuggestions = "maskSuggestions"
+        static let dataSuggestions = "dataSuggestions"
+    }
+    
+    // MARK: - 回調函數
+    // 壓力校正回調
     var onOffsetReceived: ((PressureOffset) -> Void)?
     var onOffsetDeleted: ((String) -> Void)?
+    
+    // 掃描 Log 回調
+    var onLogReceived: ((BLEPacket) -> Void)?
+    var onLogDeleted: ((String) -> Void)?
+    
+    // Suggestion 回調
+    @Published var maskSuggestions: [String] = [] {
+        didSet {
+            // 當 maskSuggestions 改變時自動保存到本地
+            saveMaskSuggestionsToLocal()
+        }
+    }
+    
+    @Published var dataSuggestions: [String] = [] {
+        didSet {
+            // 當 dataSuggestions 改變時自動保存到本地
+            saveDataSuggestionsToLocal()
+        }
+    }
     
     private let mqttQueue = DispatchQueue(label: "mqtt.queue", qos: .userInitiated)
         
     
     init() {
+        loadSuggestionsFromLocal()
         setupMQTT()
     }
     
@@ -112,11 +176,9 @@ class MQTTManager: ObservableObject {
     }
     
     private func cleanupResources() {
-        // 在當前線程清理
         mqttClient = nil
         
         if let eventLoopGroup = eventLoopGroup {
-            // 異步關閉 EventLoopGroup
             eventLoopGroup.shutdownGracefully { error in
                 if let error = error {
                     print("EventLoopGroup 關閉錯誤: \(error)")
@@ -130,7 +192,6 @@ class MQTTManager: ObservableObject {
     
     // MARK: - 連接管理
     func connect() {
-        // 確保在後台線程執行連接
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.performConnect()
         }
@@ -141,7 +202,6 @@ class MQTTManager: ObservableObject {
            print("MQTT 客戶端未初始化，正在重新初始化...")
            performSetupMQTT()
            
-           // 等待初始化完成後重試
            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
                self.performConnect()
            }
@@ -152,7 +212,6 @@ class MQTTManager: ObservableObject {
             self.connectionStatus = "連接中..."
         }
         
-        // 連接到 MQTT Broker
         mqttClient.connect().whenComplete { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -161,9 +220,9 @@ class MQTTManager: ObservableObject {
                     self?.connectionStatus = "已連接"
                     print("MQTT 連接成功")
                     
-                    // 連接成功後設置監聽器和訂閱
                     DispatchQueue.global(qos: .userInitiated).async {
                         self?.setupListenersAndSubscribe()
+                        self?.requestAllInitialData()
                     }
                     
                 case .failure(let error):
@@ -178,17 +237,16 @@ class MQTTManager: ObservableObject {
     private func setupListenersAndSubscribe() {
         guard let mqttClient = mqttClient else { return }
         
-        // 設定訊息接收處理
         mqttClient.addPublishListener(named: "MessageHandler") { [weak self] result in
             switch result {
             case .success(let publishInfo):
-                self?.handleReceivedMessage(publishInfo)
+                // 使用增強版處理器
+                self?.enhancedHandleReceivedMessage(publishInfo)
             case .failure(let error):
                 print("收到訊息時發生錯誤: \(error)")
             }
         }
         
-        // 訂閱主題
         subscribeToTopics()
     }
     
@@ -215,8 +273,15 @@ class MQTTManager: ObservableObject {
         guard let mqttClient = mqttClient, isConnected else { return }
         
         let subscriptions = [
+            // 壓力校正主題
             MQTTSubscribeInfo(topicFilter: downloadTopic, qos: .atLeastOnce),
-            MQTTSubscribeInfo(topicFilter: "\(requestTopic)/response", qos: .atLeastOnce)
+            MQTTSubscribeInfo(topicFilter: "\(requestTopic)/response", qos: .atLeastOnce),
+            // 掃描 Log 主題
+            MQTTSubscribeInfo(topicFilter: logDownloadTopic, qos: .atLeastOnce),
+            MQTTSubscribeInfo(topicFilter: "\(logRequestTopic)/response", qos: .atLeastOnce),
+            
+            // Suggestion 主題 (使用通配符+)
+            MQTTSubscribeInfo(topicFilter: "suggestion/+/download", qos: .atLeastOnce)
         ]
         
         mqttClient.subscribe(to: subscriptions).whenComplete { result in
@@ -228,10 +293,10 @@ class MQTTManager: ObservableObject {
             }
         }
         
-        print("已訂閱主題: \(downloadTopic), \(requestTopic)/response")
+        printSubscribedTopics() // 印所有訂閱的主題
     }
     
-    // MARK: - 發布訊息
+    // MARK: - 發布訊息 (壓力校正)
     func publishOffset(_ pressureOffset: PressureOffset) {
         // 確保在後台線程執行發布
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -356,67 +421,172 @@ class MQTTManager: ObservableObject {
             print("JSON 編碼失敗: \(error)")
         }
     }
-    
-    // MARK: - 錯誤處理
-   private func handleMQTTOperationFailure(_ error: Error) {
-       DispatchQueue.main.async {
-           self.isConnected = false
-           self.connectionStatus = "連接中斷: \(error.localizedDescription)"
-       }
-   }
-    
-    // MARK: - 處理接收到的訊息
-    private func handleReceivedMessage(_ publishInfo: MQTTPublishInfo) {
-        let topic = publishInfo.topicName
-        let payload = publishInfo.payload
-        
-        guard let jsonString = payload.getString(at: 0, length: payload.readableBytes) else {
-            print("無法解析訊息內容")
+
+    // MARK: - 發布訊息 (掃描 Log)
+    func publishLog(_ packet: BLEPacket, action: String = "upload") {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.performPublishLog(packet, action: action)
+        }
+    }
+
+    private func performPublishLog(_ packet: BLEPacket, action: String) {
+        guard let mqttClient = mqttClient, isConnected else {
+            print("MQTT 未連接，無法發送 Log")
             return
         }
         
-        print("收到訊息 from \(topic): \(jsonString)")
+        let message = MQTTLogMessage(from: packet, action: action)
+        let topic = (action == "delete") ? logUploadTopic : logUploadTopic // Deletes also go to the upload topic with a "delete" action
         
         do {
-            let jsonData = jsonString.data(using: .utf8) ?? Data()
-            let mqttMessage = try JSONDecoder().decode(MQTTOffsetMessage.self, from: jsonData)
+            let jsonData = try JSONEncoder().encode(message)
+            let payload = ByteBuffer(data: jsonData)
             
-            switch mqttMessage.action {
-            case "update":
-                handleOffsetUpdate(mqttMessage)
-            case "delete":
-                handleOffsetDelete(mqttMessage)
-            case "response":
-                handleOffsetResponse(mqttMessage)
-            default:
-                print("未知的動作: \(mqttMessage.action)")
+            mqttClient.publish(to: topic, payload: payload, qos: .atLeastOnce).whenComplete { result in
+                switch result {
+                case .success:
+                    print("Log \(action) 成功: \(packet.id.uuidString)")
+                case .failure(let error):
+                    print("Log \(action) 失敗: \(error)")
+                }
             }
-            
         } catch {
-            print("JSON 解析失敗: \(error)")
+            print("Log JSON 編碼失敗: \(error)")
         }
     }
     
-    private func handleOffsetUpdate(_ message: MQTTOffsetMessage) {
-        // 轉換為 PressureOffset
-        let dateFormatter = ISO8601DateFormatter()
-        let calibrationTime = dateFormatter.date(from: message.calibrationTime) ?? Date()
+    func requestAllLogs() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.performRequestAllLogs()
+        }
+    }
+    
+
+    private func performRequestAllLogs() {
+        guard let mqttClient = mqttClient, isConnected else {
+            print("MQTT 未連接，無法發送請求")
+            return
+        }
+
+        // Create a dummy packet for the request message
+        let dummyPacket = BLEPacket(id: UUID(), deviceID: "ALL", identifier: "", deviceName: "", rssi: 0, rawData: "", mask: "", data: "", isMatched: false, timestamp: Date(), parsedData: nil)
+        let message = MQTTLogMessage(from: dummyPacket, action: "request")
         
+        do {
+            let jsonData = try JSONEncoder().encode(message)
+            let payload = ByteBuffer(data: jsonData)
+            
+            mqttClient.publish(to: logRequestTopic, payload: payload, qos: .atLeastOnce).whenComplete { result in
+                switch result {
+                case .success:
+                    print("請求所有 Log 成功")
+                case .failure(let error):
+                    print("請求所有 Log 失敗: \(error)")
+                }
+            }
+        } catch {
+            print("JSON 編碼失敗: \(error)")
+        }
+    }
+    
+    // MARK: - 發布訊息 (Suggestion)
+    func publishSuggestion(suggestion: String, typeKey: String, action: String) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.performPublishSuggestion(suggestion: suggestion, typeKey: typeKey, action: action)
+        }
+    }
+
+    private func performPublishSuggestion(suggestion: String, typeKey: String, action: String) {
+        guard let mqttClient = mqttClient, isConnected else {
+            print("MQTT 未連接，無法發送 Suggestion")
+            return
+        }
+        
+        let topic: String
+        switch action {
+        case "add":
+            topic = suggestionUploadTopic.replacingOccurrences(of: "{type}", with: typeKey)
+        case "delete":
+            topic = suggestionDeleteTopic.replacingOccurrences(of: "{type}", with: typeKey)
+        default:
+            print("未知的 suggestion action: \(action)")
+            return
+        }
+        
+        let payload = ByteBuffer(string: suggestion)
+        
+        mqttClient.publish(to: topic, payload: payload, qos: .atLeastOnce).whenComplete { result in
+            switch result {
+            case .success:
+                print("發送 Suggestion '\(action)' 成功: \(suggestion) 到主題 \(topic)")
+            case .failure(let error):
+                print("發送 Suggestion '\(action)' 失敗: \(error)")
+            }
+        }
+    }
+
+    func requestSuggestions(typeKey: String) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.performRequestSuggestions(typeKey: typeKey)
+        }
+    }
+
+    private func performRequestSuggestions(typeKey: String) {
+        guard let mqttClient = mqttClient, isConnected else {
+            print("MQTT 未連接，無法請求 Suggestion")
+            return
+        }
+        
+        let topic = suggestionRequestTopic.replacingOccurrences(of: "{type}", with: typeKey)
+        let payload = ByteBuffer(string: self.clientID)
+        
+        mqttClient.publish(to: topic, payload: payload, qos: .atLeastOnce).whenComplete { result in
+            switch result {
+            case .success:
+                print("請求所有 \(typeKey) suggestions 成功")
+            case .failure(let error):
+                print("請求所有 \(typeKey) suggestions 失敗: \(error)")
+            }
+        }
+    }
+    
+    // MARK: - 請求所有初始資料
+    func requestAllInitialData() {
+        requestAllOffsets()
+        requestAllLogs()
+        requestSuggestions(typeKey: "mask")
+        requestSuggestions(typeKey: "data")
+    }
+    
+    // MARK: - 錯誤處理
+    private func handleMQTTOperationFailure(_ error: Error) {
+        DispatchQueue.main.async {
+           self.isConnected = false
+           self.connectionStatus = "連接中斷: \(error.localizedDescription)"
+        }
+    }
+    
+    // MARK: - 處理接收到的訊息 (已由 enhancedHandleReceivedMessage 取代)
+    private func handleReceivedMessage(_ publishInfo: MQTTPublishInfo) {
+        // 此方法已由 enhancedHandleReceivedMessage 取代，保留以備不時之需
+    }
+
+    // MARK: - Handle Offset Messages
+    private func handleOffsetUpdate(_ message: MQTTOffsetMessage) {
+        let dateFormatter = ISO8601DateFormatter()
+        let timestamp = dateFormatter.date(from: message.timestamp) ?? Date()
+        
+        // 呼叫新的 init 方法，並傳入解析好的 timestamp
         let pressureOffset = PressureOffset(
             deviceId: message.deviceId,
             offset: message.offset,
-            baseAltitude: message.baseAltitude
-        )
-        
-        // 創建包含正確校正時間的偏差值
-        let updatedOffset = PressureOffset(
-            deviceId: pressureOffset.deviceId,
-            offset: pressureOffset.offset,
-            baseAltitude: pressureOffset.baseAltitude
+            baseAltitude: message.baseAltitude,
+            timestamp: timestamp
         )
         
         DispatchQueue.main.async {
-            self.onOffsetReceived?(updatedOffset)
+            // 現在傳遞的 pressureOffset 物件會包含來自伺服器的正確時間
+            self.onOffsetReceived?(pressureOffset)
         }
     }
     
@@ -425,17 +595,85 @@ class MQTTManager: ObservableObject {
             self.onOffsetDeleted?(message.deviceId)
         }
     }
+
+    // MARK: - Handle Log Messages
+    private func handleLogUpdate(_ message: MQTTLogMessage) {
+        let dateFormatter = ISO8601DateFormatter()
+        let timestamp = dateFormatter.date(from: message.timestamp) ?? Date()
+        guard let uuid = UUID(uuidString: message.id) else {
+            print("無法解析 Log 的 UUID: \(message.id)")
+            return
+        }
+
+        // 建立 BLEPacket 並包含從訊息中收到的 parsedData
+        let packet = BLEPacket(
+            id: uuid,
+            deviceID: message.deviceID,
+            identifier: "",
+            deviceName: "",
+            rssi: message.rssi,
+            rawData: message.rawData,
+            mask: "",
+            data: "",
+            isMatched: false,
+            timestamp: timestamp,
+            parsedData: message.parsedData 
+        )
+
+        DispatchQueue.main.async {
+            self.onLogReceived?(packet)
+        }
+    }
+
+    private func handleLogDelete(_ message: MQTTLogMessage) {
+        DispatchQueue.main.async {
+            self.onLogDeleted?(message.id)
+        }
+    }
+
+    private func loadSuggestionsFromLocal() {
+        // 載入 mask suggestions
+        if let savedMaskSuggestions = UserDefaults.standard.array(forKey: UserDefaultsKeys.maskSuggestions) as? [String] {
+            self.maskSuggestions = savedMaskSuggestions
+        }
+        
+        // 載入 data suggestions
+        if let savedDataSuggestions = UserDefaults.standard.array(forKey: UserDefaultsKeys.dataSuggestions) as? [String] {
+            self.dataSuggestions = savedDataSuggestions
+        }
+        
+        print("📱 已載入本地 Suggestions:")
+        print("   - Mask: \(maskSuggestions.count) 項")
+        print("   - Data: \(dataSuggestions.count) 項")
+    }
     
-    private func handleOffsetResponse(_ message: MQTTOffsetMessage) {
-        // 處理請求回應，與 update 相同
-        handleOffsetUpdate(message)
+    //MARK: - 本地儲存
+    // 保存 mask suggestions 到本地
+    private func saveMaskSuggestionsToLocal() {
+        UserDefaults.standard.set(maskSuggestions, forKey: UserDefaultsKeys.maskSuggestions)
+        print("已保存 Mask Suggestions 到本地: \(maskSuggestions.count) 項")
+    }
+    
+    //保存 data suggestions 到本地
+    private func saveDataSuggestionsToLocal() {
+        UserDefaults.standard.set(dataSuggestions, forKey: UserDefaultsKeys.dataSuggestions)
+        print("已保存 Data Suggestions 到本地: \(dataSuggestions.count) 項")
+    }
+    
+    // 清除本地存儲的 suggestions
+    func clearLocalSuggestions() {
+        UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.maskSuggestions)
+        UserDefaults.standard.removeObject(forKey: UserDefaultsKeys.dataSuggestions)
+        
+        maskSuggestions.removeAll()
+        dataSuggestions.removeAll()
+        
+        print("已清除所有本地 Suggestions")
     }
 }
+
+// MARK: - 調試方法
 extension MQTTManager {
-    
-    // MARK: - 調試方法
-    
-    /// 測試連接狀態
     func testConnection() {
         print("🔍 測試 MQTT 連接狀態...")
         print("   - 連接狀態: \(isConnected ? "已連接" : "未連接")")
@@ -450,7 +688,6 @@ extension MQTTManager {
         }
     }
     
-    /// 發送測試訊息
     func sendTestMessage() {
         print("🧪 發送測試訊息...")
         
@@ -461,84 +698,138 @@ extension MQTTManager {
         )
         
         publishOffset(testOffset)
-        print("   - 測試訊息已發送: \(testOffset.deviceId)")
+        print("   - 測試偏差值訊息已發送: \(testOffset.deviceId)")
+    }
+
+    func sendTestLogMessage() {
+        print("🧪 發送測試 Log 訊息...")
+
+        let testPacket = BLEPacket(
+            deviceID: "TestDevice_\(Int.random(in: 1...9))",
+            identifier: UUID().uuidString,
+            deviceName: "Test Device",
+            rssi: -Int.random(in: 40...80),
+            rawData: "TEST_RAW_DATA",
+            mask: "FF",
+            data: "TEST_DATA",
+            isMatched: true,
+            timestamp: Date()
+        )
+        publishLog(testPacket)
+        print("   - 測試 Log 訊息已發送: \(testPacket.deviceID)")
     }
     
-    /// 請求所有資料並顯示結果
     func testRequestAllData() {
         print("📥 測試請求所有資料...")
         
-        // 設置臨時回調來顯示接收到的資料
-        let originalCallback = onOffsetReceived
-        
-        onOffsetReceived = { [weak self] offset in
-            print("   ✅ 接收到資料: \(offset.deviceId)")
-            print("      - 偏差值: \(offset.offset)")
-            print("      - 基準海拔: \(offset.baseAltitude)")
-            print("      - 校正時間: \(offset.calibrationTime)")
-            
-            // 呼叫原始回調
-            originalCallback?(offset)
-        }
-        
+        // 請求校正資料
         requestAllOffsets()
+        
+        // 請求 Log 資料
+        requestAllLogs()
     }
     
-    /// 打印所有訂閱的主題
     func printSubscribedTopics() {
-        print("📡 訂閱的主題:")
-        print("   - 下載主題: \(downloadTopic)")
-        print("   - 請求回應主題: \(requestTopic)/response")
+        print("📡 已訂閱的主題:")
+        print("   - 壓力校正下載: \(downloadTopic)")
+        print("   - 壓力校正請求回應: \(requestTopic)/response")
+        print("   - Log 下載: \(logDownloadTopic)")
+        print("   - Log 請求回應: \(logRequestTopic)/response")
     }
 }
 
-// MARK: - 增強的訊息處理（替換原有的 handleReceivedMessage）
+// MARK: - 增強的訊息處理
 extension MQTTManager {
-    
-    /// 增強版訊息處理，包含更詳細的日誌
     private func enhancedHandleReceivedMessage(_ publishInfo: MQTTPublishInfo) {
         let topic = publishInfo.topicName
         let payload = publishInfo.payload
         
-        // 詳細日誌
         print("📨 [MQTT] 收到訊息")
         print("   - 主題: \(topic)")
-        print("   - 載荷大小: \(payload.readableBytes) bytes")
         print("   - 時間: \(Date())")
         
-        guard let jsonString = payload.getString(at: 0, length: payload.readableBytes) else {
-            print("   ❌ 無法解析載荷內容")
-            return
-        }
-        
-        print("   - 內容: \(jsonString)")
-        
-        do {
-            let jsonData = jsonString.data(using: .utf8) ?? Data()
-            let mqttMessage = try JSONDecoder().decode(MQTTOffsetMessage.self, from: jsonData)
-            
-            print("   ✅ JSON 解析成功")
-            print("      - 設備ID: \(mqttMessage.deviceId)")
-            print("      - 動作: \(mqttMessage.action)")
-            print("      - 偏差值: \(mqttMessage.offset)")
-            
-            switch mqttMessage.action {
-            case "update":
-                print("   🔄 處理更新動作")
-                handleOffsetUpdate(mqttMessage)
-            case "delete":
-                print("   🗑️ 處理刪除動作")
-                handleOffsetDelete(mqttMessage)
-            case "response":
-                print("   📤 處理回應動作")
-                handleOffsetResponse(mqttMessage)
-            default:
-                print("   ⚠️ 未知動作: \(mqttMessage.action)")
+        // 根據主題判斷訊息類型
+        if topic.contains("suggestion/") {
+            // 如果是 suggestion 主題，當作純文字處理
+            guard let textString = payload.getString(at: 0, length: payload.readableBytes) else {
+                print("   ❌ 無法解析 suggestion 載荷內容")
+                return
             }
+            print("   - 內容: \(textString)")
+            handleSuggestionMessage(topic: topic, payloadString: textString)
+
+        } else if topic.contains("pressure/offset") || topic.contains("log/scanner") {
+            // 如果是其他主題，才當作 JSON 處理
+            guard let jsonString = payload.getString(at: 0, length: payload.readableBytes) else {
+                print("   ❌ 無法解析 JSON 載荷內容")
+                return
+            }
+            print("   - 內容: \(jsonString)")
+            let jsonData = Data(jsonString.utf8)
+
+            if topic.contains("pressure/offset") {
+                handlePressureOffsetMessage(jsonData: jsonData)
+            } else if topic.contains("log/scanner") {
+                handleScannerLogMessage(jsonData: jsonData)
+            }
+
+        } else {
+            print("   ⚠️ 未知主題群組: \(topic)")
+        }
+    }
+
+    private func handlePressureOffsetMessage(jsonData: Data) {
+        do {
+            let message = try JSONDecoder().decode(MQTTOffsetMessage.self, from: jsonData)
+            print("   ✅ 壓力校正訊息解析成功, 動作: \(message.action)")
             
+            switch message.action {
+            case "update", "response": // response 和 update 處理方式相同
+                handleOffsetUpdate(message)
+            case "delete":
+                handleOffsetDelete(message)
+            default:
+                print("   ⚠️ 未知的壓力校正動作: \(message.action)")
+            }
         } catch {
-            print("   ❌ JSON 解析失敗: \(error)")
-            print("   原始內容: \(jsonString)")
+            print("   ❌ 壓力校正訊息 JSON 解析失敗: \(error)")
+        }
+    }
+
+    private func handleScannerLogMessage(jsonData: Data) {
+        do {
+            let message = try JSONDecoder().decode(MQTTLogMessage.self, from: jsonData)
+            print("   ✅ 掃描 Log 訊息解析成功, 動作: \(message.action)")
+
+            switch message.action {
+            case "upload", "response": // 雲端下載的 log 和請求回應的 log
+                handleLogUpdate(message)
+            case "delete":
+                handleLogDelete(message)
+            default:
+                print("   ⚠️ 未知的 Log 動作: \(message.action)")
+            }
+        } catch {
+            print("   ❌ 掃描 Log 訊息 JSON 解析失敗: \(error)")
+        }
+    }
+    
+    private func handleSuggestionMessage(topic: String, payloadString: String) {
+        let suggestions = payloadString.split(separator: ",").map(String.init).filter { !$0.isEmpty }
+        print("   ✅ Suggestion 訊息解析成功: \(suggestions.count) items")
+
+        DispatchQueue.main.async {
+            // 使用臨時變量避免在 didSet 中重複保存
+            if topic.contains("/mask/") {
+                // 只有當數據真的不同時才更新（避免重複保存）
+                if self.maskSuggestions != suggestions {
+                    self.maskSuggestions = suggestions
+                }
+            } else if topic.contains("/data/") {
+                if self.dataSuggestions != suggestions {
+                    self.dataSuggestions = suggestions
+                }
+            }
         }
     }
 }

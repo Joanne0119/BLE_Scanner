@@ -1,13 +1,22 @@
-//  最後更新 2025/06/19
+//  最後更新 2025/06/20
 
 import SwiftUI
 import AVFoundation
 import UIKit
 
 struct SettingView: View {
+    @EnvironmentObject var mqttManager: MQTTManager
+    
     enum SuggestionType: String, CaseIterable {
         case mask = "遮罩"
         case data = "內容"
+        
+        var topicKey: String {
+            switch self {
+            case .mask: return "mask"
+            case .data: return "data"
+            }
+        }
     }
 
     @State private var selectedType: SuggestionType = .mask
@@ -17,8 +26,6 @@ struct SettingView: View {
     @State private var maskInput = ""
     @State private var dataInput = ""
 
-    @Binding var maskSuggestions: [String]
-    @Binding var dataSuggestions: [String]
     @State private var maskError: String?
     @State private var dataError: String?
     
@@ -52,8 +59,7 @@ struct SettingView: View {
                         originalInput: currentInput,
                         errorBinding: &errorBinding(for: newType).wrappedValue,
                         fieldName: newType.rawValue,
-                        parseHex: parseHexInput,
-                        isAsciiSafe: isAsciiSafe
+                        parseHex: parseHexInput
                     ) { corrected in
                         binding(for: newType).wrappedValue = corrected
                     }
@@ -66,14 +72,12 @@ struct SettingView: View {
                             VStack(alignment: .leading) {
                                 Text("自訂遮罩與內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方")
                                     .font(.system(size: 15, weight: .light, design: .serif))
-                                Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                
+                                Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
                                     .font(.system(size: 15, weight: .light, design: .serif))
                                     .padding()
                                     .background(Color.gray.opacity(0.2))
                                     .cornerRadius(20)
-                                Text("* 不要使用 00，可能會導致00後的資料遺失")
-                                    .font(.system(size: 15, weight: .light, design: .serif))
-                                    .foregroundStyle(.red)
                             }
                             .padding()
                             
@@ -98,10 +102,7 @@ struct SettingView: View {
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundStyle(.red)
                         } else {
-                            // 取得當前輸入，根據選擇的類型
                             let currentInput = binding(for: selectedType).wrappedValue
-                            
-                            // 當輸入為空時顯示 0 byte
                             if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text("0 byte")
                                     .font(.system(size: 20, weight: .bold))
@@ -125,31 +126,46 @@ struct SettingView: View {
                     Text("自訂\(selectedType.rawValue)")
                         .font(.system(size: 18, weight: .bold))
                         .padding(.horizontal)
-                    
+                
                     HStack {
-                        TextField("輸入自訂\(selectedType.rawValue)", text: binding(for: selectedType))
-                            .font(.system(size: 18, weight: .bold, design: .serif))
-                            .focused($focusState)
-                            .onChange(of: binding(for: selectedType).wrappedValue) { newValue in
-                                enforceMaxLength(
-                                    originalInput: newValue,
-                                    input: &binding(for: selectedType).wrappedValue,
-                                    parseHex: parseHexInput
-                                )
-                                validateField(
-                                    originalInput: newValue,
-                                    errorBinding: &errorBinding(for: selectedType).wrappedValue,
-                                    fieldName: selectedType.rawValue,
-                                    parseHex: parseHexInput,
-                                    isAsciiSafe: isAsciiSafe) { corrected in
-                                        binding(for: selectedType).wrappedValue = corrected
+                        // 1. 用一個 HStack 包裹輸入框和清除按鈕
+                        HStack {
+                            TextField("輸入自訂\(selectedType.rawValue)", text: binding(for: selectedType))
+                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                .focused($focusState)
+                                .onChange(of: binding(for: selectedType).wrappedValue) { newValue in
+                                    // onChange 內部只處理邏輯，不放UI元件
+                                    enforceMaxLength(
+                                        originalInput: newValue,
+                                        input: &binding(for: selectedType).wrappedValue,
+                                        parseHex: parseHexInput
+                                    )
+                                    validateField(
+                                        originalInput: newValue,
+                                        errorBinding: &errorBinding(for: selectedType).wrappedValue,
+                                        fieldName: selectedType.rawValue,
+                                        parseHex: parseHexInput) { corrected in
+                                            binding(for: selectedType).wrappedValue = corrected
+                                        }
                                 }
+                            
+                            // 2. 將清除按鈕放在 TextField 旁邊
+                            if !binding(for: selectedType).wrappedValue.isEmpty {
+                                Button(action: {
+                                    binding(for: selectedType).wrappedValue = ""
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                                .transition(.opacity)
                             }
-                            .padding()
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(combinedError == nil ? Color.secondary : Color.red, lineWidth: 2)
-                            )
+                        }
+                        // 3. 將 padding 和 overlay 應用於包含兩者的 HStack 上
+                        .padding()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(combinedError == nil ? Color.secondary : Color.red, lineWidth: 2)
+                        )
                         
                         Button("新增") {
                             addSuggestion(for: selectedType)
@@ -157,12 +173,17 @@ struct SettingView: View {
                         .font(.system(size: 18, weight: .bold, design: .serif))
                     }
                     .padding(.horizontal)
+                    // 4. 為按鈕的出現/消失添加動畫效果
+                    .animation(.easeInOut(duration: 0.2), value: binding(for: selectedType).wrappedValue.isEmpty)
                 }
                 
                 List {
                     ForEach(suggestions(for: selectedType), id: \.self) { suggestion in
                         Text(suggestion)
                             .font(.system(size: 18, weight: .bold, design: .serif))
+                            .onTapGesture {
+                                binding(for: selectedType).wrappedValue = suggestion
+                            }
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                 Button {
                                     editSuggestion(suggestion)
@@ -185,6 +206,7 @@ struct SettingView: View {
             }
             .padding()
             .sheet(isPresented: $isEditing) {
+                // ... sheet 內容維持不變 ...
                 NavigationView {
                     VStack(alignment: .leading, spacing: 20) {
                         Text("編輯\(selectedType.rawValue)")
@@ -274,8 +296,8 @@ struct SettingView: View {
 
     func suggestions(for type: SuggestionType) -> [String] {
         switch type {
-        case .mask: return maskSuggestions
-        case .data: return dataSuggestions
+        case .mask: return mqttManager.maskSuggestions
+        case .data: return mqttManager.dataSuggestions
         }
     }
     
@@ -291,21 +313,28 @@ struct SettingView: View {
         let list = suggestions(for: type)
         let trimmed = inputBinding.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !list.contains(trimmed) else { return }
+        
+        mqttManager.publishSuggestion(suggestion: trimmed, typeKey: type.topicKey, action: "add")
 
         switch type {
         case .mask:
-            maskSuggestions.append(trimmed)
+            mqttManager.maskSuggestions.append(trimmed)
             maskInput = ""
         case .data:
-            dataSuggestions.append(trimmed)
+            mqttManager.dataSuggestions.append(trimmed)
             dataInput = ""
         }
     }
 
     func deleteSuggestion(for type: SuggestionType, at offsets: IndexSet) {
+        let suggestionsToDelete = offsets.map { suggestions(for: type)[$0] }
+        for suggestion in suggestionsToDelete {
+            mqttManager.publishSuggestion(suggestion: suggestion, typeKey: type.topicKey, action: "delete")
+        }
+        
         switch type {
-        case .mask: maskSuggestions.remove(atOffsets: offsets)
-        case .data: dataSuggestions.remove(atOffsets: offsets)
+        case .mask: mqttManager.maskSuggestions.remove(atOffsets: offsets)
+        case .data: mqttManager.dataSuggestions.remove(atOffsets: offsets)
         }
     }
     
@@ -314,29 +343,36 @@ struct SettingView: View {
             editingIndex = index
             editingText = suggestion
             
-            // 立即驗證編輯文本
             validateEditingText(suggestion){ newValue in
                 editingText = newValue
-                
             }
             
             isEditing = true
         }
     }
     
-    // 修改 saveEditedSuggestion 函數
     func saveEditedSuggestion() {
         guard let index = editingIndex else { return }
         let trimmed = editingText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !trimmed.isEmpty else { return }
+        
+        let originalSuggestion: String
+        switch selectedType {
+        case .mask: originalSuggestion = mqttManager.maskSuggestions[index]
+        case .data: originalSuggestion = mqttManager.dataSuggestions[index]
+        }
+        
+        if originalSuggestion != trimmed {
+            mqttManager.publishSuggestion(suggestion: originalSuggestion, typeKey: selectedType.topicKey, action: "delete")
+            mqttManager.publishSuggestion(suggestion: trimmed, typeKey: selectedType.topicKey, action: "add")
+        }
 
-        // 寫回資料
         switch selectedType {
         case .mask:
-            maskSuggestions[index] = trimmed
+            mqttManager.maskSuggestions[index] = trimmed
         case .data:
-            dataSuggestions[index] = trimmed
+            mqttManager.dataSuggestions[index] = trimmed
         }
     }
 
@@ -364,105 +400,41 @@ struct SettingView: View {
         return result.isEmpty ? nil : result
     }
     
-    func isAsciiSafe(_ data: [UInt8]) -> Bool {
-        for byte in data {
-            if byte > 0x7F {
-                return false
-            }
-        }
-        return true
-    }
-    
-    // 添加用於驗證編輯文本的函數
-    func validateEditingText(_ text: String, setInput: @escaping (String) -> Void) {
-        // 如果文本為空，清除錯誤狀態
+    func validateEditingText(_ text: String, setInput: (String) -> Void) {
         if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             editingByteStatus = ""
             return
         }
         
-        // 檢查十六進位格式
-        guard let bytes = parseHexInput(text) else {
+        guard parseHexInput(text) != nil else {
             editingByteStatus = "\(selectedType.rawValue)格式錯誤"
             return
         }
         
-        // 檢查ASCII範圍
-        if !isAsciiSafe(bytes) {
-            editingByteStatus = "\(selectedType.rawValue)應在 01~7F 內"
-            triggerInputLimitFeedback()
-            AudioServicesPlaySystemSound(1102)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                // 保留格式，只刪掉最後兩個字元（避免跳動感太重）
-                let trimmed = String(text.dropLast(2))
-                setInput(trimmed)
-            }
-            return
-        }
-        
-        // 檢查是否包含0x00
-        if bytes.contains(0x00) {
-            editingByteStatus = "\(selectedType.rawValue)不能包含 00"
-            triggerInputLimitFeedback()
-            AudioServicesPlaySystemSound(1102)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                // 保留格式，只刪掉最後兩個字元（避免跳動感太重）
-                let trimmed = String(text.dropLast(2))
-                setInput(trimmed)
-            }
-            return
-        }
-        
-        // 如果沒有錯誤，清除錯誤狀態
         editingByteStatus = ""
     }
     
-    // 修改后的 validateField 函数
     func validateField(
         originalInput: String,
         errorBinding: inout String?,
         fieldName: String,
         parseHex: (String) -> [UInt8]?,
-        isAsciiSafe: ([UInt8]) -> Bool,
-        setInput: @escaping (String) -> Void
+        setInput: (String) -> Void
     ) {
-        // 如果输入为空，清除错误并返回
         if originalInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             errorBinding = nil
             return
         }
         
         let cleanedHex = originalInput.cleanedHex
-        guard let bytes = parseHex(cleanedHex) else {
+        guard parseHex(cleanedHex) != nil else {
             errorBinding = "\(fieldName)格式錯誤"
             return
         }
-
-        if !isAsciiSafe(bytes) {
-            errorBinding = "\(fieldName)應在 01~7F 內"
-            triggerInputLimitFeedback()
-            AudioServicesPlaySystemSound(1102)
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                // 保留格式，只刪掉最後兩個字元（避免跳動感太重）
-                let trimmed = String(originalInput.dropLast(2))
-                setInput(trimmed)
-            }
-        } else if bytes.contains(0x00) {
-            errorBinding = "\(fieldName)不能包含 00"
-            triggerInputLimitFeedback()
-            AudioServicesPlaySystemSound(1102)
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                let trimmed = String(originalInput.dropLast(2))
-                setInput(trimmed)
-            }
-        } else {
-            errorBinding = nil
-        }
+        
+        errorBinding = nil
     }
     
-    // 修改后的 combinedError 计算属性
     var combinedError: String? {
         switch selectedType {
         case .mask:
@@ -472,7 +444,6 @@ struct SettingView: View {
         }
     }
     
-    // 修改后的 enforceMaxLength 函数
     func enforceMaxLength(
         originalInput: String,
         input: inout String,
@@ -487,7 +458,6 @@ struct SettingView: View {
             return
         }
         
-        // 根據不同的 type 設定不同的最大長度
         let maxLength: Int
         switch selectedType {
         case .mask:
@@ -497,7 +467,6 @@ struct SettingView: View {
         }
 
         if inputBytes.count > maxLength {
-            // 超過最大長度，刪掉原始輸入尾端兩個字元（不破壞空白或逗號格式）
             input = String(originalInput.dropLast(2))
             triggerInputLimitFeedback()
             AudioServicesPlaySystemSound(1103)
@@ -509,5 +478,13 @@ struct SettingView: View {
     func triggerInputLimitFeedback() {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
+    }
+}
+
+// 原始檔案中缺少這個 String extension，補上以確保程式碼能正常編譯
+extension String {
+    var cleanedHex: String {
+        return self.components(separatedBy: .whitespacesAndNewlines).joined()
+                   .components(separatedBy: CharacterSet(charactersIn: ",，")).joined()
     }
 }

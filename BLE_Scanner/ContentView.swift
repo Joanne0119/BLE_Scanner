@@ -1,73 +1,68 @@
-//
-//  ContentView.swift
-//  BLE_Scanner
-//
-//  Created by 劉丞恩 on 2025/4/11.
-//  最後更新 2025/06/19
+// ContentView.swift
+
+//  最後更新 2025/06/20
 //
 
 import SwiftUI
 
 struct ContentView: View {
-    @State private var maskSuggestions: [String] = UserDefaults.standard.savedMaskSuggestions
-    @State private var dataSuggestions: [String] = UserDefaults.standard.savedDataSuggestions
-    @StateObject var packetStore = SavedPacketsStore()
+    @StateObject private var mqttManager: MQTTManager
+    @StateObject private var packetStore: SavedPacketsStore
+    @StateObject private var offsetManager: PressureOffsetManager
+    
+    init() {
+        // 先建立 MQTTManager
+        let manager = MQTTManager()
+        // 再建立 SavedPacketsStore，並將 manager 傳入
+        let store = SavedPacketsStore(mqttManager: manager)
+        let pressureManager = PressureOffsetManager(mqttManager: manager)
+        
+        _mqttManager = StateObject(wrappedValue: manager)
+        _packetStore = StateObject(wrappedValue: store)
+        _offsetManager = StateObject(wrappedValue: pressureManager)
+    }
     
     
     var body: some View {
-        TabView {
-            BLEBroadcasterView(maskSuggestions: $maskSuggestions, dataSuggestions: $dataSuggestions)
-                .tabItem {
-                    Label("廣播", systemImage: "antenna.radiowaves.left.and.right")
-                }
-
-            BLEScannerView(packetStore: packetStore, maskSuggestions: $maskSuggestions)
-                .tabItem {
-                    Label("掃描", systemImage: "wave.3.right")
-                }
-            ScannerLogView(packetStore: packetStore)
-                .tabItem {
-                    Label("掃描Log", systemImage: "text.document")
-                }
-            SettingView(maskSuggestions: $maskSuggestions, dataSuggestions: $dataSuggestions)
-                .tabItem {
-                    Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
-                }
-            PressureCorrectionView(maskSuggestions: $maskSuggestions)
-                .tabItem {
-                    Label("大氣壓力校正", systemImage: "checkmark.circle.badge.questionmark")
-                }
+        ZStack(alignment: .bottomTrailing) {
+            TabView {
+                BLEBroadcasterView(maskSuggestions: $mqttManager.maskSuggestions, dataSuggestions: $mqttManager.dataSuggestions)
+                    .tabItem {
+                        Label("廣播", systemImage: "antenna.radiowaves.left.and.right")
+                    }
+                
+                BLEScannerView(packetStore: packetStore, maskSuggestions: $mqttManager.maskSuggestions)
+                    .tabItem {
+                        Label("掃描", systemImage: "wave.3.right")
+                    }
+                ScannerLogView(packetStore: packetStore)
+                    .tabItem {
+                        Label("掃描Log", systemImage: "text.document")
+                    }
+                // 將 mqttManager 作為環境物件傳遞下去
+                SettingView()
+                    .tabItem {
+                        Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
+                    }
+                PressureCorrectionView(offsetManager: offsetManager, maskSuggestions: $mqttManager.maskSuggestions)
+                    .tabItem {
+                        Label("大氣壓力校正", systemImage: "checkmark.circle.badge.questionmark")
+                    }
+            }
+            
+            if !mqttManager.connectionStatus.isEmpty {
+                MQTTStatusView()
+                    .padding(.bottom, 50)
+                    .padding(.trailing, 20)
+            }
         }
-        .onChange(of: maskSuggestions) { newValue in
-           UserDefaults.standard.savedMaskSuggestions = newValue
-       }
-       .onChange(of: dataSuggestions) { newValue in
-           UserDefaults.standard.savedDataSuggestions = newValue
-       }
-    }
-}
-
-extension UserDefaults {
-    private enum Keys {
-        static let maskSuggestions = "maskSuggestions"
-        static let dataSuggestions = "dataSuggestions"
-    }
-
-    var savedMaskSuggestions: [String] {
-        get {
-            array(forKey: Keys.maskSuggestions) as? [String] ?? []
-        }
-        set {
-            set(newValue, forKey: Keys.maskSuggestions)
-        }
-    }
-
-    var savedDataSuggestions: [String] {
-        get {
-            array(forKey: Keys.dataSuggestions) as? [String] ?? []
-        }
-        set {
-            set(newValue, forKey: Keys.dataSuggestions)
+        .environmentObject(packetStore)
+        .environmentObject(mqttManager)
+        .environmentObject(offsetManager)
+        .onAppear {
+            offsetManager.loadAndSyncOffsets()
+            // 當 View 出現時，開始 MQTT 連線
+            mqttManager.connect()
         }
     }
 }

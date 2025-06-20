@@ -475,9 +475,4 @@ struct BLEBroadcasterView: View {
         impactFeedback.impactOccurred()
     }
 }
-extension String {
-    var cleanedHex: String {
-        return self.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
-    }
-}
 

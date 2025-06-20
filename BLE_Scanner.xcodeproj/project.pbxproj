@@ -24,6 +24,7 @@
 		F5D6C9332E00809C0037982D /* MQTTManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9322E00808F0037982D /* MQTTManager.swift */; };
 		F5D6C9392E010BBE0037982D /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F5D6C9382E010BBE0037982D /* MQTTNIO */; };
 		F5D6C93B2E0124A80037982D /* MQTTDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93A2E0124A00037982D /* MQTTDebugView.swift */; };
+		F5D6C93D2E0507BC0037982D /* MQTTStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		F5CB0FC52DCDE71500B7C152 /* SettingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingView.swift; sourceTree = "<group>"; };
 		F5D6C9322E00808F0037982D /* MQTTManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTManager.swift; sourceTree = "<group>"; };
 		F5D6C93A2E0124A00037982D /* MQTTDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTDebugView.swift; sourceTree = "<group>"; };
+		F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTStatusView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +95,7 @@
 				F55A69CB2DFBE9ED00095DF4 /* BLEParser.swift */,
 				F5D6C9322E00808F0037982D /* MQTTManager.swift */,
 				F5202E3A2DE5962100257750 /* StorageManager.swift */,
+				F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */,
 				F5B34AA92DA907E900A47FEE /* Assets.xcassets */,
 				F5B34AAB2DA907E900A47FEE /* Preview Content */,
 			);
@@ -186,6 +189,7 @@
 				F5D6C9332E00809C0037982D /* MQTTManager.swift in Sources */,
 				F5B34AB82DAA1D8E00A47FEE /* BLEScannerView.swift in Sources */,
 				F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */,
+				F5D6C93D2E0507BC0037982D /* MQTTStatusView.swift in Sources */,
 				F5B34AB62DAA1C8F00A47FEE /* CBLEBroadcaster.swift in Sources */,
 				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
 				F5B34AB42DA9083900A47FEE /* CBLEScanner.swift in Sources */,

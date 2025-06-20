@@ -21,7 +21,7 @@ struct ParsedBLEData: Codable, Equatable {
 
 // 裝置資訊結構
 struct DeviceInfo: Codable, Equatable {
-    let deviceId: UInt8    // 裝置ID
+    let deviceId: String   // 裝置ID
     let count: UInt8       // 接收次數
     let receptionRate: Double // 接收率（次/秒）
 }
@@ -31,14 +31,21 @@ struct PressureOffset: Codable, Identifiable {
     let deviceId: String
     let offset: Double
     let baseAltitude: Double
-    let calibrationTime: Date
+    let timestamp: Date
     
     init(deviceId: String, offset: Double, baseAltitude: Double) {
         self.deviceId = deviceId
         self.offset = offset
         self.baseAltitude = baseAltitude
-        self.calibrationTime = Date()
+        self.timestamp = Date()
     }
+    
+    init(deviceId: String, offset: Double, baseAltitude: Double, timestamp: Date) {
+       self.deviceId = deviceId
+       self.offset = offset
+       self.baseAltitude = baseAltitude
+       self.timestamp = timestamp
+   }
 }
 
 class BLEDataParser {
@@ -81,7 +88,7 @@ class BLEDataParser {
         
         for i in 0..<5 {
             let baseIndex = 5 + (i * 2)  // 從第5個byte開始，每個裝置佔2 bytes
-            let deviceId = dataBytes[baseIndex]
+            let deviceIdByte = dataBytes[baseIndex]
             let count = dataBytes[baseIndex + 1]
             
             // 檢查是否達到100次 (0x64 = 100)
@@ -89,11 +96,12 @@ class BLEDataParser {
                 hasReachedTarget = true
             }
             
+            let deviceIdString = String(format: "%02X", deviceIdByte)
             // 計算接收率 (次/秒)
             let receptionRate = seconds > 0 ? Double(count) / Double(seconds) : 0.0
             
             let deviceInfo = DeviceInfo(
-                deviceId: deviceId,
+                deviceId: deviceIdString,
                 count: count,
                 receptionRate: receptionRate
             )
@@ -143,7 +151,7 @@ class BLEDataParser {
         result += "裝置資訊:\n"
         
         for (index, device) in parsedData.devices.enumerated() {
-            result += "  裝置\(index + 1) - ID: \(String(format: "%02X", device.deviceId)), "
+            result += "  裝置\(index + 1) - ID: \(device.deviceId), "
             result += "次數: \(device.count), "
             result += "接收率: \(String(format: "%.2f", device.receptionRate)) 次/秒\n"
         }
@@ -162,8 +170,8 @@ class PressureOffsetManager: ObservableObject {
     private var mqttManager: MQTTManager
     private var cancellables = Set<AnyCancellable>()
     
-    init() {
-       self.mqttManager = MQTTManager()
+    init(mqttManager: MQTTManager) {
+       self.mqttManager = mqttManager
        setupMQTTCallbacks()
        setupMQTTStatusBinding()
    }
@@ -241,7 +249,7 @@ class PressureOffsetManager: ObservableObject {
         // 檢查是否需要更新（避免循環更新）
         if let existingOffset = offsets[pressureOffset.deviceId] {
             // 比較時間戳，只更新較新的資料
-            if pressureOffset.calibrationTime > existingOffset.calibrationTime {
+            if pressureOffset.timestamp > existingOffset.timestamp {
                 offsets[pressureOffset.deviceId] = pressureOffset
                 saveOffsets()
             }
@@ -279,6 +287,23 @@ class PressureOffsetManager: ObservableObject {
         }
     }
     
+    func loadAndSyncOffsets() {
+        // 1. 從本地加載
+        if let data = UserDefaults.standard.data(forKey: "PressureOffsets"),
+           let decoded = try? JSONDecoder().decode([PressureOffset].self, from: data) {
+            offsets = Dictionary(uniqueKeysWithValues: decoded.map { ($0.deviceId, $0) })
+        }
+        
+        // 2. 連接 MQTT
+        connectMQTT()
+        
+        // 3. 連接後從伺服器請求最新資料
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.requestAllOffsetsFromServer()
+        }
+    }
+    
+    
     func getCalibrationInfo(for deviceId: String) -> String {
         guard let offset = offsets[deviceId] else {
             return "未校正"
@@ -286,7 +311,7 @@ class PressureOffsetManager: ObservableObject {
         
         let formatter = DateFormatter()
         formatter.dateFormat = "MM/dd HH:mm"
-        let timeString = formatter.string(from: offset.calibrationTime)
+        let timeString = formatter.string(from: offset.timestamp)
         
         return "海拔: \(String(format: "%.1f", offset.baseAltitude))m\n偏差: \(String(format: "%.2f", offset.offset))hPa\n時間: \(timeString)"
     }

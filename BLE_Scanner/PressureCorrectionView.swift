@@ -9,7 +9,7 @@ struct PressureCorrectionView: View {
         case base
     }
     @StateObject private var scanner = CBLEScanner()
-    @StateObject private var offsetManager = PressureOffsetManager()
+    @ObservedObject var offsetManager: PressureOffsetManager
     @Binding var maskSuggestions: [String]
     @State private var maskTextEmpty = false
     @State private var baseText: String = ""
@@ -44,16 +44,6 @@ struct PressureCorrectionView: View {
             VStack(spacing: 20) {
                 Text("大氣壓力校正")
                     .font(.largeTitle).bold()
-                HStack{
-                    mqttStatusSection
-                    mqttControlSection
-                    Button("", systemImage: "ladybug") {
-                        showDebugView = true
-                    }
-                    .tint(.gray)
-                    .padding(.trailing)
-                }
-                .padding()
                 
                 toggleSection
                 
@@ -85,11 +75,6 @@ struct PressureCorrectionView: View {
             }
 
         }
-        .onAppear {
-//            offsetManager.loadOffsets()
-            loadOffsetsAndConnectMQTT()
-            mqttdebugManager.connect()
-        }
         .alert("校準結果", isPresented: $showingCalibrationAlert) {
             Button("確定", role: .cancel) { }
         } message: {
@@ -105,42 +90,6 @@ struct PressureCorrectionView: View {
         }
     }
     
-    // MARK: - MQTT View Components
-    private var mqttStatusSection: some View {
-        HStack {
-            Circle()
-                .fill(offsetManager.mqttStatus == "已連接" ? Color.green : Color.red)
-                .frame(width: 10, height: 10)
-            
-            Text("MQTT: \(offsetManager.mqttStatus)")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(offsetManager.mqttStatus == "已連接" ? .green : .red)
-            
-            Spacer()
-            
-            if isLoadingMQTTData {
-                ProgressView()
-                    .scaleEffect(0.8)
-            }
-        }
-        .padding(.horizontal)
-    }
-    
-    private var mqttControlSection: some View {
-        HStack(spacing: 15) {
-            Button("", systemImage: "arrow.trianglehead.2.clockwise") {
-                syncFromServer()
-            }
-            .disabled(offsetManager.mqttStatus != "已連接")
-            
-            Button("", systemImage: "link") {
-                reconnectMQTT()
-            }
-            .tint(.orange)
-        }
-
-    }
-    
     // MARK: - View Components
     
     private var toggleSection: some View {
@@ -152,14 +101,6 @@ struct PressureCorrectionView: View {
            .foregroundStyle(isCalibrationMode ? .orange : .primary)
            .font(.system(size: 18, weight: .light, design: .serif))
            
-           Toggle(isOn: $isOn) {
-               Text("套用偏差值")
-           }
-           .toggleStyle(iOSCheckboxToggleStyle())
-           .foregroundStyle(isOn ? .green : .primary)
-           .font(.system(size: 18, weight: .light, design: .serif))
-           .disabled(isCalibrationMode)
-           .opacity(isCalibrationMode ? 0.4 : 1.0)
        }
     }
     
@@ -299,10 +240,10 @@ struct PressureCorrectionView: View {
     
     private var dataTableView: some View {
         let columns = [
-            GridItem(.fixed(50), spacing: 0),     // ID 欄位
-            GridItem(.flexible(), spacing: 0),    // 大氣壓力欄位
-            GridItem(.fixed(80), spacing: 0),      // 時間欄位
-            GridItem(.fixed(60), spacing: 0)      // 校症狀態
+            GridItem(.fixed(30), spacing: 0),     // ID 欄位
+            GridItem(.flexible(), spacing: 0),    // 原始大氣壓力欄位
+            GridItem(.fixed(70), spacing: 0),      // offset
+            GridItem(.flexible(),  spacing: 0)      // 校正後的大氣壓力
         ]
         
         return LazyVGrid(columns: columns, spacing: 0) {
@@ -314,7 +255,6 @@ struct PressureCorrectionView: View {
                 TableRowView(
                     packet: packet,
                     offsetManager: offsetManager,
-                    isOn: isOn
                 )
             }
         }
@@ -328,78 +268,21 @@ struct PressureCorrectionView: View {
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .center)
             
-            Text("大氣壓力 (hPa)")
+            Text("原始大氣壓力")
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .center)
             
-            Text("時間")
+            Text("Offset")
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .center)
                 
-            Text("校正")
+            Text("校正大氣壓力")
                 .font(.system(size: 16, weight: .bold))
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.vertical, 8)
         .background(Color.gray.opacity(0.2))
     }
-    
-    //MARK: - MQTT Methods
-    private func loadOffsetsAndConnectMQTT() {
-        isLoadingMQTTData = true
-        
-        // 載入本地偏差值
-        offsetManager.loadOffsets()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.offsetManager.connectMQTT()
-        }
-        
-        // 監聽 MQTT 連接狀態變化
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            self.isLoadingMQTTData = false
-            
-            if self.offsetManager.mqttStatus == "已連接" {
-                self.mqttAlertMessage = "MQTT 連接成功，已同步伺服器資料"
-                self.showingMQTTAlert = true
-            } else {
-                self.mqttAlertMessage = "MQTT 連接失敗，僅使用本地資料"
-                self.showingMQTTAlert = true
-            }
-        }
-    }
-    
-    private func syncFromServer() {
-        guard offsetManager.mqttStatus == "已連接" else {
-            mqttAlertMessage = "MQTT 未連接，無法同步資料"
-            showingMQTTAlert = true
-            return
-        }
-        
-        isLoadingMQTTData = true
-        
-        // 請求伺服器所有偏差值
-        offsetManager.requestAllOffsetsFromServer()
-        
-        // 模擬同步過程
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.isLoadingMQTTData = false
-            self.mqttAlertMessage = "資料同步完成"
-            self.showingMQTTAlert = true
-        }
-    }
-    
-    private func reconnectMQTT() {
-        mqttAlertMessage = "正在重新連接 MQTT..."
-        showingMQTTAlert = true
-        
-        offsetManager.disconnectMQTT()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.offsetManager.connectMQTT()
-        }
-    }
-    
     // MARK: - Helper Methods
     
     private func performCalibration() {
@@ -448,7 +331,6 @@ struct PressureCorrectionView: View {
 struct TableRowView: View {
     let packet: BLEPacket
     let offsetManager: PressureOffsetManager
-    let isOn: Bool
     
     var body: some View {
         Group {
@@ -458,11 +340,13 @@ struct TableRowView: View {
             // 大氣壓力欄位
             pressureCell
             
-            // 時間欄位
-            timeCell
+            // offset欄位
+//            timeCell
+            offsetCell
             
-            // 校正狀態欄位
-            calibrationStatusCell
+            // 校正大氣壓力欄位
+//            calibrationStatusCell
+            calibrationPressureCell
         }
         .padding(.vertical, 8)
         .background(Color.white.opacity(0.5))
@@ -484,18 +368,11 @@ struct TableRowView: View {
         Group {
             if let parsedData = packet.parsedData {
                 let deviceOffset = offsetManager.getOffset(for: packet.deviceID)
-                let correctedPressure = isOn ?
-                parsedData.atmosphericPressure + deviceOffset :
-                parsedData.atmosphericPressure
+                let correctedPressure = parsedData.atmosphericPressure
                 
                 VStack(alignment: .center, spacing: 2) {
                     Text(String(format: "%.2f", correctedPressure))
                         .font(.system(size: 14, weight: .medium, design: .monospaced))
-//                    if isOn && deviceOffset != 0 {
-//                        Text("(\(deviceOffset > 0 ? "+" : "")\(String(format: "%.2f", deviceOffset)))")
-//                            .font(.system(size: 10, weight: .light))
-//                            .foregroundColor(.blue)
-//                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
             } else {
@@ -506,27 +383,42 @@ struct TableRowView: View {
         }
     }
     
-    private var timeCell: some View {
-        Text(formatTime(packet.timestamp))
-            .font(.system(size: 14, weight: .regular, design: .monospaced))
-            .frame(maxWidth: .infinity, alignment: .center)
-    }
-    
-    private var calibrationStatusCell: some View {
-        VStack {
+    private var offsetCell: some View {
+        Group{
             if offsetManager.isCalibrated(deviceId: packet.deviceID) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.system(size: 14))
-            } else {
-                Image(systemName: "circle")
-                    .foregroundColor(.gray)
-                    .font(.system(size: 14))
+                let deviceOffset = offsetManager.getOffset(for: packet.deviceID)
+                Text(String(format: "%.2f", deviceOffset))
+                    .font(.system(size: 14, weight: .regular, design: .monospaced))
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            else {
+                Text("--")
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .center)
     }
     
+    private var calibrationPressureCell: some View {
+        
+        Group() {
+            if let parsedData = packet.parsedData {
+                let deviceOffset = offsetManager.getOffset(for: packet.deviceID)
+                let correctedPressure = parsedData.atmosphericPressure + deviceOffset
+                if offsetManager.isCalibrated(deviceId: packet.deviceID) {
+                    Text(String(format: "%.2f", correctedPressure))
+                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                else {
+                    Text("--")
+                        .font(.system(size: 14, weight: .medium))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
+        }
+    }
+  
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"

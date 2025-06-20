@@ -176,16 +176,16 @@ struct BLEScannerView: View {
                             if scanner.isScanning {
                                 scanner.stopScanning()
                             } else {
-                                let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+//                                let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                 // 設定錯誤狀態
-                                maskTextEmpty = isMaskEmpty
+//                                maskTextEmpty = isMaskEmpty
                                 
-                                if isMaskEmpty {
-                                    withAnimation {
-                                        isExpanded = true // 展開區塊
-                                    }
-                                    return
-                                }
+//                                if isMaskEmpty {
+//                                    withAnimation {
+//                                        isExpanded = true // 展開區塊
+//                                    }
+//                                    return
+//                                }
                                 handleStartScan()
                             }
                         }
@@ -245,7 +245,7 @@ struct BLEScannerView: View {
                                        ForEach(Array(parsedData.devices.enumerated()), id: \.offset) { index, device in
                                            HStack {
                                                
-                                               Text("ID: \(String(format: "%02X", device.deviceId))")
+                                               Text("ID: \(device.deviceId)")
                                                    .font(.system(size: 14, weight: .regular, design: .serif))
                                                    .frame(width: 50, alignment: .leading)
                                                

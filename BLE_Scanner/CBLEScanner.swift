@@ -103,29 +103,30 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         lastUpdateTimes[identifier] = now
         
 //        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
-//            print("廣播封包內容：")
-//            for (key, value) in advertisementData {
-//                print("\(key): \(value)")
-//            }
+        print("廣播封包內容：")
+        for (key, value) in advertisementData {
+            print("\(key): \(value)")
+        }
 //        print(allPackets)
-        if let localName = advertisementData[CBAdvertisementDataLocalNameKey] as? String {
-            print("收到裝置名稱：\(localName)")
+        if let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
+            print("收到製造商數據：\(manufacturerData)")
             print("full packet: ")
-            let nameBytes = asciiStringToBytes(localName)
-            rawDataStr = bytesToHexString(nameBytes)
-            deviceName = localName
+            let manufacturerBytes = Array(manufacturerData)
+            rawDataStr = bytesToHexString(manufacturerBytes)
+           
             let idLength = 1
-            let deviceIdBytes = Array(nameBytes.suffix(idLength))
+            let deviceIdBytes = Array(manufacturerBytes.suffix(idLength))
             print("id: ")
             deviceId = bytesToHexString(deviceIdBytes)
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
             let maskLength = expectedMask?.count ?? 11
-            if nameBytes.count >= (maskLength) + (idLength) {
-                let receivedMask = Array(nameBytes.prefix(maskLength))
+            if manufacturerBytes.count >= (maskLength) + (idLength) {
+                let receivedMask = Array(manufacturerBytes.prefix(maskLength))
                 let receivedID = deviceIdBytes
-                let dataRange = maskLength..<(nameBytes.count - idLength)
-                let dataBytes = Array(nameBytes[dataRange])
+                let dataRange = maskLength..<(manufacturerBytes.count - idLength)
+                let dataBytes = Array(manufacturerBytes[dataRange])
+                
                 
                 maskStr = bytesToHexString(receivedMask)
                 dataStr = bytesToHexString(dataBytes)
