@@ -1,4 +1,4 @@
-//  最後更新 2025/06/19
+//  最後更新 2025/06/20
 
 import SwiftUI
 import Foundation
