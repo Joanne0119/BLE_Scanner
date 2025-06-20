@@ -103,10 +103,10 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         lastUpdateTimes[identifier] = now
         
 //        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
-        print("廣播封包內容：")
-        for (key, value) in advertisementData {
-            print("\(key): \(value)")
-        }
+//        print("廣播封包內容：")
+//        for (key, value) in advertisementData {
+//            print("\(key): \(value)")
+//        }
 //        print(allPackets)
         if let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
             print("收到製造商數據：\(manufacturerData)")
@@ -120,7 +120,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             deviceId = bytesToHexString(deviceIdBytes)
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
-            let maskLength = expectedMask?.count ?? 11
+            let maskLength = expectedMask?.count ?? 14
             if manufacturerBytes.count >= (maskLength) + (idLength) {
                 let receivedMask = Array(manufacturerBytes.prefix(maskLength))
                 let receivedID = deviceIdBytes

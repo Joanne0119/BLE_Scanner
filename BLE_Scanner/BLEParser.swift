@@ -12,7 +12,7 @@ import Combine
 
 // 解析後的數據結構
 struct ParsedBLEData: Codable, Equatable {
-    let temperature: UInt8            // 1 byte 溫度
+    let temperature: Int             // 1 byte 溫度
     let atmosphericPressure: Double  // 3 bytes 大氣壓力
     let seconds: UInt8                // 1 byte 秒數
     let devices: [DeviceInfo]         // 5個裝置資訊
@@ -73,7 +73,7 @@ class BLEDataParser {
         }
         
         //溫度（第1 byte)
-        let temperature = dataBytes[0]
+        let temperature = Int(dataBytes[0])
         
         // 解析大氣壓力 (前2到4bytes)
         let pressureBytes = Array(dataBytes[1..<4])

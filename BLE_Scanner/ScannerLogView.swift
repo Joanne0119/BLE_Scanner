@@ -92,8 +92,12 @@ struct ScannerLogView: View {
                                        }
                                    }
                                    
-                                   Text("🌡️ 大氣壓力：\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa")
+                                   Text("🌡️ 溫度：\(parsedData.temperature) °C")
                                        .font(.system(size: 15, weight: .medium, design: .serif))
+                                   
+                                   Text("🎚️ 大氣壓力：\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa")
+                                       .font(.system(size: 15, weight: .medium, design: .serif))
+                                   
                                    
                                    Text("📱 裝置接收狀況：")
                                        .font(.system(size: 15, weight: .medium, design: .serif))

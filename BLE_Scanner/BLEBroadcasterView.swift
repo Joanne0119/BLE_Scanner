@@ -55,14 +55,7 @@ struct BLEBroadcasterView: View {
                     isExpanded: $isExpanded.animation(.easeInOut(duration: 0.3)),
                     content: {
                         VStack(alignment: .center) {
-                            Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                .font(.system(size: 15, weight: .light, design: .serif))
-                                .padding()
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(20)
-                            Text("* 不要使用 00，可能會導致00後的資料遺失")
-                                .font(.system(size: 15, weight: .light, design: .serif))
-                                .foregroundStyle(.red)
+                            Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
                             Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
                                 .font(.system(size: 18, weight: .bold))
                                 .padding()
@@ -189,7 +182,7 @@ struct BLEBroadcasterView: View {
                                 .frame(width: 60, alignment: .leading)
                             ZStack(){
                                 HStack(){
-                                    TextField("ex: 01 ,03 0F3E, 00", text: $inputData)
+                                    TextField("ex: 01 ,03 0564, 10", text: $inputData)
                                         .font(.system(size: 18, weight: .bold, design: .serif))
                                         .keyboardType(.asciiCapable)
                                         .padding(.horizontal)
