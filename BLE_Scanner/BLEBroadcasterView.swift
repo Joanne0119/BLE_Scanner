@@ -55,7 +55,9 @@ struct BLEBroadcasterView: View {
                     isExpanded: $isExpanded.animation(.easeInOut(duration: 0.3)),
                     content: {
                         VStack(alignment: .center) {
-                            Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                            Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                .font(.system(size: 15, weight: .light, design: .serif))
+                                .padding(.vertical)
                             Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
                                 .font(.system(size: 18, weight: .bold))
                                 .padding()
