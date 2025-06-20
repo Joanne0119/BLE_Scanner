@@ -7,12 +7,14 @@ struct PressureCorrectionView: View {
     enum Field: Hashable {
         case mask
         case base
+        case basePressure
     }
     @StateObject private var scanner = CBLEScanner()
     @ObservedObject var offsetManager: PressureOffsetManager
     @Binding var maskSuggestions: [String]
     @State private var maskTextEmpty = false
     @State private var baseText: String = ""
+    @State private var basePressureText: String = ""
     @State private var maskText: String = ""
     @FocusState private var focusedField: Field?
     @State private var isOn = false
@@ -34,7 +36,7 @@ struct PressureCorrectionView: View {
     }
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.white.opacity(0.01)
                 .onTapGesture {
                     if focusedField != nil{
@@ -121,10 +123,10 @@ struct PressureCorrectionView: View {
     private var maskInputSection: some View {
         HStack(alignment: .center) {
             Text("遮罩：")
-                .font(.system(size: 18, weight: .bold, design: .serif))
+                .font(.system(size: 16, weight: .bold, design: .serif))
                 .frame(width: 100, alignment: .leading)
             
-            ZStack {
+            ZStack() {
                 HStack {
                     TextField("ex：01 02 03", text: $maskText)
                         .font(.system(size: 18, weight: .bold, design: .serif))
@@ -189,23 +191,42 @@ struct PressureCorrectionView: View {
     }
     
     private var baseAltitudeInputSection: some View {
-        HStack(alignment: .center) {
-            Text("基準海拔：")
-                .font(.system(size: 18, weight: .bold, design: .serif))
-                .frame(width: 100, alignment: .leading)
-            
-            TextField("ex：20（m）", text: $baseText)
-                .font(.system(size: 18, weight: .bold, design: .serif))
-                .keyboardType(.decimalPad)
-                .id("baseText")
-                .focused($focusedField, equals: .base)
-                .padding()
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(Color.secondary, lineWidth: 2)
-                )
+        VStack(){
+            HStack(alignment: .center) {
+                Text("海平面氣壓：")
+                    .font(.system(size: 16, weight: .bold, design: .serif))
+                    .frame(width: 100, alignment: .leading)
+                
+                TextField("ex：1013.25（hPa）", text: $basePressureText)
+                    .font(.system(size: 18, weight: .bold, design: .serif))
+                    .keyboardType(.decimalPad)
+                    .id("baseText")
+                    .focused($focusedField, equals: .basePressure)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color.secondary, lineWidth: 2)
+                    )
+            }
+            .padding(.horizontal)
+            HStack(alignment: .center) {
+                Text("基準海拔：")
+                    .font(.system(size: 16, weight: .bold, design: .serif))
+                    .frame(width: 100, alignment: .leading)
+                
+                TextField("ex：20（m）", text: $baseText)
+                    .font(.system(size: 18, weight: .bold, design: .serif))
+                    .keyboardType(.decimalPad)
+                    .id("baseText")
+                    .focused($focusedField, equals: .base)
+                    .padding()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color.secondary, lineWidth: 2)
+                    )
+            }
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
     
     private var buttonSection: some View {
@@ -231,7 +252,7 @@ struct PressureCorrectionView: View {
                     performCalibration()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(blePackets.isEmpty || baseText.isEmpty)
+                .disabled(blePackets.isEmpty || baseText.isEmpty || basePressureText.isEmpty)
                 .tint(.orange)
             }
         }
@@ -292,7 +313,13 @@ struct PressureCorrectionView: View {
             return
         }
         
-        let expectedPressure = pressureFromAltitude(baseAltitude)
+        guard let basePressure = Double(basePressureText), basePressure > 0 else {
+            calibrationMessage = "請輸入有效的目前海平面氣壓"
+            showingCalibrationAlert = true
+            return
+        }
+        
+        let expectedPressure = pressureFromAltitude(baseAltitude, basePressure)
         let currentPackets = blePackets.filter { $0.parsedData != nil }
         
         if currentPackets.isEmpty {
@@ -310,12 +337,12 @@ struct PressureCorrectionView: View {
             }
         }
         
-        calibrationMessage = "成功校準 \(calibratedCount) 個裝置\n基準海拔：\(baseAltitude)m\n標準壓力：\(String(format: "%.2f", expectedPressure))hPa"
+        calibrationMessage = "成功校準 \(calibratedCount) 個裝置\n目前海平面氣壓\n基準海拔：\(baseAltitude)m\n標準壓力：\(String(format: "%.2f", expectedPressure))hPa"
         showingCalibrationAlert = true
     }
     
-    private func pressureFromAltitude(_ altitude: Double) -> Double {
-        let pressure = 1013.25 * pow((1 - (altitude / 44330.0)), 5.255)
+    private func pressureFromAltitude(_ altitude: Double, _ basePressure: Double) -> Double {
+        let pressure = basePressure * pow((1 - (altitude / 44330.0)), 5.255)
         return pressure
     }
     
