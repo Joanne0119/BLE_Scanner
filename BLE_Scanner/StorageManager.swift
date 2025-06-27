@@ -43,6 +43,31 @@ class SavedPacketsStore: ObservableObject {
         setupMQTTCallbacks()
         requestAllLogsFromServer()
     }
+    
+    func updateOrAppend(contentsOf newPackets: [BLEPacket]) {
+        // 遍歷所有從掃描器傳來的新封包
+        for newPacket in newPackets {
+            // 嘗試尋找本地儲存中是否已存在相同 id 的封包
+            if let existingIndex = self.packets.firstIndex(where: { $0.deviceID == newPacket.deviceID }) {
+                // 如果找到了，就用新的封包資料【更新】掉舊的資料
+                self.packets[existingIndex] = newPacket
+            } else {
+                // 如果沒找到，就將這個新封包【新增】到陣列中
+                self.packets.append(newPacket)
+            }
+        }
+        
+        // --- 同步與儲存 ---
+        // 迴圈處理完畢後，儲存所有變動到本地
+        StorageManager.save(packets: self.packets)
+        
+        // 將每一筆「新」的或「被更新」的日誌發布到 MQTT
+        // 注意：這裡的邏輯是，不論是新增還是更新，都發布一次日誌，
+        // 讓其他訂閱者也能同步到最新的狀態。
+        for packet in newPackets {
+            mqttManager.publishLog(packet)
+        }
+    }
 
     private func setupMQTTCallbacks() {
         mqttManager.onLogReceived = { [weak self] packet in

@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/06/20
+//  最後更新 2025/06/27
 //
 
 import SwiftUI
@@ -190,7 +190,7 @@ struct BLEScannerView: View {
                         
                         Button("儲存掃描結果") {
                             scanner.stopScanning()
-                            packetStore.append(filteredPackets)
+                            packetStore.updateOrAppend(contentsOf: filteredPackets)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.brown)
