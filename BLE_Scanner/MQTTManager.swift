@@ -51,8 +51,16 @@ class MQTTManager: ObservableObject {
     var onLogReceived: ((BLEPacket) -> Void)?
     var onLogDeleted: ((String) -> Void)?
     
-    @Published var maskSuggestions: [String] = []
-    @Published var dataSuggestions: [String] = []
+    @Published var maskSuggestions: [String] = [] {
+        didSet {
+            saveMaskSuggestionsToLocal()
+        }
+    }
+    @Published var dataSuggestions: [String] = [] {
+        didSet {
+            saveDataSuggestionsToLocal()
+        }
+    }
     
     private let mqttQueue = DispatchQueue(label: "mqtt.queue", qos: .userInitiated)
     
