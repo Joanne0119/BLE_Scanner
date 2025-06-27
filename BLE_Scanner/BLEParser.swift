@@ -96,7 +96,8 @@ class BLEDataParser {
                 hasReachedTarget = true
             }
             
-            let deviceIdString = String(format: "%02X", deviceIdByte)
+            let deviceIdInt = Int(deviceIdByte)
+            let deviceIdString = String(format: "%02x", deviceIdInt)
             // 計算接收率 (次/秒)
             let receptionRate = seconds > 0 ? Double(count) / Double(seconds) : 0.0
             

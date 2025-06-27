@@ -117,7 +117,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             let idLength = 1
             let deviceIdBytes = Array(manufacturerBytes.suffix(idLength))
             print("id: ")
-            deviceId = bytesToHexString(deviceIdBytes)
+            deviceId = deviceIdBytes.map { String($0) }.joined(separator: " ")
             // 解析expectedMask和expectedID
             let expectedMask = parseHexInput(expectedMaskText)
             let maskLength = expectedMask?.count ?? 14
