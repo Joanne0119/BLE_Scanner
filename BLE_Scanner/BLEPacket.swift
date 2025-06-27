@@ -8,7 +8,7 @@
 import Foundation
 
 struct BLEPacket: Identifiable, Codable, Equatable {
-    var id: UUID = UUID()
+    var id: String { identifier }
     var deviceID: String
     var identifier: String
     var deviceName: String

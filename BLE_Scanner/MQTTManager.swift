@@ -15,6 +15,7 @@ import NIOPosix
 class MQTTManager: ObservableObject {
     @Published var isConnected = false
     @Published var connectionStatus = "未連接"
+    private let dataParser = BLEDataParser()
     private var mqttClient: MQTTClient?
     private var eventLoopGroup: MultiThreadedEventLoopGroup?
     private let clientID = "BLE_Scanner_\(UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString)"
@@ -360,25 +361,51 @@ class MQTTManager: ObservableObject {
         }
         
         for i in stride(from: 0, to: components.count, by: 3) {
-            let rawData = components[i].trimmingCharacters(in: .whitespaces)
+            let rawDataStr = components[i].trimmingCharacters(in: .whitespaces)
             guard let rssi = Int(components[i+1].trimmingCharacters(in: .whitespaces)),
                   let timestamp = MQTTManager.logDateFormatter.date(from: components[i+2].trimmingCharacters(in: .whitespaces)) else {
                 print("   ❌ 無法解析log數值: \(components[i+1]), \(components[i+2])")
                 continue // 繼續處理下一組
             }
             
+            let maskLength = 13
+            let dataLength = 15 // As expected by BLEDataParser
+            let idLength = 1
+            
+            guard let rawBytes = parseHexInput(rawDataStr), rawBytes.count >= (maskLength + dataLength + idLength) else {
+                print("   ❌ Raw data from MQTT is invalid or has incorrect length.")
+                continue
+            }
+            
+            // 1. Extract Mask (First 13 bytes)
+            let maskBytes = Array(rawBytes.prefix(maskLength))
+            let maskStr = bytesToHexString(maskBytes)
+            
+            // 2. Extract Device ID (Last byte)
+            let idBytes = Array(rawBytes.suffix(idLength))
+            // Convert byte to its decimal string representation, like in CBLEScanner
+            let deviceId = idBytes.map { String($0) }.joined()
+
+            // 3. Extract Data (The 15 bytes between mask and ID)
+            let dataStartIndex = maskLength
+            let dataEndIndex = rawBytes.count - idLength
+            let dataBytes = Array(rawBytes[dataStartIndex..<dataEndIndex])
+            let dataStr = bytesToHexString(dataBytes)
+
+            // 4. Parse the data payload using BLEDataParser
+            let parsedData = dataParser.parseDataBytes(dataBytes)
+            
             let partialPacket = BLEPacket(
-                id: UUID(),
-                deviceID: "N/A (from MQTT)", // Device ID 未知
-                identifier: "",
-                deviceName: "",
+                deviceID: deviceId,
+                identifier: UUID().uuidString, // Generate a new unique ID as peripheral's is unknown
+                deviceName: "N/A (from MQTT)",
                 rssi: rssi,
-                rawData: rawData,
-                mask: "",
-                data: "",
+                rawData: rawDataStr,
+                mask: maskStr,
+                data: dataStr,
                 isMatched: false,
                 timestamp: timestamp,
-                parsedData: nil
+                parsedData: parsedData
             )
             
             DispatchQueue.main.async {
@@ -570,5 +597,31 @@ extension MQTTManager {
                 }
             }
         }
+    }
+}
+private extension MQTTManager {
+    
+    func parseHexInput(_ input: String) -> [UInt8]? {
+        let cleaned = input.components(separatedBy: .whitespacesAndNewlines).joined()
+        guard cleaned.count % 2 == 0 else { return nil }
+
+        var result: [UInt8] = []
+        var index = cleaned.startIndex
+
+        while index < cleaned.endIndex {
+            let nextIndex = cleaned.index(index, offsetBy: 2)
+            let hexPair = String(cleaned[index..<nextIndex])
+            if let byte = UInt8(hexPair, radix: 16) {
+                result.append(byte)
+            } else {
+                return nil
+            }
+            index = nextIndex
+        }
+        return result
+    }
+    
+    func bytesToHexString(_ bytes: [UInt8]) -> String {
+        return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
     }
 }

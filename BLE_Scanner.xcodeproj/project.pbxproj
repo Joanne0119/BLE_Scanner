@@ -25,6 +25,8 @@
 		F5D6C9392E010BBE0037982D /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F5D6C9382E010BBE0037982D /* MQTTNIO */; };
 		F5D6C93B2E0124A80037982D /* MQTTDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93A2E0124A00037982D /* MQTTDebugView.swift */; };
 		F5D6C93D2E0507BC0037982D /* MQTTStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */; };
+		F5D6C93F2E0E387C0037982D /* BLEScanerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */; };
+		F5D6C9432E0E6AD70037982D /* BLEScannerRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +49,8 @@
 		F5D6C9322E00808F0037982D /* MQTTManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTManager.swift; sourceTree = "<group>"; };
 		F5D6C93A2E0124A00037982D /* MQTTDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTDebugView.swift; sourceTree = "<group>"; };
 		F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTStatusView.swift; sourceTree = "<group>"; };
+		F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScanerDetailView.swift; sourceTree = "<group>"; };
+		F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerRowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +90,8 @@
 				F5B34AB32DA9083900A47FEE /* CBLEScanner.swift */,
 				F5B34AB52DAA1C8F00A47FEE /* CBLEBroadcaster.swift */,
 				F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */,
+				F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */,
+				F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */,
 				F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */,
 				F5CB0FC52DCDE71500B7C152 /* SettingView.swift */,
 				F5202E382DE58CB900257750 /* ScannerLogView.swift */,
@@ -184,6 +190,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */,
+				F5D6C93F2E0E387C0037982D /* BLEScanerDetailView.swift in Sources */,
 				F5B34ABD2DAA84CA00A47FEE /* BLEPacket.swift in Sources */,
 				F5CB0FC62DCDE74000B7C152 /* SettingView.swift in Sources */,
 				F5D6C9332E00809C0037982D /* MQTTManager.swift in Sources */,
@@ -192,6 +199,7 @@
 				F5D6C93D2E0507BC0037982D /* MQTTStatusView.swift in Sources */,
 				F5B34AB62DAA1C8F00A47FEE /* CBLEBroadcaster.swift in Sources */,
 				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
+				F5D6C9432E0E6AD70037982D /* BLEScannerRowView.swift in Sources */,
 				F5B34AB42DA9083900A47FEE /* CBLEScanner.swift in Sources */,
 				F5202E3B2DE5962B00257750 /* StorageManager.swift in Sources */,
 				F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */,
@@ -348,7 +356,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4;
 				PRODUCT_NAME = BlueAdv;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -381,7 +389,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4;
 				PRODUCT_NAME = BlueAdv;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;

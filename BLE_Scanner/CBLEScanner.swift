@@ -113,6 +113,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             print("full packet: ")
             let manufacturerBytes = Array(manufacturerData)
             rawDataStr = bytesToHexString(manufacturerBytes)
+            print(rawDataStr);
            
             let idLength = 1
             let deviceIdBytes = Array(manufacturerBytes.suffix(idLength))

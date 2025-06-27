@@ -20,21 +20,40 @@ struct ContentView: View {
         _mqttManager = StateObject(wrappedValue: manager)
         _packetStore = StateObject(wrappedValue: store)
         _offsetManager = StateObject(wrappedValue: pressureManager)
+        
+        setupNavigationBarAppearance()
     }
     
+    private func setupNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(red: 0.2, green: 0.5, blue: 0.8, alpha: 1.0)
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        // 設置返回按鈕顏色
+        UINavigationBar.appearance().tintColor = UIColor.white
+        
+        // 應用到所有導航欄
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView {
+                
                 BLEBroadcasterView(maskSuggestions: $mqttManager.maskSuggestions, dataSuggestions: $mqttManager.dataSuggestions)
                     .tabItem {
                         Label("廣播", systemImage: "antenna.radiowaves.left.and.right")
                     }
-                
+            
                 BLEScannerView(packetStore: packetStore, maskSuggestions: $mqttManager.maskSuggestions)
                     .tabItem {
                         Label("掃描", systemImage: "wave.3.right")
                     }
+                
                 ScannerLogView(packetStore: packetStore)
                     .tabItem {
                         Label("掃描Log", systemImage: "text.document")
@@ -66,7 +85,6 @@ struct ContentView: View {
         }
     }
 }
-
 
 #Preview {
     ContentView()

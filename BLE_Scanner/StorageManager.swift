@@ -78,7 +78,7 @@ class SavedPacketsStore: ObservableObject {
 
     private func deleteLogFromMQTT(id: UUID) {
         DispatchQueue.main.async {
-            self.packets.removeAll(where: { $0.id == id })
+            self.packets.removeAll(where: { $0.identifier == id.uuidString })
             StorageManager.save(packets: self.packets)
         }
     }
@@ -103,18 +103,17 @@ class SavedPacketsStore: ObservableObject {
             packets.remove(at: index)
             StorageManager.save(packets: packets)
             
-            // --- 【修正】---
             // 通知 MQTT 刪除這筆日誌，呼叫新的 deleteLog 函式
-            mqttManager.deleteLog(packetId: packet.id.uuidString)
+            mqttManager.deleteLog(packetId: packet.identifier)
         }
     }
     
     /// 清除所有日誌（同時會發布刪除指令到 MQTT）
     func clear() {
-        // --- 【修正】---
+        
         // 先通知 MQTT 刪除所有日誌
         for packet in packets {
-            mqttManager.deleteLog(packetId: packet.id.uuidString)
+            mqttManager.deleteLog(packetId: packet.identifier)
         }
         
         // 然後再清除本地資料
