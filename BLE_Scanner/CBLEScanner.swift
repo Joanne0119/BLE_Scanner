@@ -148,29 +148,14 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                         print(dataParser.formatParseResult(result))
                         
                         // 檢查是否需要停止掃描
-                        if result.hasReachedTarget && shouldStopScan {
-                            print("檢測到裝置接收次數達到100次，停止掃描")
-                            stopScanning()
-                        }
+//                        if result.hasReachedTarget && shouldStopScan {
+//                            print("檢測到裝置接收次數達到100次，停止掃描")
+//                            stopScanning()
+//                        }
                     }
                     
                     matchedCount += 1
                     print("Is Match！")
-                    let matchedPacket = BLEPacket(deviceID: deviceId,
-                                                  identifier: identifier,
-                                                  deviceName: deviceName,
-                                                  rssi: rssiValue,
-                                                  rawData: rawDataStr,
-                                                  mask: maskStr,
-                                                  data: dataStr,
-                                                  isMatched: true,
-                                                  timestamp: now,
-                                                  parsedData: parsedData
-                                                    )
-                    if matchedPackets[identifier] == nil {
-                        matchedPackets[identifier] = matchedPacket
-                    }
-//                    print(matchedPackets)
                    
                 }
             }
@@ -194,7 +179,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             self.allPackets[identifier] = packet
             
             if isMatched {
-                self.matchedPackets[identifier] = packet
+                self.matchedPackets[deviceId] = packet
             }
         }
 

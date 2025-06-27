@@ -23,6 +23,7 @@ struct BLEScannerView: View {
     @State private var idTextEmpty = false
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 100
+    @State private var maskError: String?
     @FocusState private var focusedField: Field?
     @Binding var maskSuggestions: [String]
     
@@ -46,22 +47,74 @@ struct BLEScannerView: View {
                     }
                 VStack(spacing: 20) {
                     VStack(alignment: .leading) {
-                        Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                            .font(.system(size: 15, weight: .light, design: .serif))
+                        DisclosureGroup(
+                            isExpanded: $isExpanded,
+                            content: {
+                                HStack{
+                                    VStack(alignment: .leading) {
+                                        Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                            .font(.system(size: 15, weight: .light))
+                                            .padding()
+                                            .background(Color.gray.opacity(0.2))
+                                            .cornerRadius(20)
+                                    }
+                                    .padding()
+                                    
+                                    Spacer()
+                                }
+                            }, label: {
+                                Text("說明")
+                                    .font(.system(size: 17, weight: .regular))
+                                    .foregroundColor(.secondary)
+                            }
+                        )
+                        VStack(alignment: .leading) {
+                            HStack {
+                                Text("目前Byte數: ")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(.blue)
+                                
+                                if let error = maskError {
+                                    Text(error)
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.red)
+                                } else {
+                                    let currentInput = maskText
+                                    if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        Text("0 byte")
+                                            .font(.system(size: 20, weight: .bold))
+                                            .foregroundStyle(.blue)
+                                    } else {
+                                        if let bytes = parseHexInput(currentInput) {
+                                            Text("\(bytes.count) byte")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundStyle(.blue)
+                                        } else {
+                                            Text("0 byte")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundStyle(.blue)
+                                        }
+                                    }
+                                }
+                            }
                             .padding(.vertical)
+                        }
+                            
                         HStack {
                             Text("遮罩： ")
-                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                .font(.system(size: 18, weight: .bold))
                             ZStack(){
                                 HStack(){
                                     TextField("ex：01 02 03", text: $maskText)
-                                        .font(.system(size: 18, weight: .bold, design: .serif))
-                                        .onChange(of: maskText) {_ in
-                                            scanner.expectedMaskText = maskText
+                                        .font(.system(size: 18, weight: .bold))
+                                        .onChange(of: maskText) { newValue in
+                                            scanner.expectedMaskText = newValue
+                                            validateField(originalInput: newValue, errorBinding: $maskError)
                                         }
                                         .id("MaskScanner")
                                         .focused($focusedField, equals: .mask)
                                         .padding()
+                                        
                                     if !maskText.isEmpty {
                                         Button(action: {
                                             maskText = ""
@@ -75,8 +128,9 @@ struct BLEScannerView: View {
                                 }
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 18)
-                                        .stroke(maskTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
+                                        .stroke(maskError == nil && maskTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
                                 )
+//
                             }
                         }
                         if focusedField == .mask {
@@ -125,9 +179,7 @@ struct BLEScannerView: View {
                                 maskTextEmpty = isMaskEmpty
                                 
                                 if isMaskEmpty {
-                                    //                                    withAnimation {
-                                    //                                        isExpanded = true // 展開區塊
-                                    //                                    }
+                                    
                                     return
                                 }
                                 handleStartScan()
@@ -147,7 +199,7 @@ struct BLEScannerView: View {
                     
                     if scanner.noMatchFound {
                         Text("找不到符合條件的裝置")
-                            .font(.system(size: 18, weight: .bold, design: .serif))
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.red)
                     }
                     
@@ -157,14 +209,15 @@ struct BLEScannerView: View {
                     }
                     .listStyle(PlainListStyle())
                     .navigationTitle("掃描端")
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            MQTTToolbarStatusView()
+                        }
+                    }
                 
                 }
                 .padding()
-                .onTapGesture {
-                    if focusedField != nil{
-                        focusedField = nil
-                    }
-                }
+
             }
         }
         .navigationBarHidden(false)
@@ -212,5 +265,19 @@ struct BLEScannerView: View {
     private func hideKeyboard() {
        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
    }
+    
+    private func validateField(originalInput: String, errorBinding: Binding<String?>) {
+        if originalInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            errorBinding.wrappedValue = nil
+            return
+        }
+        
+        if parseHexInput(originalInput) == nil {
+            errorBinding.wrappedValue = "遮罩格式錯誤"
+        } else {
+            // 格式正確，清除錯誤訊息
+            errorBinding.wrappedValue = nil
+        }
+    }
 
 }

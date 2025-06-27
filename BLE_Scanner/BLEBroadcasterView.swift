@@ -50,13 +50,13 @@ struct BLEBroadcasterView: View {
                             }
                         }
                     }
-                VStack(spacing: 20) {
+                ScrollView {
                     DisclosureGroup(
                         isExpanded: $isExpanded.animation(.easeInOut(duration: 0.3)),
                         content: {
                             VStack(alignment: .center) {
                                 Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                    .font(.system(size: 15, weight: .light, design: .serif))
+                                    .font(.system(size: 15, weight: .light))
                                     .padding(.vertical)
                                 Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
                                     .font(.system(size: 18, weight: .bold))
@@ -93,12 +93,12 @@ struct BLEBroadcasterView: View {
                         VStack(alignment: .leading) {
                             HStack {
                                 Text("遮罩：")
-                                    .font(.system(size: 18, weight: .bold, design: .serif))
+                                    .font(.system(size: 18, weight: .bold))
                                     .frame(width: 60, alignment: .leading)
                                 ZStack {
                                     HStack {
                                         TextField("ex: 7A 00 01", text: $inputMask)
-                                            .font(.system(size: 18, weight: .bold, design: .serif))
+                                            .font(.system(size: 18, weight: .bold))
                                             .keyboardType(.asciiCapable)
                                             .padding(.horizontal)
                                             .id("MaskBroadcast")
@@ -180,12 +180,12 @@ struct BLEBroadcasterView: View {
                         VStack(alignment: .leading){
                             HStack {
                                 Text("內容：")
-                                    .font(.system(size: 18, weight: .bold, design: .serif))
+                                    .font(.system(size: 18, weight: .bold))
                                     .frame(width: 60, alignment: .leading)
                                 ZStack(){
                                     HStack(){
                                         TextField("ex: 01 ,03 0564, 10", text: $inputData)
-                                            .font(.system(size: 18, weight: .bold, design: .serif))
+                                            .font(.system(size: 18, weight: .bold))
                                             .keyboardType(.asciiCapable)
                                             .padding(.horizontal)
                                             .id("DataBroadcast")
@@ -266,12 +266,12 @@ struct BLEBroadcasterView: View {
                         //MARK: - ID輸入
                         HStack {
                             Text("ID：")
-                                .font(.system(size: 18, weight: .bold, design: .serif))
+                                .font(.system(size: 18, weight: .bold))
                                 .frame(width: 60, alignment: .leading)
                             ZStack(){
                                 HStack(){
                                     TextField("ex: 01", text: $inputID)
-                                        .font(.system(size: 18, weight: .bold, design: .serif))
+                                        .font(.system(size: 18, weight: .bold))
                                         .keyboardType(.asciiCapable)
                                         .padding(.horizontal)
                                         .id("IdBroadcast")
@@ -332,7 +332,7 @@ struct BLEBroadcasterView: View {
                                 print("isAdv: \(broadcaster.isAdvertising)")
                             }
                         }
-                        .font(.system(size: 18, weight: .light, design: .serif))
+                        .font(.system(size: 18, weight: .light))
                         .buttonStyle(.borderedProminent)
                         .tint(broadcaster.isRepeatAdv ? .red : .blue)
                         .alert(alertMessage, isPresented: $showAlert) {
@@ -343,21 +343,26 @@ struct BLEBroadcasterView: View {
                     
                     if broadcaster.nameStr != "N/A" && broadcaster.isRepeatAdv{
                         Text("廣播中...")
-                            .font(.system(size: 15, weight: .light, design: .serif))
+                            .font(.system(size: 15, weight: .light))
                         Text("Payload: \(broadcaster.nameStr)")
-                            .font(.system(size: 15, weight: .light, design: .serif))
+                            .font(.system(size: 15, weight: .light))
                             .foregroundStyle(.primary)
                             .padding(.bottom)
                             .padding(.top, 6)
                     }
                     else {
                         Text("Ex: Payload: 7A000101030F3E0001")
-                            .font(.system(size: 15, weight: .light, design: .serif))
+                            .font(.system(size: 15, weight: .light))
                             .foregroundStyle(.secondary)
                             .padding()
                     }
                 }
                 .navigationTitle("廣播端")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        MQTTToolbarStatusView()
+                    }
+                }
                 .padding()
                 .onTapGesture {
                     if focusedField != nil{

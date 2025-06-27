@@ -41,49 +41,41 @@ struct ContentView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            TabView {
-                
-                BLEBroadcasterView(maskSuggestions: $mqttManager.maskSuggestions, dataSuggestions: $mqttManager.dataSuggestions)
-                    .tabItem {
-                        Label("廣播", systemImage: "antenna.radiowaves.left.and.right")
-                    }
+        TabView { 
             
-                BLEScannerView(packetStore: packetStore, maskSuggestions: $mqttManager.maskSuggestions)
-                    .tabItem {
-                        Label("掃描", systemImage: "wave.3.right")
-                    }
-                
-                ScannerLogView(packetStore: packetStore)
-                    .tabItem {
-                        Label("掃描Log", systemImage: "text.document")
-                    }
-                // 將 mqttManager 作為環境物件傳遞下去
-                SettingView()
-                    .tabItem {
-                        Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
-                    }
-                PressureCorrectionView(offsetManager: offsetManager, maskSuggestions: $mqttManager.maskSuggestions)
-                    .tabItem {
-                        Label("大氣壓力校正", systemImage: "checkmark.circle.badge.questionmark")
-                    }
-            }
+            BLEBroadcasterView(maskSuggestions: $mqttManager.maskSuggestions, dataSuggestions: $mqttManager.dataSuggestions)
+                .tabItem {
+                    Label("廣播", systemImage: "antenna.radiowaves.left.and.right")
+                }
+        
+            BLEScannerView(packetStore: packetStore, maskSuggestions: $mqttManager.maskSuggestions)
+                .tabItem {
+                    Label("掃描", systemImage: "wave.3.right")
+                }
             
-            if !mqttManager.connectionStatus.isEmpty {
-                MQTTStatusView()
-                    .padding(.bottom, 50)
-                    .padding(.trailing, 20)
-            }
+            ScannerLogView(packetStore: packetStore)
+                .tabItem {
+                    Label("掃描Log", systemImage: "text.document")
+                }
+
+            SettingView()
+                .tabItem {
+                    Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
+                }
+            PressureCorrectionView(offsetManager: offsetManager, maskSuggestions: $mqttManager.maskSuggestions)
+                .tabItem {
+                    Label("大氣壓力校正", systemImage: "checkmark.circle.badge.questionmark")
+                }
         }
         .environmentObject(packetStore)
         .environmentObject(mqttManager)
         .environmentObject(offsetManager)
         .onAppear {
             offsetManager.loadAndSyncOffsets()
-            // 當 View 出現時，開始 MQTT 連線
             mqttManager.connect()
         }
     }
+    
 }
 
 #Preview {

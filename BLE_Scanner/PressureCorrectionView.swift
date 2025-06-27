@@ -36,60 +36,67 @@ struct PressureCorrectionView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.white.opacity(0.01)
-                .onTapGesture {
-                    if focusedField != nil{
-                        focusedField = nil
+        NavigationView {
+            ZStack(alignment: .top) {
+                Color.white.opacity(0.01)
+                    .onTapGesture {
+                        if focusedField != nil{
+                            focusedField = nil
+                        }
+                    }
+                VStack(spacing: 20) {
+                    
+                    toggleSection
+                    
+                    inputSection
+                    
+                    buttonSection
+                    
+                    Text("已掃描到 \(blePackets.count) 個")
+                        .font(.system(size: 18, weight: .bold))
+                    
+                    dataTableView
+                }
+                .navigationTitle("大氣壓力校正")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        MQTTToolbarStatusView()
                     }
                 }
-            VStack(spacing: 20) {
-                Text("大氣壓力校正")
-                    .font(.largeTitle).bold()
-                
-                toggleSection
-                
-                inputSection
-                
-                buttonSection
-                
-                Text("已掃描到 \(blePackets.count) 個")
-                    .font(.system(size: 18, weight: .bold, design: .serif))
-                
-                dataTableView
-            }
-            .padding()
-            
-            if isLoadingMQTTData {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                
-                VStack {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("同步 MQTT 資料中...")
-                        .font(.system(size: 16, weight: .medium))
-                        .padding(.top, 10)
-                }
                 .padding()
-                .background(Color.white)
-                .cornerRadius(10)
+                
+                if isLoadingMQTTData {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    VStack {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("同步 MQTT 資料中...")
+                            .font(.system(size: 16, weight: .medium))
+                            .padding(.top, 10)
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+                }
+                
             }
-
+            .alert("校準結果", isPresented: $showingCalibrationAlert) {
+                Button("確定", role: .cancel) { }
+            } message: {
+                Text(calibrationMessage)
+            }
+            .alert("MQTT 通知", isPresented: $showingMQTTAlert) {
+                Button("確定", role: .cancel) { }
+            } message: {
+                Text(mqttAlertMessage)
+            }
+            .sheet(isPresented: $showDebugView) {
+                MQTTDebugView(mqttManager: mqttdebugManager)
+            }
         }
-        .alert("校準結果", isPresented: $showingCalibrationAlert) {
-            Button("確定", role: .cancel) { }
-        } message: {
-            Text(calibrationMessage)
-        }
-        .alert("MQTT 通知", isPresented: $showingMQTTAlert) {
-            Button("確定", role: .cancel) { }
-        } message: {
-            Text(mqttAlertMessage)
-        }
-        .sheet(isPresented: $showDebugView) {
-            MQTTDebugView(mqttManager: mqttdebugManager)
-        }
+        .navigationBarHidden(false)
     }
     
     // MARK: - View Components
@@ -101,7 +108,7 @@ struct PressureCorrectionView: View {
            }
            .toggleStyle(iOSCheckboxToggleStyle())
            .foregroundStyle(isCalibrationMode ? .orange : .primary)
-           .font(.system(size: 18, weight: .light, design: .serif))
+           .font(.system(size: 18, weight: .light))
            
        }
     }
@@ -123,13 +130,13 @@ struct PressureCorrectionView: View {
     private var maskInputSection: some View {
         HStack(alignment: .center) {
             Text("遮罩：")
-                .font(.system(size: 16, weight: .bold, design: .serif))
+                .font(.system(size: 16, weight: .bold))
                 .frame(width: 100, alignment: .leading)
             
             ZStack() {
                 HStack {
                     TextField("ex：01 02 03", text: $maskText)
-                        .font(.system(size: 18, weight: .bold, design: .serif))
+                        .font(.system(size: 18, weight: .bold))
                         .onChange(of: maskText) { _ in
                             scanner.expectedMaskText = maskText
                         }
@@ -194,11 +201,11 @@ struct PressureCorrectionView: View {
         VStack(){
             HStack(alignment: .center) {
                 Text("海平面氣壓：")
-                    .font(.system(size: 16, weight: .bold, design: .serif))
+                    .font(.system(size: 16, weight: .bold))
                     .frame(width: 100, alignment: .leading)
                 
                 TextField("ex：1013.25（hPa）", text: $basePressureText)
-                    .font(.system(size: 18, weight: .bold, design: .serif))
+                    .font(.system(size: 18, weight: .bold))
                     .keyboardType(.decimalPad)
                     .id("baseText")
                     .focused($focusedField, equals: .basePressure)
@@ -211,11 +218,11 @@ struct PressureCorrectionView: View {
             .padding(.horizontal)
             HStack(alignment: .center) {
                 Text("基準海拔：")
-                    .font(.system(size: 16, weight: .bold, design: .serif))
+                    .font(.system(size: 16, weight: .bold))
                     .frame(width: 100, alignment: .leading)
                 
                 TextField("ex：20（m）", text: $baseText)
-                    .font(.system(size: 18, weight: .bold, design: .serif))
+                    .font(.system(size: 18, weight: .bold))
                     .keyboardType(.decimalPad)
                     .id("baseText")
                     .focused($focusedField, equals: .base)

@@ -35,254 +35,263 @@ struct SettingView: View {
     @State private var editingByteStatus: String = ""
 
     var body: some View {
-        ZStack {
-            Color.white.opacity(0.01)
-                .onTapGesture {
-                    if focusState != false{
-                        focusState = false
-                    }
-                }
-            VStack {
-                Text("自訂輸入").font(.largeTitle).bold()
-                
-                Picker("選擇類型", selection: $selectedType) {
-                    ForEach(SuggestionType.allCases, id: \.self) { type in
-                        Text(type.rawValue).tag(type)
-                    }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
-                .onChange(of: selectedType) { newType in
-                    // 重新驗證當前選定類型的輸入內容
-                    let currentInput = binding(for: newType).wrappedValue
-                    validateField(
-                        originalInput: currentInput,
-                        errorBinding: &errorBinding(for: newType).wrappedValue,
-                        fieldName: newType.rawValue,
-                        parseHex: parseHexInput
-                    ) { corrected in
-                        binding(for: newType).wrappedValue = corrected
-                    }
-                }
-                
-                DisclosureGroup(
-                    isExpanded: $isExpanded,
-                    content: {
-                        HStack{
-                            VStack(alignment: .leading) {
-                                Text("自訂遮罩與內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方")
-                                    .font(.system(size: 15, weight: .light, design: .serif))
-                                
-                                Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                    .font(.system(size: 15, weight: .light, design: .serif))
-                                    .padding()
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(20)
-                            }
-                            .padding()
-                            
-                            Spacer()
+        NavigationView {
+            ZStack {
+                Color.white.opacity(0.01)
+                    .onTapGesture {
+                        if focusState != false{
+                            focusState = false
                         }
-                    }, label: {
-                        Text("說明")
-                            .font(.system(size: 17, weight: .regular))
-                            .foregroundColor(.secondary)
                     }
-                )
-                .padding()
-                
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("目前Byte數: ")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.blue)
-                        
-                        if let error = combinedError {
-                            Text(error)
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.red)
-                        } else {
-                            let currentInput = binding(for: selectedType).wrappedValue
-                            if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                Text("0 byte")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.blue)
-                            } else {
-                                if let bytes = parseHexInput(currentInput) {
-                                    Text("\(bytes.count) byte")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(.blue)
-                                } else {
-                                    Text("0 byte")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(.blue)
+                VStack {
+                    DisclosureGroup(
+                        isExpanded: $isExpanded,
+                        content: {
+                            HStack{
+                                VStack(alignment: .leading) {
+                                    Text("自訂遮罩與內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方")
+                                        .font(.system(size: 15, weight: .light))
+                                    
+                                    Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                        .font(.system(size: 15, weight: .light))
+                                        .padding()
+                                        .background(Color.gray.opacity(0.2))
+                                        .cornerRadius(20)
                                 }
+                                .padding()
+                                
+                                Spacer()
                             }
+                        }, label: {
+                            Text("說明")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundColor(.secondary)
                         }
-                    }
+                    )
                     .padding()
                     
-                    
-                    Text("自訂\(selectedType.rawValue)")
-                        .font(.system(size: 18, weight: .bold))
-                        .padding(.horizontal)
-                
-                    HStack {
-                        // 1. 用一個 HStack 包裹輸入框和清除按鈕
-                        HStack {
-                            TextField("輸入自訂\(selectedType.rawValue)", text: binding(for: selectedType))
-                                .font(.system(size: 18, weight: .bold, design: .serif))
-                                .focused($focusState)
-                                .onChange(of: binding(for: selectedType).wrappedValue) { newValue in
-                                    // onChange 內部只處理邏輯，不放UI元件
-                                    enforceMaxLength(
-                                        originalInput: newValue,
-                                        input: &binding(for: selectedType).wrappedValue,
-                                        parseHex: parseHexInput
-                                    )
-                                    validateField(
-                                        originalInput: newValue,
-                                        errorBinding: &errorBinding(for: selectedType).wrappedValue,
-                                        fieldName: selectedType.rawValue,
-                                        parseHex: parseHexInput) { corrected in
-                                            binding(for: selectedType).wrappedValue = corrected
-                                        }
-                                }
-                            
-                            // 2. 將清除按鈕放在 TextField 旁邊
-                            if !binding(for: selectedType).wrappedValue.isEmpty {
-                                Button(action: {
-                                    binding(for: selectedType).wrappedValue = ""
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                                .transition(.opacity)
-                            }
+                    Picker("選擇類型", selection: $selectedType) {
+                        ForEach(SuggestionType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
                         }
-                        // 3. 將 padding 和 overlay 應用於包含兩者的 HStack 上
-                        .padding()
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(combinedError == nil ? Color.secondary : Color.red, lineWidth: 2)
-                        )
-                        
-                        Button("新增") {
-                            addSuggestion(for: selectedType)
-                        }
-                        .font(.system(size: 18, weight: .bold, design: .serif))
                     }
+                    .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
-                    // 4. 為按鈕的出現/消失添加動畫效果
-                    .animation(.easeInOut(duration: 0.2), value: binding(for: selectedType).wrappedValue.isEmpty)
-                }
-                
-                List {
-                    ForEach(suggestions(for: selectedType), id: \.self) { suggestion in
-                        Text(suggestion)
-                            .font(.system(size: 18, weight: .bold, design: .serif))
-                            .onTapGesture {
-                                binding(for: selectedType).wrappedValue = suggestion
-                            }
-                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                Button {
-                                    editSuggestion(suggestion)
-                                } label: {
-                                    Label("編輯", systemImage: "pencil")
-                                }
-                                .tint(.blue)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    if let index = suggestions(for: selectedType).firstIndex(of: suggestion) {
-                                        deleteSuggestion(for: selectedType, at: IndexSet(integer: index))
-                                    }
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                            }
+                    .onChange(of: selectedType) { newType in
+                        // 重新驗證當前選定類型的輸入內容
+                        let currentInput = binding(for: newType).wrappedValue
+                        validateField(
+                            originalInput: currentInput,
+                            errorBinding: &errorBinding(for: newType).wrappedValue,
+                            fieldName: newType.rawValue,
+                            parseHex: parseHexInput
+                        ) { corrected in
+                            binding(for: newType).wrappedValue = corrected
+                        }
                     }
-                }
-            }
-            .padding()
-            .sheet(isPresented: $isEditing) {
-                // ... sheet 內容維持不變 ...
-                NavigationView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        Text("編輯\(selectedType.rawValue)")
-                            .font(.system(size: 20, weight: .bold, design: .serif))
-                        
+                    
+                    
+                    
+                    VStack(alignment: .leading) {
                         HStack {
                             Text("目前Byte數: ")
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundStyle(.blue)
                             
-                            // 檢查編輯文本的錯誤和Byte數
-                            if editingText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                Text("0 byte")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.blue)
-                            } else if let error = editingByteStatus.isEmpty ? nil : editingByteStatus {
+                            if let error = combinedError {
                                 Text(error)
                                     .font(.system(size: 20, weight: .bold))
                                     .foregroundStyle(.red)
-                            } else if let bytes = parseHexInput(editingText) {
-                                Text("\(bytes.count) byte")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.blue)
                             } else {
-                                Text("格式錯誤")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.red)
+                                let currentInput = binding(for: selectedType).wrappedValue
+                                if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    Text("0 byte")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.blue)
+                                } else {
+                                    if let bytes = parseHexInput(currentInput) {
+                                        Text("\(bytes.count) byte")
+                                            .font(.system(size: 20, weight: .bold))
+                                            .foregroundStyle(.blue)
+                                    } else {
+                                        Text("0 byte")
+                                            .font(.system(size: 20, weight: .bold))
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
                             }
                         }
                         .padding()
                         
-                        TextField("輸入\(selectedType.rawValue)", text: $editingText)
-                            .font(.system(size: 18, weight: .bold, design: .serif))
-                            .autocapitalization(.allCharacters)
-                            .focused($focusState)
-                            .onChange(of: editingText) { newValue in
-                                // 檢查長度限制
-                                let maxLength: Int = 26
-                                if let bytes = parseHexInput(newValue), bytes.count > maxLength {
-                                    editingText = String(newValue.dropLast(2))
-                                    triggerInputLimitFeedback()
-                                }
+                        
+                        Text("自訂\(selectedType.rawValue)")
+                            .font(.system(size: 18, weight: .bold))
+                            .padding(.horizontal)
+                        
+                        HStack {
+                            // 1. 用一個 HStack 包裹輸入框和清除按鈕
+                            HStack {
+                                TextField("輸入自訂\(selectedType.rawValue)", text: binding(for: selectedType))
+                                    .font(.system(size: 18, weight: .bold))
+                                    .focused($focusState)
+                                    .onChange(of: binding(for: selectedType).wrappedValue) { newValue in
+                                        // onChange 內部只處理邏輯，不放UI元件
+                                        enforceMaxLength(
+                                            originalInput: newValue,
+                                            input: &binding(for: selectedType).wrappedValue,
+                                            parseHex: parseHexInput
+                                        )
+                                        validateField(
+                                            originalInput: newValue,
+                                            errorBinding: &errorBinding(for: selectedType).wrappedValue,
+                                            fieldName: selectedType.rawValue,
+                                            parseHex: parseHexInput) { corrected in
+                                                binding(for: selectedType).wrappedValue = corrected
+                                            }
+                                    }
                                 
-                                // 驗證格式和內容
-                                validateEditingText(newValue){ correct in
-                                    editingText = correct
+                                // 2. 將清除按鈕放在 TextField 旁邊
+                                if !binding(for: selectedType).wrappedValue.isEmpty {
+                                    Button(action: {
+                                        binding(for: selectedType).wrappedValue = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .transition(.opacity)
                                 }
                             }
+                            // 3. 將 padding 和 overlay 應用於包含兩者的 HStack 上
                             .padding()
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18)
-                                    .stroke(editingByteStatus.isEmpty ? Color.secondary : Color.red, lineWidth: 2)
+                                    .stroke(combinedError == nil ? Color.secondary : Color.red, lineWidth: 2)
                             )
-
-                        Spacer()
-                    }
-                    .padding()
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("取消") {
-                                isEditing = false
+                            
+                            Button("新增") {
+                                addSuggestion(for: selectedType)
                             }
-                            .font(.system(size: 18, weight: .bold, design: .serif))
+                            .font(.system(size: 18, weight: .bold))
                         }
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("儲存") {
-                                saveEditedSuggestion()
-                                isEditing = false
+                        .padding(.horizontal)
+                        // 4. 為按鈕的出現/消失添加動畫效果
+                        .animation(.easeInOut(duration: 0.2), value: binding(for: selectedType).wrappedValue.isEmpty)
+                    }
+                    
+                    List {
+                        ForEach(suggestions(for: selectedType), id: \.self) { suggestion in
+                            Text(suggestion)
+                                .font(.system(size: 18, weight: .bold))
+                                .onTapGesture {
+                                    binding(for: selectedType).wrappedValue = suggestion
+                                }
+                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                    Button {
+                                        editSuggestion(suggestion)
+                                    } label: {
+                                        Label("編輯", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        if let index = suggestions(for: selectedType).firstIndex(of: suggestion) {
+                                            deleteSuggestion(for: selectedType, at: IndexSet(integer: index))
+                                        }
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                }
+                        }
+                    }
+                }
+                .navigationTitle("自訂輸入")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        MQTTToolbarStatusView()
+                    }
+                }
+                .padding()
+                .sheet(isPresented: $isEditing) {
+                    // ... sheet 內容維持不變 ...
+                    NavigationView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text("編輯\(selectedType.rawValue)")
+                                .font(.system(size: 20, weight: .bold))
+                            
+                            HStack {
+                                Text("目前Byte數: ")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(.blue)
+                                
+                                // 檢查編輯文本的錯誤和Byte數
+                                if editingText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    Text("0 byte")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.blue)
+                                } else if let error = editingByteStatus.isEmpty ? nil : editingByteStatus {
+                                    Text(error)
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.red)
+                                } else if let bytes = parseHexInput(editingText) {
+                                    Text("\(bytes.count) byte")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.blue)
+                                } else {
+                                    Text("格式錯誤")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundStyle(.red)
+                                }
                             }
-                            .font(.system(size: 18, weight: .bold, design: .serif))
+                            .padding()
+                            
+                            TextField("輸入\(selectedType.rawValue)", text: $editingText)
+                                .font(.system(size: 18, weight: .bold))
+                                .autocapitalization(.allCharacters)
+                                .focused($focusState)
+                                .onChange(of: editingText) { newValue in
+                                    // 檢查長度限制
+                                    let maxLength: Int = 26
+                                    if let bytes = parseHexInput(newValue), bytes.count > maxLength {
+                                        editingText = String(newValue.dropLast(2))
+                                        triggerInputLimitFeedback()
+                                    }
+                                    
+                                    // 驗證格式和內容
+                                    validateEditingText(newValue){ correct in
+                                        editingText = correct
+                                    }
+                                }
+                                .padding()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 18)
+                                        .stroke(editingByteStatus.isEmpty ? Color.secondary : Color.red, lineWidth: 2)
+                                )
+                            
+                            Spacer()
+                        }
+                        .padding()
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("取消") {
+                                    isEditing = false
+                                }
+                                .font(.system(size: 18, weight: .bold))
+                            }
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("儲存") {
+                                    saveEditedSuggestion()
+                                    isEditing = false
+                                }
+                                .font(.system(size: 18, weight: .bold))
+                            }
                         }
                     }
                 }
             }
         }
+        .navigationBarHidden(false)
     }
 
     // MARK: - Helper Functions

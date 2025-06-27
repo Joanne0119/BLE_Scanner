@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/20.
-//  最後更新 2025/06/20
+
 //
 import SwiftUI
 
@@ -100,6 +100,76 @@ struct MQTTStatusView: View {
             // 成功狀態顯示 2 秒後恢復正常
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 withAnimation(.easeInOut(duration: 0.3)) {
+                    showUpdateSuccess = false
+                }
+            }
+        }
+    }
+}
+
+struct MQTTToolbarStatusView: View {
+    @EnvironmentObject var mqttManager: MQTTManager
+    @State private var isUpdating = false
+    @State private var showUpdateSuccess = false
+
+    var body: some View {
+        Button(action: handleButtonTap) {
+            // 使用 ZStack 來確保 ProgressView 和 Image 佔用相同空間，防止版面跳動
+            ZStack {
+                // 根據不同狀態顯示對應的圖示
+                if isUpdating {
+                    ProgressView()
+                        .scaleEffect(0.8) // 調整大小以適應 Toolbar
+                } else if showUpdateSuccess {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                } else if mqttManager.isConnected {
+                    Image(systemName: "checkmark.icloud")
+                        .foregroundColor(.white) // 使用主題色或 .blue
+                } else {
+                    Image(systemName: "xmark.icloud")
+                        .foregroundColor(.red)
+                }
+            }
+            .font(.system(size: 16, weight: .medium)) // 統一設定字體大小和粗細
+            .frame(width: 20, height: 20, alignment: .center) // 給予固定大小，防止切換時佈局變化
+            .animation(.easeInOut(duration: 0.2), value: isUpdating)
+            .animation(.easeInOut(duration: 0.2), value: showUpdateSuccess)
+            .animation(.easeInOut(duration: 0.2), value: mqttManager.isConnected)
+        }
+        .disabled(isUpdating)
+    }
+    
+    private func handleButtonTap() {
+        if mqttManager.isConnected {
+            // 如果已連線，則執行手動更新
+            manualUpdateData()
+        } else {
+            // 如果未連線，則嘗試重新連線
+            mqttManager.connect()
+        }
+    }
+    
+    
+    // 更新資料的邏輯與原本的 MQTTStatusView 相同
+    private func manualUpdateData() {
+        guard !isUpdating else { return }
+        
+        withAnimation {
+            isUpdating = true
+            showUpdateSuccess = false
+        }
+        
+        mqttManager.requestAllInitialData()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation {
+                isUpdating = false
+                showUpdateSuccess = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                withAnimation {
                     showUpdateSuccess = false
                 }
             }
