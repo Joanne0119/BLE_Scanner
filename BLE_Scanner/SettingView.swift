@@ -44,37 +44,12 @@ struct SettingView: View {
                         }
                     }
                 VStack {
-                    DisclosureGroup(
-                        isExpanded: $isExpanded,
-                        content: {
-                            HStack{
-                                VStack(alignment: .leading) {
-                                    Text("自訂遮罩與內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方")
-                                        .font(.system(size: 15, weight: .light))
-                                    
-                                    Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                        .font(.system(size: 15, weight: .light))
-                                        .padding()
-                                        .background(Color.gray.opacity(0.2))
-                                        .cornerRadius(20)
-                                }
-                                .padding()
-                                
-                                Spacer()
-                            }
-                        }, label: {
-                            Text("說明")
-                                .font(.system(size: 17, weight: .regular))
-                                .foregroundColor(.secondary)
-                        }
-                    )
-                    .padding()
-                    
                     Picker("選擇類型", selection: $selectedType) {
                         ForEach(SuggestionType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
+                    .font(.system(size: 30, weight: .bold))
                     .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
                     .onChange(of: selectedType) { newType in
@@ -94,34 +69,54 @@ struct SettingView: View {
                     
                     VStack(alignment: .leading) {
                         HStack {
-                            Text("目前Byte數: ")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.blue)
-                            
-                            if let error = combinedError {
-                                Text(error)
+                            HStack {
+                                Text("目前Byte數: ")
                                     .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.red)
-                            } else {
-                                let currentInput = binding(for: selectedType).wrappedValue
-                                if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    Text("0 byte")
+                                    .foregroundStyle(.blue)
+                                
+                                if let error = combinedError {
+                                    Text(error)
                                         .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(.blue)
+                                        .foregroundStyle(.red)
                                 } else {
-                                    if let bytes = parseHexInput(currentInput) {
-                                        Text("\(bytes.count) byte")
-                                            .font(.system(size: 20, weight: .bold))
-                                            .foregroundStyle(.blue)
-                                    } else {
+                                    let currentInput = binding(for: selectedType).wrappedValue
+                                    if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                         Text("0 byte")
                                             .font(.system(size: 20, weight: .bold))
                                             .foregroundStyle(.blue)
+                                    } else {
+                                        if let bytes = parseHexInput(currentInput) {
+                                            Text("\(bytes.count) byte")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundStyle(.blue)
+                                        } else {
+                                            Text("0 byte")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundStyle(.blue)
+                                        }
                                     }
                                 }
                             }
+                            .padding()
+                            
+                       
+                            Spacer()
+                            HelpButtonView {
+                                VStack(alignment: .leading) {
+                                    Text("此為自訂遮罩與自訂內容的快速選取欄位，此自訂內容會出現在廣播與掃描端的輸入框下方\n")
+                                        .font(.system(size: 25, weight: .medium))
+                                    
+                                    Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）\n")
+                                        .font(.system(size: 20, weight: .medium))
+                                    Text("注意：\n廣播端只能使用 01 ~ 7F 十六進位的數字。\n掃描端為00 ~ FF 十六進位的數字")
+                                        .foregroundColor(.red)
+                                        .font(.system(size: 20, weight: .medium))
+                                }
+                                .padding()
+                            }
+                            .padding()
+                            
                         }
-                        .padding()
                         
                         
                         Text("自訂\(selectedType.rawValue)")
@@ -278,6 +273,7 @@ struct SettingView: View {
                                     isEditing = false
                                 }
                                 .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
                             }
                             ToolbarItem(placement: .confirmationAction) {
                                 Button("儲存") {
@@ -285,6 +281,7 @@ struct SettingView: View {
                                     isEditing = false
                                 }
                                 .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
                             }
                         }
                     }

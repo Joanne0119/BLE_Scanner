@@ -27,6 +27,7 @@
 		F5D6C93D2E0507BC0037982D /* MQTTStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */; };
 		F5D6C93F2E0E387C0037982D /* BLEScanerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */; };
 		F5D6C9432E0E6AD70037982D /* BLEScannerRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */; };
+		F5D6C9452E1133CB0037982D /* HelpButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9442E1133BF0037982D /* HelpButtonView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 		F5D6C93C2E0507BC0037982D /* MQTTStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTStatusView.swift; sourceTree = "<group>"; };
 		F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScanerDetailView.swift; sourceTree = "<group>"; };
 		F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerRowView.swift; sourceTree = "<group>"; };
+		F5D6C9442E1133BF0037982D /* HelpButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpButtonView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +91,7 @@
 				F5B34AA72DA907E700A47FEE /* ContentView.swift */,
 				F5B34AB32DA9083900A47FEE /* CBLEScanner.swift */,
 				F5B34AB52DAA1C8F00A47FEE /* CBLEBroadcaster.swift */,
+				F5D6C9442E1133BF0037982D /* HelpButtonView.swift */,
 				F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */,
 				F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */,
 				F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */,
@@ -204,6 +207,7 @@
 				F5202E3B2DE5962B00257750 /* StorageManager.swift in Sources */,
 				F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */,
 				F55A69CC2DFBE9FB00095DF4 /* BLEParser.swift in Sources */,
+				F5D6C9452E1133CB0037982D /* HelpButtonView.swift in Sources */,
 				F5D6C93B2E0124A80037982D /* MQTTDebugView.swift in Sources */,
 				F5202E392DE58CC500257750 /* ScannerLogView.swift in Sources */,
 			);

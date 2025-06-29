@@ -47,57 +47,51 @@ struct BLEScannerView: View {
                     }
                 VStack(spacing: 20) {
                     VStack(alignment: .leading) {
-                        DisclosureGroup(
-                            isExpanded: $isExpanded,
-                            content: {
-                                HStack{
-                                    VStack(alignment: .leading) {
-                                        Text("請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                            .font(.system(size: 15, weight: .light))
-                                            .padding()
-                                            .background(Color.gray.opacity(0.2))
-                                            .cornerRadius(20)
-                                    }
-                                    .padding()
-                                    
-                                    Spacer()
-                                }
-                            }, label: {
-                                Text("說明")
-                                    .font(.system(size: 17, weight: .regular))
-                                    .foregroundColor(.secondary)
-                            }
-                        )
                         VStack(alignment: .leading) {
                             HStack {
-                                Text("目前Byte數: ")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(.blue)
-                                
-                                if let error = maskError {
-                                    Text(error)
+                                HStack {
+                                    Text("目前Byte數: ")
                                         .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(.red)
-                                } else {
-                                    let currentInput = maskText
-                                    if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                        Text("0 byte")
+                                        .foregroundStyle(.blue)
+                                    
+                                    if let error = maskError {
+                                        Text(error)
                                             .font(.system(size: 20, weight: .bold))
-                                            .foregroundStyle(.blue)
+                                            .foregroundStyle(.red)
                                     } else {
-                                        if let bytes = parseHexInput(currentInput) {
-                                            Text("\(bytes.count) byte")
-                                                .font(.system(size: 20, weight: .bold))
-                                                .foregroundStyle(.blue)
-                                        } else {
+                                        let currentInput = maskText
+                                        if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                             Text("0 byte")
                                                 .font(.system(size: 20, weight: .bold))
                                                 .foregroundStyle(.blue)
+                                        } else {
+                                            if let bytes = parseHexInput(currentInput) {
+                                                Text("\(bytes.count) byte")
+                                                    .font(.system(size: 20, weight: .bold))
+                                                    .foregroundStyle(.blue)
+                                            } else {
+                                                Text("0 byte")
+                                                    .font(.system(size: 20, weight: .bold))
+                                                    .foregroundStyle(.blue)
+                                            }
                                         }
                                     }
                                 }
+                                
+                                Spacer()
+                                HelpButtonView {
+                                    VStack {
+                                        Text("掃描端篩選用的遮罩請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C)\n")
+                                            .font(.system(size: 20, weight: .medium))
+                                        Text("輸入遮罩後可按下「開始掃描」按鈕，即可獲得符合條件的裝置列表，列表中的內容為裝置ID與該裝置的rssi，點擊該裝置即可鎖定裝置，並進入裝置的詳細資料內容。\n詳細內容內可查看一定數據中最短的接收封包的時間、溫度、大氣壓力，以及該裝置鄰近裝置的ID與建議佈件移動方位。")
+                                            .font(.system(size: 20, weight: .medium))
+                                    }
+                                    .padding()
+                                }
+                                .padding()
+                            
+                                
                             }
-                            .padding(.vertical)
                         }
                             
                         HStack {
@@ -166,8 +160,6 @@ struct BLEScannerView: View {
                             .padding(.horizontal)
                         }
                     }
-                    .padding()
-                    
                     
                     HStack {
                         Button(scanner.isScanning ? "停止掃描" : "開始掃描") {

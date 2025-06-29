@@ -51,41 +51,44 @@ struct BLEBroadcasterView: View {
                         }
                     }
                 ScrollView {
-                    DisclosureGroup(
-                        isExpanded: $isExpanded.animation(.easeInOut(duration: 0.3)),
-                        content: {
-                            VStack(alignment: .center) {
-                                Text("請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                                    .font(.system(size: 15, weight: .light))
-                                    .padding(.vertical)
-                                Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .padding()
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(20)
+                    ZStack {
+                        HStack {
+                            if let error = combinedError  {
+                                Text(error)
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(.red)
+                            }
+                            else {
+                                Text("\(currentByte) byte")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(.blue)
                             }
                             
-                        }, label: {
-                            Text("說明")
-                                .font(.system(size: 17, weight: .regular))
-                                .foregroundColor(.secondary)
-                        }
-                    )
-                    .padding()
-                    HStack {
-                        if let error = combinedError  {
-                            Text(error)
+                            Text("/ 26 byte")
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.red)
-                        }
-                        else {
-                            Text("\(currentByte) byte")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.blue)
                         }
                         
-                        Text("/ 26 byte")
-                            .font(.system(size: 20, weight: .bold))
+                        HStack {
+                        Spacer()
+                            HelpButtonView {
+                                
+                                VStack(alignment: .leading, spacing: 20) {
+                                    VStack(alignment: .center) {
+                                        Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
+                                            .font(.system(size: 25, weight: .bold))
+                                            .padding()
+                                            .frame(maxWidth: .infinity)
+                                            .background(Color.blue.opacity(0.1))
+                                            .cornerRadius(12)
+                                    }
+                                    Text("廣播端的封包請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
+                                        .font(.system(size: 20, weight: .medium))
+                                        
+                                }
+                                .padding()
+                            }
+                        }
+                        .padding()
                     }
                     
                     //MARK: - 遮罩輸入
@@ -369,6 +372,7 @@ struct BLEBroadcasterView: View {
                         focusedField = nil
                     }
                 }
+                
             }
         }
         .navigationBarHidden(false)
