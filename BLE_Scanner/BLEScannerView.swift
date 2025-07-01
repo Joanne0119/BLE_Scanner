@@ -180,12 +180,12 @@ struct BLEScannerView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(scanner.isScanning ? .red : .blue)
                         
-                        Button("儲存掃描結果") {
-                            scanner.stopScanning()
-                            packetStore.updateOrAppend(contentsOf: filteredPackets)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brown)
+//                        Button("儲存掃描結果") {
+//                            scanner.stopScanning()
+//                            packetStore.updateOrAppend(contentsOf: filteredPackets)
+//                        }
+//                        .buttonStyle(.borderedProminent)
+//                        .tint(.brown)
                         
                     }
                     
@@ -200,6 +200,23 @@ struct BLEScannerView: View {
                         BLEPacketRowView(packet: packet)
                     }
                     .listStyle(PlainListStyle())
+                    .onChange(of: scanner.matchedPackets) { _ in
+                        guard scanner.isScanning
+                        else { return }
+                        
+                        let parser = BLEDataParser()
+                        
+                        let conditionMet = scanner.matchedPackets.values.contains { packet in
+                            if let parsed = parser.parseDataString(packet.data) {
+                                return parsed.hasReachedTarget
+                            }
+                            return false
+                        }
+                        
+                        if conditionMet {
+                            packetStore.updateOrAppend(contentsOf: filteredPackets)
+                        }
+                    }
                     .navigationTitle("掃描端")
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {

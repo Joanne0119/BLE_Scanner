@@ -28,6 +28,7 @@
 		F5D6C93F2E0E387C0037982D /* BLEScanerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */; };
 		F5D6C9432E0E6AD70037982D /* BLEScannerRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */; };
 		F5D6C9452E1133CB0037982D /* HelpButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9442E1133BF0037982D /* HelpButtonView.swift */; };
+		F5D6C9472E1374A00037982D /* CompassManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9462E1374900037982D /* CompassManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +54,7 @@
 		F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScanerDetailView.swift; sourceTree = "<group>"; };
 		F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEScannerRowView.swift; sourceTree = "<group>"; };
 		F5D6C9442E1133BF0037982D /* HelpButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpButtonView.swift; sourceTree = "<group>"; };
+		F5D6C9462E1374900037982D /* CompassManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompassManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +97,7 @@
 				F5B34AB72DAA1D8E00A47FEE /* BLEScannerView.swift */,
 				F5D6C9422E0E6ACC0037982D /* BLEScannerRowView.swift */,
 				F5D6C93E2E0E38440037982D /* BLEScanerDetailView.swift */,
+				F5D6C9462E1374900037982D /* CompassManager.swift */,
 				F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */,
 				F5CB0FC52DCDE71500B7C152 /* SettingView.swift */,
 				F5202E382DE58CB900257750 /* ScannerLogView.swift */,
@@ -204,6 +207,7 @@
 				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
 				F5D6C9432E0E6AD70037982D /* BLEScannerRowView.swift in Sources */,
 				F5B34AB42DA9083900A47FEE /* CBLEScanner.swift in Sources */,
+				F5D6C9472E1374A00037982D /* CompassManager.swift in Sources */,
 				F5202E3B2DE5962B00257750 /* StorageManager.swift in Sources */,
 				F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */,
 				F55A69CC2DFBE9FB00095DF4 /* BLEParser.swift in Sources */,

@@ -37,8 +37,10 @@ struct BLEPacketRowView: View {
                 // 中間的訊號圖示
                 SignalStrengthView(rssi: packet.rssi)
                 
+                let rssi = if packet.rssi != 127 { "\(packet.rssi)" } else { "Error" }
+                
                 // 右側的 RSSI 數值
-                Text("\(packet.rssi)")
+                Text("\(rssi)")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                     .frame(width: 80, alignment: .leading)
@@ -53,7 +55,9 @@ struct SignalStrengthView: View {
     
     // 根據 RSSI 值決定顏色
     private var signalColor: Color {
-        if rssi > -70 {
+        if rssi == 127 {
+            return .red
+        } else if rssi > -70 {
             return .green
         } else if rssi > -90 {
             return .orange
@@ -64,7 +68,10 @@ struct SignalStrengthView: View {
     
     // 根據 RSSI 值決定要顯示幾格訊號
     private var numberOfBars: Int {
-        if rssi > -65 {
+        if rssi == 127 {
+            return 0
+        }
+        else if rssi > -65 {
             return 4
         } else if rssi > -80 {
             return 3

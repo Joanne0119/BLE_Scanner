@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/06/27
+//  最後更新 2025/07/01
 
 import SwiftUI
 import Foundation
@@ -55,6 +55,7 @@ enum DeviceSuggestion {
 struct BLEScannerDetailView: View {
     let packet: BLEPacket
     @Environment(\.dismiss) var dismiss
+    @StateObject private var compassManager = CompassManager()
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
@@ -109,14 +110,34 @@ struct BLEScannerDetailView: View {
             
             // 右側指南針按鈕
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    print("指南針")
-                }) {
-                    Image(systemName: "safari")
-                        .font(.system(size: 20, weight: .medium))
+                
+                HStack {
+                    Text("\(direction(from: compassManager.heading))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white)
+                    
+                    Image(systemName: "location.north.circle")
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                        .rotationEffect(Angle(degrees: -compassManager.heading))
+                        .animation(.easeInOut, value: compassManager.heading)
                         .foregroundColor(.white)
                 }
+                
             }
+        }
+    }
+    private func direction(from heading: Double) -> String {
+        switch heading {
+        case 0..<22.5, 337.5..<360: return "北"
+        case 22.5..<67.5: return "東北"
+        case 67.5..<112.5: return "東"
+        case 112.5..<157.5: return "東南"
+        case 157.5..<202.5: return "南"
+        case 202.5..<247.5: return "西南"
+        case 247.5..<292.5: return "西"
+        case 292.5..<337.5: return "西北"
+        default: return "未知"
         }
     }
 }

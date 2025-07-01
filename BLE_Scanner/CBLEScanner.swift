@@ -152,6 +152,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
 //                            print("檢測到裝置接收次數達到100次，停止掃描")
 //                            stopScanning()
 //                        }
+                        
                     }
                     
                     matchedCount += 1

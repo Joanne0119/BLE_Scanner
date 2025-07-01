@@ -109,6 +109,8 @@ class BLEDataParser {
             devices.append(deviceInfo)
         }
         
+        devices.sort { $0.count > $1.count }
+        
         return ParsedBLEData(
             temperature: temperature,
             atmosphericPressure: atmosphericPressure,
