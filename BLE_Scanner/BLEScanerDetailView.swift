@@ -59,6 +59,7 @@ struct BLEScannerDetailView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var compassManager = CompassManager()
     @State private var hasBeenSaved = false
+    @State private var lastSavedCycle: Date?  // 記錄上次保存的時間，用於防止重複保存
     
     private var currentPacket: BLEPacket? {
         scanner.matchedPackets[deviceID]
@@ -69,21 +70,34 @@ struct BLEScannerDetailView: View {
     }
     
     private var displayPacket: BLEPacket? {
-        //  必須要有即時封包，否則 UI 無法即時更新
         guard var packetForDisplay = currentPacket else {
-            // 如果沒有即時資料 (例如剛停止掃描)，則顯示儲存的資料作為備用
             return storedPacket
         }
-
-        //  檢查是否有歷史紀錄
+        
+        // 將歷史數據添加到即時數據後面
         if let historyDevices = storedPacket?.parsedData?.devices {
-            //    將完整的歷史紀錄注入到我們用於顯示的封包中
-            //    如果 packetForDisplay.parsedData 是 nil，這行不會做事，是安全的
-            packetForDisplay.parsedData?.devices = historyDevices
+            let currentDevices = packetForDisplay.parsedData?.devices ?? []
+            // 即時數據在前，歷史數據在後
+            packetForDisplay.parsedData?.devices = currentDevices + historyDevices
         }
         
-        //  回傳這個混合了「即時頂層數據」和「完整歷史列表」的完美封包
         return packetForDisplay
+    }
+    
+    private var historicalDevices: [DeviceInfo] {
+        return storedPacket?.parsedData?.devices ?? []
+    }
+
+    
+    // 檢查是否需要重置狀態
+    private func shouldResetState() -> Bool {
+        guard let currentParsedData = currentPacket?.parsedData else { return false }
+        
+        // 檢查當前封包中的所有裝置計數是否都小於100
+        let allDevicesBelowTarget = currentParsedData.devices.allSatisfy { $0.count < 100 }
+        
+        // 如果之前已經保存過，並且現在所有裝置都低於目標，則需要重置
+        return hasBeenSaved && allDevicesBelowTarget
     }
 
     var body: some View {
@@ -164,24 +178,59 @@ struct BLEScannerDetailView: View {
                 }
             }
             .onChange(of: currentPacket) { newPacket in
-                print("onChang")
+                print("onChange 觸發")
+                
+                // 首先檢查是否需要重置狀態
+                if shouldResetState() {
+                    print("--- 檢測到重置條件，重置狀態 ---")
+                    hasBeenSaved = false
+                    lastSavedCycle = nil
+                    print("hasBeenSaved 已重置為 false")
+                    return
+                }
+                
+                // 檢查是否需要保存
                 guard let packetToSave = newPacket,
                       packetToSave.parsedData?.hasReachedTarget == true,
                       !hasBeenSaved
                 else {
-                    print(newPacket?.parsedData?.hasReachedTarget ?? false)
+                    print("不符合保存條件:")
+                    print("- hasReachedTarget: \(newPacket?.parsedData?.hasReachedTarget ?? false)")
+                    print("- hasBeenSaved: \(hasBeenSaved)")
+                    return
+                }
+                
+                // 防止在短時間內重複保存同一個週期的數據
+                let currentTime = Date()
+                if let lastSaved = lastSavedCycle,
+                   currentTime.timeIntervalSince(lastSaved) < 5.0 {
+                    print("距離上次保存時間過短，跳過保存")
                     return
                 }
                 
                 print("--- 自動儲存觸發！Device ID: \(packetToSave.deviceID) ---")
                 packetStore.updateOrAppendDeviceHistory(for: packetToSave)
                 
-                hasBeenSavedTimer()
+                // 設定保存狀態和時間
+                hasBeenSaved = true
+                lastSavedCycle = currentTime
                 
+                print("已儲存並設置 hasBeenSaved = true")
                 
+                // 輸出當前達標的裝置信息
+                if let devices = packetToSave.parsedData?.devices {
+                    let reachedTargetDevices = devices.filter { $0.count >= 100 }
+                    print("達標裝置數量: \(reachedTargetDevices.count)")
+                    for device in reachedTargetDevices {
+                        print("- 裝置 \(device.deviceId): \(device.count) 次")
+                    }
+                }
             }
             .onDisappear(){
+                // 離開頁面時重置狀態，準備下次進入
                 hasBeenSaved = false
+                lastSavedCycle = nil
+                print("頁面消失，重置狀態")
             }
         }
         else {
@@ -198,16 +247,7 @@ struct BLEScannerDetailView: View {
             }
         }
     }
-    private func hasBeenSavedTimer() {
-        hasBeenSaved = true
-        print("--- 儲存功能已鎖定，10秒後解鎖 ---")
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-            //10 秒後，執行這段程式碼，解除鎖定
-            self.hasBeenSaved = false
-            print("--- [偵錯] 儲存功能已解鎖 ---")
-        }
-    }
+    
     private func direction(from heading: Double) -> String {
         switch heading {
         case 0..<22.5, 337.5..<360: return "北"
@@ -253,82 +293,52 @@ struct DeviceStatusCardsView: View {
     let allHistoricalDevices: [DeviceInfo]
     let currentDeviceIDs: Set<String>
     
-    // 【新增】用來追蹤哪個裝置的歷史紀錄被展開了
     @State private var expandedDeviceId: String? = nil
 
-    // 【新增】將傳入的 devices 陣列按 deviceId 分組，並按時間戳排序
+    // 將所有數據按 deviceId 分組
     private var groupedDevices: [String: [DeviceInfo]] {
         let sorted = allHistoricalDevices.sorted { $0.timestamp > $1.timestamp }
-        let result = Dictionary(grouping: sorted, by: { $0.deviceId })
-        
-        return result
+        return Dictionary(grouping: sorted, by: { $0.deviceId })
     }
 
-    // 取得每個分組中最新的一筆紀錄，並按時間戳排序
-    private var uniqueLatestDevices: [DeviceInfo] {
-        groupedDevices
-            .compactMap { $0.value.first } // 先取得所有歷史裝置的最新一筆
-            .filter { currentDeviceIDs.contains($0.deviceId) } // 只保留那些ID存在於「當前掃描」中的裝置
-            .sorted { $0.timestamp > $1.timestamp } // 最後對結果進行排序
+    // 取得每個裝置的最新數據（即時數據）
+    private var currentDisplayDevices: [DeviceInfo] {
+        return currentDeviceIDs.compactMap { deviceId in
+            // 對於每個當前活躍的裝置ID，找到其最新的數據
+            return groupedDevices[deviceId]?.first
+        }.sorted { $0.receptionRate > $1.receptionRate }
     }
     
     var body: some View {
-        // 判斷總紀錄是否大於5筆，來決定是否啟用折疊功能
-        
-        if allHistoricalDevices.count > 5 {
-            // --- 折疊模式 ---
-            VStack(spacing: 6) {
-                ForEach(uniqueLatestDevices) { latestDevice in
-                    VStack(spacing: 0) {
-                        // 顯示最新一筆紀錄的卡片
-                        DeviceCardView(device: latestDevice)
-                            .onTapGesture {
-                                // 點擊時切換展開狀態
-                                print("--- 卡片被點擊 ---")
-                                print("點擊的 Device ID: \(latestDevice.deviceId)")
-                                print("點擊前的 expandedDeviceId: \(String(describing: expandedDeviceId))")
-                               
-                                withAnimation(.spring()) {
-                                    if expandedDeviceId == latestDevice.deviceId {
-                                        expandedDeviceId = nil // 如果已經展開，則收合
-                                    } else {
-                                        expandedDeviceId = latestDevice.deviceId // 否則展開
-                                    }
-                                }
-                                print("點擊後的 expandedDeviceId: \(String(describing: expandedDeviceId))")
-                                print("--------------------------")
-                            }
-                        
-                        // 如果當前裝置被設定為展開，則顯示其歷史紀錄
-                        if expandedDeviceId == latestDevice.deviceId {
-                            let _ = print("--- 展開歷史紀錄 ---")
-                            let _ = print("要展開的 Device ID: \(latestDevice.deviceId)")
-                            // 取得除了最新一筆以外的所有歷史紀錄
-                            let historicalDevices = groupedDevices[latestDevice.deviceId]?.dropFirst() ?? []
-                            
-                            let _ = print("找到的歷史紀錄筆數: \(historicalDevices.count)")
-                            let _ = print("--------------------------")
-                            
-                            ForEach(Array(historicalDevices)) { historicalDevice in
-                                DeviceCardView(device: historicalDevice, isHistory: true)
-                                    .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity.combined(with: .move(edge: .bottom))))
+        VStack(spacing: 6) {
+            ForEach(currentDisplayDevices) { currentDevice in
+                VStack(spacing: 0) {
+                    // 第一層：顯示即時數據
+                    DeviceCardView(device: currentDevice)
+                        .onTapGesture {
+                            withAnimation(.spring()) {
+                                expandedDeviceId = (expandedDeviceId == currentDevice.deviceId) ? nil : currentDevice.deviceId
                             }
                         }
+                    
+                    // 展開後：顯示該裝置的所有歷史數據（除了最新的）
+                    if expandedDeviceId == currentDevice.deviceId {
+                        let historicalDevices = groupedDevices[currentDevice.deviceId]?.dropFirst() ?? []
+                        
+                        ForEach(Array(historicalDevices)) { historicalDevice in
+                            DeviceCardView(device: historicalDevice, isHistory: true)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity.combined(with: .move(edge: .bottom))
+                                ))
+                        }
                     }
-                }
-            }
-        } else {
-            // --- 全部顯示模式 ---
-            VStack(spacing: 6) {
-                ForEach(allHistoricalDevices) { device in
-                    DeviceCardView(device: device)
                 }
             }
         }
     }
 }
-
-// 【新增】將單張卡片的 UI 拆分成獨立的 View，方便重用
+// 將單張卡片的 UI 拆分成獨立的 View，方便重用
 struct DeviceCardView: View {
     let device: DeviceInfo
     var isHistory: Bool = false // 用來區分是否為歷史紀錄
