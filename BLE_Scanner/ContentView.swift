@@ -1,6 +1,6 @@
 // ContentView.swift
 
-//  最後更新 2025/06/27
+//  最後更新 2025/07/02
 //
 
 import SwiftUI
@@ -53,10 +53,10 @@ struct ContentView: View {
                     Label("掃描", systemImage: "wave.3.right")
                 }
             
-            ScannerLogView(packetStore: packetStore)
-                .tabItem {
-                    Label("掃描Log", systemImage: "text.document")
-                }
+//            ScannerLogView(packetStore: packetStore)
+//                .tabItem {
+//                    Label("掃描Log", systemImage: "text.document")
+//                }
 
             SettingView()
                 .tabItem {

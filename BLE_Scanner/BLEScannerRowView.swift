@@ -3,13 +3,16 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/06/27
+//  最後更新 2025/07/02
 //
 
 import SwiftUI
 
 struct BLEPacketRowView: View {
     let packet: BLEPacket
+    
+    let scanner: CBLEScanner
+    let packetStore: SavedPacketsStore
     
     private var signalColor: Color {
         if packet.rssi > -70 {
@@ -23,7 +26,11 @@ struct BLEPacketRowView: View {
 
     var body: some View {
         // NavigationLink 作為 Row 的一部分
-        NavigationLink(destination: BLEScannerDetailView(packet: packet)) {
+        NavigationLink(destination: BLEScannerDetailView(
+            packetStore: packetStore,
+            scanner: scanner,
+            deviceID: packet.deviceID 
+        )) {
             HStack(spacing: 16) {
                 // 左側的圓圈 ID
                 Text(packet.deviceID)

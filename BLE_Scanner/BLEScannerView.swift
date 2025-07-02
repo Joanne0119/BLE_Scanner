@@ -3,20 +3,21 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/06/27
+//  最後更新 2025/07/02
 //
 
 import SwiftUI
 import CoreBluetooth
 
+enum BLEScannerField: Hashable {
+    case mask
+    case id
+}
+
 struct BLEScannerView: View {
-    enum Field: Hashable {
-        case mask
-        case id
-    }
-    
     @StateObject private var scanner = CBLEScanner()
     @ObservedObject var packetStore: SavedPacketsStore
+    @State private var savedDeviceIDsInSession: Set<String> = []
     @State private var maskText: String = ""
     @State private var idText: String = ""
     @State private var maskTextEmpty = false
@@ -24,12 +25,11 @@ struct BLEScannerView: View {
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 100
     @State private var maskError: String?
-    @FocusState private var focusedField: Field?
+    @FocusState private var focusedField: BLEScannerField?
     @Binding var maskSuggestions: [String]
     
     var filteredPackets: [BLEPacket] {
         scanner.matchedPackets.values.filter { packet in
-            
             let rssiMatch = packet.rssi >= -Int(rssiValue)
             return rssiMatch
         }
@@ -39,221 +39,308 @@ struct BLEScannerView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.white.opacity(0.01)
-                    .onTapGesture {
-                        if focusedField != nil{
-                            focusedField = nil
-                        }
-                    }
-                VStack(spacing: 20) {
-                    VStack(alignment: .leading) {
-                        VStack(alignment: .leading) {
-                            HStack {
-                                HStack {
-                                    Text("目前Byte數: ")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundStyle(.blue)
-                                    
-                                    if let error = maskError {
-                                        Text(error)
-                                            .font(.system(size: 20, weight: .bold))
-                                            .foregroundStyle(.red)
-                                    } else {
-                                        let currentInput = maskText
-                                        if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                            Text("0 byte")
-                                                .font(.system(size: 20, weight: .bold))
-                                                .foregroundStyle(.blue)
-                                        } else {
-                                            if let bytes = parseHexInput(currentInput) {
-                                                Text("\(bytes.count) byte")
-                                                    .font(.system(size: 20, weight: .bold))
-                                                    .foregroundStyle(.blue)
-                                            } else {
-                                                Text("0 byte")
-                                                    .font(.system(size: 20, weight: .bold))
-                                                    .foregroundStyle(.blue)
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                Spacer()
-                                HelpButtonView {
-                                    VStack {
-                                        Text("掃描端篩選用的遮罩請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C)\n")
-                                            .font(.system(size: 20, weight: .medium))
-                                        Text("輸入遮罩後可按下「開始掃描」按鈕，即可獲得符合條件的裝置列表，列表中的內容為裝置ID與該裝置的rssi，點擊該裝置即可鎖定裝置，並進入裝置的詳細資料內容。\n詳細內容內可查看一定數據中最短的接收封包的時間、溫度、大氣壓力，以及該裝置鄰近裝置的ID與建議佈件移動方位。")
-                                            .font(.system(size: 20, weight: .medium))
-                                    }
-                                    .padding()
-                                }
-                                .padding()
-                            
-                                
-                            }
-                        }
-                            
-                        HStack {
-                            Text("遮罩： ")
-                                .font(.system(size: 18, weight: .bold))
-                            ZStack(){
-                                HStack(){
-                                    TextField("ex：01 02 03", text: $maskText)
-                                        .font(.system(size: 18, weight: .bold))
-                                        .onChange(of: maskText) { newValue in
-                                            scanner.expectedMaskText = newValue
-                                            validateField(originalInput: newValue, errorBinding: $maskError)
-                                        }
-                                        .id("MaskScanner")
-                                        .focused($focusedField, equals: .mask)
-                                        .padding()
-                                        
-                                    if !maskText.isEmpty {
-                                        Button(action: {
-                                            maskText = ""
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.gray)
-                                        }
-                                        .padding(.trailing, 12)
-                                        .transition(.opacity)
-                                    }
-                                }
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(maskError == nil && maskTextEmpty == false ? Color.secondary : Color.red, lineWidth: 2)
-                                )
-//
-                            }
-                        }
-                        if focusedField == .mask {
-                            VStack {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 10) {
-                                        if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
-                                            Text("沒有自訂遮罩！")
-                                                .foregroundColor(.gray)
-                                        } else{
-                                            ForEach(maskSuggestions, id: \.self) { suggestion in
-                                                Button(action: {
-                                                    maskText = suggestion
-                                                    focusedField = nil // 選擇後取消焦點
-                                                }) {
-                                                    Text(suggestion)
-                                                        .padding(.vertical, 5)
-                                                        .padding(.horizontal, 10)
-                                                        .background(Color.blue.opacity(0.2))
-                                                        .foregroundColor(.primary)
-                                                        .cornerRadius(8)
-                                                }
-                                                .buttonStyle(PlainButtonStyle())
-                                            }
-                                        }
-                                    }
-                                    .padding(8)
-                                }
-                                .frame(height: 40)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(8)
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-                    
-                    HStack {
-                        Button(scanner.isScanning ? "停止掃描" : "開始掃描") {
-                            if scanner.isScanning {
-                                scanner.stopScanning()
-                            } else {
-                                let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                
-                                maskTextEmpty = isMaskEmpty
-                                
-                                if isMaskEmpty {
-                                    
-                                    return
-                                }
-                                handleStartScan()
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(scanner.isScanning ? .red : .blue)
-                        
-//                        Button("儲存掃描結果") {
-//                            scanner.stopScanning()
-//                            packetStore.updateOrAppend(contentsOf: filteredPackets)
-//                        }
-//                        .buttonStyle(.borderedProminent)
-//                        .tint(.brown)
-                        
-                    }
-                    
-                    if scanner.noMatchFound {
-                        Text("找不到符合條件的裝置")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.red)
-                    }
-                    
-                    
-                    List(filteredPackets) { packet in
-                        BLEPacketRowView(packet: packet)
-                    }
-                    .listStyle(PlainListStyle())
-                    .onChange(of: scanner.matchedPackets) { _ in
-                        guard scanner.isScanning
-                        else { return }
-                        
-                        let parser = BLEDataParser()
-                        
-                        let conditionMet = scanner.matchedPackets.values.contains { packet in
-                            if let parsed = parser.parseDataString(packet.data) {
-                                return parsed.hasReachedTarget
-                            }
-                            return false
-                        }
-                        
-                        if conditionMet {
-                            packetStore.updateOrAppend(contentsOf: filteredPackets)
-                        }
-                    }
-                    .navigationTitle("掃描端")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            MQTTToolbarStatusView()
-                        }
-                    }
+                backgroundTapGesture
                 
+                VStack(spacing: 20) {
+                    inputSection
+                    buttonSection
+                    noMatchMessageView
+                    deviceListView
                 }
                 .padding()
-
+                .navigationTitle("掃描端")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        MQTTToolbarStatusView()
+                    }
+                }
             }
         }
         .navigationBarHidden(false)
     }
+}
+
+// MARK: - 背景點擊手勢
+extension BLEScannerView {
+    private var backgroundTapGesture: some View {
+        Color.white.opacity(0.01)
+            .onTapGesture {
+                if focusedField != nil {
+                    focusedField = nil
+                }
+            }
+    }
+}
+
+// MARK: - 無匹配裝置訊息
+extension BLEScannerView {
+    private var noMatchMessageView: some View {
+        Group {
+            if scanner.noMatchFound {
+                Text("找不到符合條件的裝置")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.red)
+            }
+        }
+    }
+}
+
+// MARK: - 裝置列表
+extension BLEScannerView {
+    private var deviceListView: some View {
+        List(filteredPackets) { packet in
+            BLEPacketRowView(
+                            packet: packet,
+                            scanner: scanner,
+                            packetStore: packetStore
+                        )
+        }
+        .listStyle(PlainListStyle())
+//        .onChange(of: scanner.matchedPackets) { _ in
+//            handlePacketChanges()
+//        }
+    }
     
-    private func parseHexInput(_ input: String) -> [UInt8]? {
-        let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined().uppercased()
-            guard cleaned.count % 2 == 0 else { return nil }
+//    private func handlePacketChanges() {
+//        guard scanner.isScanning else { return }
+//        
+//        let packetsToSave = scanner.matchedPackets.values.filter { packet in
+//            let hasReachedTarget = packet.parsedData?.hasReachedTarget == true
+//            let notYetSaved = !savedDeviceIDsInSession.contains(packet.deviceID)
+//            return hasReachedTarget && notYetSaved
+//        }
+//        
+//        for packet in packetsToSave {
+//            print("--- [偵錯] 自動儲存被觸發！---")
+//            print("觸發裝置 ID: \(packet.deviceID)")
+//            print("--------------------------")
+//            
+//            packetStore.updateOrAppendDeviceHistory(for: packet)
+//            savedDeviceIDsInSession.insert(packet.deviceID)
+//        }
+//    }
+}
+
+// MARK: - 按鈕區塊
+extension BLEScannerView {
+    private var buttonSection: some View {
+        HStack {
+            Button(scanner.isScanning ? "停止掃描" : "開始掃描") {
+                if scanner.isScanning {
+                    scanner.stopScanning()
+                } else {
+                    startScanningIfValid()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(scanner.isScanning ? .red : .blue)
+        }
+    }
+    
+    private func startScanningIfValid() {
+        let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        maskTextEmpty = isMaskEmpty
+        
+        if isMaskEmpty {
+            return
+        }
+        
+//        savedDeviceIDsInSession.removeAll()
+        handleStartScan()
+    }
+}
+
+// MARK: - 輸入區塊
+extension BLEScannerView {
+    private var inputSection: some View {
+        VStack(alignment: .leading) {
+            InputHeaderView(
+                maskError: maskError,
+                maskText: maskText,
+                parseHexInput: parseHexInput
+            )
             
-            var result: [UInt8] = []
-            var index = cleaned.startIndex
+            maskInputField
             
-            while index < cleaned.endIndex {
-                let nextIndex = cleaned.index(index, offsetBy: 2, limitedBy: cleaned.endIndex) ?? cleaned.endIndex
-                if nextIndex <= cleaned.endIndex {
-                    let hexStr = String(cleaned[index..<nextIndex])
-                    if let byte = UInt8(hexStr, radix: 16) {
-                        result.append(byte)
-                    } else {
-                        return nil
+            if focusedField == .mask {
+                MaskSuggestionsView(
+                    maskSuggestions: maskSuggestions,
+                    maskText: $maskText
+                )
+            }
+        }
+    }
+    
+    private var maskInputField: some View {
+        HStack {
+            Text("遮罩： ")
+                .font(.system(size: 18, weight: .bold))
+            
+            ZStack {
+                HStack {
+                    TextField("ex：01 02 03", text: $maskText)
+                        .font(.system(size: 18, weight: .bold))
+                        .onChange(of: maskText) { newValue in
+                            scanner.expectedMaskText = newValue
+                            validateField(originalInput: newValue, errorBinding: $maskError)
+                        }
+                        .id("MaskScanner")
+                        .focused($focusedField, equals: .mask)
+                        .padding()
+                    
+                    if !maskText.isEmpty {
+                        Button(action: {
+                            maskText = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.trailing, 12)
+                        .transition(.opacity)
                     }
                 }
-                index = nextIndex
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(maskError == nil ? Color.secondary : Color.red, lineWidth: 2)
+                )
             }
-            
-            return result.isEmpty ? nil : result
         }
+    }
+}
+
+// MARK: - 輸入區標題視圖
+struct InputHeaderView: View {
+    let maskError: String?
+    let maskText: String
+    let parseHexInput: (String) -> [UInt8]?
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                currentByteCount
+                Spacer()
+                helpButton
+            }
+        }
+    }
+    
+    private var currentByteCount: some View {
+        HStack {
+            Text("目前Byte數: ")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.blue)
+            
+            if let error = maskError {
+                Text(error)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.red)
+            } else {
+                byteCountText
+            }
+        }
+    }
+    
+    private var byteCountText: some View {
+        Group {
+            let currentInput = maskText
+            if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text("0 byte")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.blue)
+            } else {
+                if let bytes = parseHexInput(currentInput) {
+                    Text("\(bytes.count) byte")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.blue)
+                } else {
+                    Text("0 byte")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.blue)
+                }
+            }
+        }
+    }
+    
+    private var helpButton: some View {
+        HelpButtonView {
+            VStack {
+                Text("掃描端篩選用的遮罩請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C)\n")
+                    .font(.system(size: 20, weight: .medium))
+                Text("輸入遮罩後可按下「開始掃描」按鈕，即可獲得符合條件的裝置列表，列表中的內容為裝置ID與該裝置的rssi，點擊該裝置即可鎖定裝置，並進入裝置的詳細資料內容。\n詳細內容內可查看一定數據中最短的接收封包的時間、溫度、大氣壓力，以及該裝置鄰近裝置的ID與建議佈件移動方位。")
+                    .font(.system(size: 20, weight: .medium))
+            }
+            .padding()
+        }
+        .padding()
+    }
+}
+
+// MARK: - 遮罩建議視圖
+struct MaskSuggestionsView: View {
+    let maskSuggestions: [String]
+    @Binding var maskText: String
+    
+    var body: some View {
+        VStack {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    if maskSuggestions.filter({ !$0.isEmpty }).isEmpty {
+                        Text("沒有自訂遮罩！")
+                            .foregroundColor(.gray)
+                    } else {
+                        ForEach(maskSuggestions, id: \.self) { suggestion in
+                            suggestionButton(suggestion)
+                        }
+                    }
+                }
+                .padding(8)
+            }
+            .frame(height: 40)
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(8)
+        }
+        .padding(.horizontal)
+    }
+    
+    private func suggestionButton(_ suggestion: String) -> some View {
+        Button(action: {
+            maskText = suggestion
+        }) {
+            Text(suggestion)
+                .padding(.vertical, 5)
+                .padding(.horizontal, 10)
+                .background(Color.blue.opacity(0.2))
+                .foregroundColor(.primary)
+                .cornerRadius(8)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - 輔助函數
+extension BLEScannerView {
+    private func parseHexInput(_ input: String) -> [UInt8]? {
+        let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined().uppercased()
+        guard cleaned.count % 2 == 0 else { return nil }
+        
+        var result: [UInt8] = []
+        var index = cleaned.startIndex
+        
+        while index < cleaned.endIndex {
+            let nextIndex = cleaned.index(index, offsetBy: 2, limitedBy: cleaned.endIndex) ?? cleaned.endIndex
+            if nextIndex <= cleaned.endIndex {
+                let hexStr = String(cleaned[index..<nextIndex])
+                if let byte = UInt8(hexStr, radix: 16) {
+                    result.append(byte)
+                } else {
+                    return nil
+                }
+            }
+            index = nextIndex
+        }
+        
+        return result.isEmpty ? nil : result
+    }
     
     func isAsciiSafe(_ data: [UInt8]) -> Bool {
         for byte in data {
@@ -272,8 +359,8 @@ struct BLEScannerView: View {
     }
     
     private func hideKeyboard() {
-       UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-   }
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
     
     private func validateField(originalInput: String, errorBinding: Binding<String?>) {
         if originalInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -284,9 +371,7 @@ struct BLEScannerView: View {
         if parseHexInput(originalInput) == nil {
             errorBinding.wrappedValue = "遮罩格式錯誤"
         } else {
-            // 格式正確，清除錯誤訊息
             errorBinding.wrappedValue = nil
         }
     }
-
 }

@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/13.
-//  最後更新 2025/06/27
+//  最後更新 2025/07/02
 //
 import SwiftUI
 import Foundation
@@ -15,12 +15,15 @@ struct ParsedBLEData: Codable, Equatable {
     let temperature: Int             // 1 byte 溫度
     let atmosphericPressure: Double  // 3 bytes 大氣壓力
     let seconds: UInt8                // 1 byte 秒數
-    let devices: [DeviceInfo]         // 5個裝置資訊
+    var devices: [DeviceInfo]         // 5個裝置資訊
     let hasReachedTarget: Bool        // 是否有裝置達到100次
 }
 
 // 裝置資訊結構
-struct DeviceInfo: Codable, Equatable {
+struct DeviceInfo: Codable, Equatable, Identifiable {
+    var id: String { "\(deviceId)-\(timestamp.timeIntervalSince1970)" }
+    
+    let timestamp: Date  // Timestamp
     let deviceId: String   // 裝置ID
     let count: UInt8       // 接收次數
     let receptionRate: Double // 接收率（次/秒）
@@ -97,11 +100,12 @@ class BLEDataParser {
             }
             
             let deviceIdInt = Int(deviceIdByte)
-            let deviceIdString = String(format: "%02x", deviceIdInt)
+            let deviceIdString = String(deviceIdInt)
             // 計算接收率 (次/秒)
             let receptionRate = seconds > 0 ? Double(count) / Double(seconds) : 0.0
             
             let deviceInfo = DeviceInfo(
+                timestamp: Date(),
                 deviceId: deviceIdString,
                 count: count,
                 receptionRate: receptionRate
