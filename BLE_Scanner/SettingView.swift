@@ -289,6 +289,7 @@ struct SettingView: View {
             }
         }
         .navigationBarHidden(false)
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 
     // MARK: - Helper Functions

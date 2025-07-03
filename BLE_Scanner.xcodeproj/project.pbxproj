@@ -82,12 +82,12 @@
 				F535E9ED2E1631E200026E17 /* BLEManager */,
 				F535E9EE2E16321000026E17 /* ScannerView */,
 				F535E9F12E16327100026E17 /* MQTTView */,
-				F5D6C9442E1133BF0037982D /* HelpButtonView.swift */,
 				F535E9F82E16597800026E17 /* DataStructure */,
 				F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */,
 				F5CB0FC52DCDE71500B7C152 /* SettingView.swift */,
 				F5202E382DE58CB900257750 /* ScannerLogView.swift */,
 				F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */,
+				F5D6C9442E1133BF0037982D /* HelpButtonView.swift */,
 				F5B34AA92DA907E900A47FEE /* Assets.xcassets */,
 				F5B34AAB2DA907E900A47FEE /* Preview Content */,
 			);

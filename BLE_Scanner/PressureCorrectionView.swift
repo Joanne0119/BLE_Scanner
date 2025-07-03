@@ -97,6 +97,7 @@ struct PressureCorrectionView: View {
             }
         }
         .navigationBarHidden(false)
+        .navigationViewStyle(StackNavigationViewStyle())
     }
     
     // MARK: - View Components

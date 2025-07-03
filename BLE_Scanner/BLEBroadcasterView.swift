@@ -376,6 +376,7 @@ struct BLEBroadcasterView: View {
             }
         }
         .navigationBarHidden(false)
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 
 //MARK: - 格式錯誤檢查

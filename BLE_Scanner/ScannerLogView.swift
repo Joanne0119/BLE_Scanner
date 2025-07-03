@@ -155,6 +155,7 @@ struct ScannerLogView: View {
             }
         }
         .navigationBarHidden(false)
+        .navigationViewStyle(StackNavigationViewStyle())
         
     }
     private func loadSavedPackets() {

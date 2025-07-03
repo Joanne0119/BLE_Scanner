@@ -57,6 +57,7 @@ struct BLEScannerView: View {
             }
         }
         .navigationBarHidden(false)
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 
