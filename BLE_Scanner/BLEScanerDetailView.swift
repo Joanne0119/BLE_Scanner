@@ -226,12 +226,6 @@ struct BLEScannerDetailView: View {
                     }
                 }
             }
-            .onDisappear(){
-                // 離開頁面時重置狀態，準備下次進入
-                hasBeenSaved = false
-                lastSavedCycle = nil
-                print("頁面消失，重置狀態")
-            }
         }
         else {
             Text("裝置資料不存在或已過期")
