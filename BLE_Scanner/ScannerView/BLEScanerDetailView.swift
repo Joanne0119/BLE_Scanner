@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/07/02
+//  最後更新 2025/07/03
 
 import SwiftUI
 import Foundation
@@ -292,7 +292,8 @@ struct DeviceStatusCardsView: View {
     // 將所有數據按 deviceId 分組
     private var groupedDevices: [String: [DeviceInfo]] {
         let sorted = allHistoricalDevices.sorted { $0.timestamp > $1.timestamp }
-        return Dictionary(grouping: sorted, by: { $0.deviceId })
+        let recentRecords = sorted.prefix(30)
+        return Dictionary(grouping: recentRecords, by: { $0.deviceId })
     }
 
     // 取得每個裝置的最新數據（即時數據）

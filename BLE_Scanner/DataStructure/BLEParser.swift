@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/13.
-//  最後更新 2025/07/02
+//  最後更新 2025/07/03
 //
 import SwiftUI
 import Foundation
@@ -72,6 +72,11 @@ class BLEDataParser {
         for i in 0..<5 {
             let baseIndex = 5 + (i * 2)  // 從第5個byte開始，每個裝置佔2 bytes
             let deviceIdByte = dataBytes[baseIndex]
+            
+            guard deviceIdByte != 0 else {
+                continue
+            }
+            
             let count = dataBytes[baseIndex + 1]
             
             // 檢查是否達到100次 (0x64 = 100)
