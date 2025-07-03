@@ -27,7 +27,7 @@ struct ContentView: View {
     private func setupNavigationBarAppearance() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(red: 0.2, green: 0.5, blue: 0.8, alpha: 1.0)
+        appearance.backgroundColor = UIColor(red: 0.05, green: 0.6, blue: 1.0, alpha: 1.0)
         appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         
