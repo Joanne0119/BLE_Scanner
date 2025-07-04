@@ -1,4 +1,4 @@
-//  最後更新 2025/07/02
+//  最後更新 2025/07/04
 
 import SwiftUI
 import AVFoundation
@@ -502,7 +502,7 @@ struct CustomSegmentedControl: View {
                     }
                 }) {
                     Text(type.rawValue)
-                        .font(.system(size: 26, weight: .bold))
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundColor(selectedType == type ? .blue : .gray)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(.vertical, 16)
