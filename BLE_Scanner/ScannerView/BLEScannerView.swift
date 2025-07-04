@@ -17,11 +17,9 @@ enum BLEScannerField: Hashable {
 struct BLEScannerView: View {
     @StateObject private var scanner = CBLEScanner()
     @ObservedObject var packetStore: SavedPacketsStore
-    @State private var savedDeviceIDsInSession: Set<String> = []
     @State private var maskText: String = ""
     @State private var idText: String = ""
-    @State private var maskTextEmpty = false
-    @State private var idTextEmpty = false
+    @State private var maskTextEmpty: Bool = false
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 100
     @State private var maskError: String?
@@ -97,29 +95,7 @@ extension BLEScannerView {
                         )
         }
         .listStyle(PlainListStyle())
-//        .onChange(of: scanner.matchedPackets) { _ in
-//            handlePacketChanges()
-//        }
     }
-    
-//    private func handlePacketChanges() {
-//        guard scanner.isScanning else { return }
-//        
-//        let packetsToSave = scanner.matchedPackets.values.filter { packet in
-//            let hasReachedTarget = packet.parsedData?.hasReachedTarget == true
-//            let notYetSaved = !savedDeviceIDsInSession.contains(packet.deviceID)
-//            return hasReachedTarget && notYetSaved
-//        }
-//        
-//        for packet in packetsToSave {
-//            print("--- [偵錯] 自動儲存被觸發！---")
-//            print("觸發裝置 ID: \(packet.deviceID)")
-//            print("--------------------------")
-//            
-//            packetStore.updateOrAppendDeviceHistory(for: packet)
-//            savedDeviceIDsInSession.insert(packet.deviceID)
-//        }
-//    }
 }
 
 // MARK: - 按鈕區塊
@@ -141,12 +117,11 @@ extension BLEScannerView {
     private func startScanningIfValid() {
         let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         maskTextEmpty = isMaskEmpty
+        maskError = "請輸入遮罩"
         
         if isMaskEmpty {
             return
         }
-        
-//        savedDeviceIDsInSession.removeAll()
         handleStartScan()
     }
 }
@@ -296,7 +271,7 @@ struct MaskSuggestionsView: View {
                 }
                 .padding(8)
             }
-            .frame(height: 40)
+            .frame(height: 60)
             .background(Color.gray.opacity(0.1))
             .cornerRadius(8)
         }
@@ -308,11 +283,14 @@ struct MaskSuggestionsView: View {
             maskText = suggestion
         }) {
             Text(suggestion)
-                .padding(.vertical, 5)
-                .padding(.horizontal, 10)
+                .font(.system(size: 16, weight: .medium))
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .frame(minWidth: 50, minHeight: 40)
                 .background(Color.blue.opacity(0.2))
                 .foregroundColor(.primary)
                 .cornerRadius(8)
+                .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
     }
