@@ -1,4 +1,4 @@
-//  最後更新 2025/07/04
+//  最後更新 2025/07/07
 
 import SwiftUI
 import Foundation
@@ -252,6 +252,7 @@ struct PressureCorrectionView: View {
                     scanner.startScanning()
                 }
             }
+            .font(.system(size: 20, weight: .medium))
             .buttonStyle(.borderedProminent)
             .tint(scanner.isScanning ? .red : .blue)
             
@@ -259,6 +260,7 @@ struct PressureCorrectionView: View {
                 Button("執行校正") {
                     performCalibration()
                 }
+                .font(.system(size: 20, weight: .medium))
                 .buttonStyle(.borderedProminent)
                 .disabled(blePackets.isEmpty || baseText.isEmpty || basePressureText.isEmpty)
                 .tint(.orange)

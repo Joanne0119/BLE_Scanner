@@ -109,6 +109,7 @@ extension BLEScannerView {
                     startScanningIfValid()
                 }
             }
+            .font(.system(size: 20, weight: .medium))
             .buttonStyle(.borderedProminent)
             .tint(scanner.isScanning ? .red : .blue)
         }
