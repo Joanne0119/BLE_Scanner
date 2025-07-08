@@ -149,10 +149,14 @@ struct BLEScannerDetailView: View {
                             .foregroundColor(.white)
                             .padding(.leading, 3)
                         
-                        SignalStrengthView(rssi: currentPacket?.rssi ?? packet.rssi)
+                        SignalStrengthView(rssi: packet.rssi, hasLostSignal: packet.hasLostSignal)
                                                 
+                        let rssi =
+                            if (currentPacket?.hasLostSignal ?? packet.hasLostSignal) { "Lost" }
+                            else if (currentPacket?.rssi ?? packet.rssi != 127) { "\(currentPacket?.rssi ?? packet.rssi) dBm" }
+                            else { "Error" }
                         
-                        Text("\(currentPacket?.rssi ?? packet.rssi) dBm")
+                        Text("\(rssi)")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                             .padding(.trailing, 10)

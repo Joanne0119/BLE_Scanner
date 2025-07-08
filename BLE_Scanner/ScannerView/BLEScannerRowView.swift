@@ -13,6 +13,7 @@ struct BLEPacketRowView: View {
     
     let scanner: CBLEScanner
     let packetStore: SavedPacketsStore
+    let onSelect: (String) -> Void
     
     private var signalColor: Color {
         if packet.hasLostSignal {
@@ -21,19 +22,18 @@ struct BLEPacketRowView: View {
         if packet.rssi > -70 {
             return .green
         } else if packet.rssi > -90 {
-            return .yellow
+            return .orange
         } else {
             return .red
         }
     }
 
     var body: some View {
-        // NavigationLink 作為 Row 的一部分
-        NavigationLink(destination: BLEScannerDetailView(
-            packetStore: packetStore,
-            scanner: scanner,
-            deviceID: packet.deviceID 
-        )) {
+        // button 作為 Row 的一部分
+        Button(action: {
+            // 當按鈕被點擊時，呼叫傳入的 onSelect 閉包，並把 deviceID 傳出去
+            onSelect(packet.deviceID)
+        }) {
             HStack(spacing: 16) {
                 // 左側的圓圈 ID
                 Text(packet.deviceID)
@@ -57,6 +57,7 @@ struct BLEPacketRowView: View {
             }
             .padding(.vertical, 8)
         }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

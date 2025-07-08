@@ -12,11 +12,11 @@ import Combine
 
 // 解析後的數據結構
 struct ParsedBLEData: Codable, Equatable {
-    let temperature: Int             // 1 byte 溫度
-    let atmosphericPressure: Double  // 3 bytes 大氣壓力
-    let seconds: UInt8                // 1 byte 秒數
+    var temperature: Int             // 1 byte 溫度
+    var atmosphericPressure: Double  // 3 bytes 大氣壓力
+    var seconds: UInt8                // 1 byte 秒數
     var devices: [DeviceInfo]         // 5個裝置資訊
-    let hasReachedTarget: Bool        // 是否有裝置達到100次
+    var hasReachedTarget: Bool        // 是否有裝置達到100次
 }
 
 // 裝置資訊結構

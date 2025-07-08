@@ -25,6 +25,8 @@ struct BLEScannerView: View {
     @State private var maskError: String?
     @FocusState private var focusedField: BLEScannerField?
     @Binding var maskSuggestions: [String]
+    @State private var selectedDeviceID: String? = nil //用於儲存使用者點擊的裝置 ID，以便傳遞給 DetailView
+    @State private var isLinkActive: Bool = false
     
     var filteredPackets: [BLEPacket] {
         scanner.matchedPackets.values.filter { packet in
@@ -38,6 +40,7 @@ struct BLEScannerView: View {
         NavigationView {
             ZStack {
                 backgroundTapGesture
+                backgroundNavigationLink
                 
                 VStack(spacing: 20) {
                     inputSection
@@ -56,6 +59,27 @@ struct BLEScannerView: View {
         }
         .navigationBarHidden(false)
         .navigationViewStyle(StackNavigationViewStyle())
+    }
+    private var backgroundNavigationLink: some View {
+        NavigationLink(
+            destination: detailViewDestination,
+            isActive: $isLinkActive,
+            label: { EmptyView() }
+        )
+    }
+    @ViewBuilder
+    private var detailViewDestination: some View {
+        // 確保我們有選中的 deviceID 才建立 DetailView
+        if let deviceID = selectedDeviceID {
+            BLEScannerDetailView(
+                packetStore: packetStore,
+                scanner: scanner,
+                deviceID: deviceID
+            )
+        } else {
+            // 如果沒有 deviceID，為了安全提供一個空的 View
+            EmptyView()
+        }
     }
 }
 
@@ -91,7 +115,12 @@ extension BLEScannerView {
             BLEPacketRowView(
                             packet: packet,
                             scanner: scanner,
-                            packetStore: packetStore
+                            packetStore: packetStore,
+                            onSelect: { deviceID in
+                                // 當一個 Row 被點擊時執行的程式碼
+                                self.selectedDeviceID = deviceID
+                                self.isLinkActive = true
+                            }
                         )
         }
         .listStyle(PlainListStyle())

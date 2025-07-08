@@ -24,12 +24,12 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     private var scanTimeoutTask: DispatchWorkItem?
     private let dataParser = BLEDataParser()
     private var cleanupTimer: Timer?
-
+    
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
-
+    
     func startScanning() {
         allPackets.removeAll()
         matchedPackets.removeAll()
@@ -45,7 +45,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                 print("開始掃描中...")
                 
                 self.setupCleanupTimer()
-
+                
                 // 開始倒數幾秒後檢查是否有匹配
                 self.scanTimeoutTask?.cancel()
                 self.scanTimeoutTask = DispatchWorkItem {
@@ -71,7 +71,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     
     func stopScanning() {
         centralManager.stopScan()
-                cleanupTimer = nil
+        cleanupTimer?.invalidate()
+        cleanupTimer = nil
         isScanning = false
         print("停止掃描")
     }
@@ -85,45 +86,37 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
             self?.checkStaleDevices()
         }
     }
-
+    
     private func checkStaleDevices() {
         let now = Date()
-        let staleThreshold: TimeInterval = 5.0 // 5 秒沒收到信號就標記為失聯
-
+        let signalLostThreshold: TimeInterval = 5.0  // 5 秒沒收到信號 -> 標記為失聯 (變灰色)
+        
         DispatchQueue.main.async {
-            var hasChanges = false
             // 遍歷所有已匹配的裝置
-            for deviceID in self.matchedPackets.keys {
-                guard var packet = self.matchedPackets[deviceID] else { continue }
-
-                // 如果裝置尚未被標記為失聯
+            for (deviceID, packet) in self.matchedPackets {
+                // 只檢查那些還沒被標記為失聯的裝置
                 if !packet.hasLostSignal {
-                    // 檢查是否超過時限
-                    if now.timeIntervalSince(packet.timestamp) > staleThreshold {
+                    let timeSinceLastSeen = now.timeIntervalSince(packet.timestamp)
+                    
+                    if timeSinceLastSeen > signalLostThreshold {
                         print("裝置 \(packet.deviceID) 已失聯，更新其狀態。")
-                        // 更新狀態並標記有變更
+                        // 更新狀態，UI 會自動變為灰色
                         self.matchedPackets[deviceID]?.hasLostSignal = true
-                        hasChanges = true
+                        self.matchedPackets[deviceID]?.rssi = -99
                     }
                 }
             }
-
-            // 如果沒有任何變更，就不需要觸發 UI 刷新，這可以優化性能
-            if hasChanges {
-                // 透過賦值給 self.objectWillChange.send() 來手動觸發 UI 更新
-                self.objectWillChange.send()
-            }
         }
     }
-
-
+    
+    
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         if central.state == .poweredOn {
-//            print("centralManager: \(central.state.rawValue)");
-//            startScanning()
+            //            print("centralManager: \(central.state.rawValue)");
+            //            startScanning()
         }
     }
-
+    
     func centralManager(_ central: CBCentralManager,
                         didDiscover peripheral: CBPeripheral,
                         advertisementData: [String: Any],
@@ -132,7 +125,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         let deviceName = peripheral.name ?? "Unknown"
         let rssiValue = RSSI.intValue
         var deviceId = ""
-
+        
         var isMatched = false
         var rawDataStr = ""
         var maskStr = ""
@@ -146,19 +139,19 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         }
         lastUpdateTimes[identifier] = now
         
-//        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
-//        print("廣播封包內容：")
-//        for (key, value) in advertisementData {
-//            print("\(key): \(value)")
-//        }
-//        print(allPackets)
+        //        print("發現裝置：\(deviceName), RSSI: \(rssiValue)")
+        //        print("廣播封包內容：")
+        //        for (key, value) in advertisementData {
+        //            print("\(key): \(value)")
+        //        }
+        //        print(allPackets)
         if let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
             print("收到製造商數據：\(manufacturerData)")
             print("full packet: ")
             let manufacturerBytes = Array(manufacturerData)
             rawDataStr = bytesToHexString(manufacturerBytes)
             print(rawDataStr);
-           
+            
             let idLength = 1
             let deviceIdBytes = Array(manufacturerBytes.suffix(idLength))
             print("id: ")
@@ -192,75 +185,75 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                         print(dataParser.formatParseResult(result))
                         
                         // 檢查是否需要停止掃描
-//                        if result.hasReachedTarget && shouldStopScan {
-//                            print("檢測到裝置接收次數達到100次，停止掃描")
-//                            stopScanning()
-//                        }
+                        //                        if result.hasReachedTarget && shouldStopScan {
+                        //                            print("檢測到裝置接收次數達到100次，停止掃描")
+                        //                            stopScanning()
+                        //                        }
                         
                     }
                     
                     matchedCount += 1
                     print("Is Match！")
-                   
+                    
                 }
             }
             
             
             
         }
-
+        
         DispatchQueue.main.async {
-            let packet = BLEPacket(deviceID: deviceId,
-                                   identifier: identifier,
-                                   deviceName: deviceName,
-                                   rssi: rssiValue,
-                                   rawData: rawDataStr,
-                                   mask: maskStr,
-                                   data: dataStr,
-                                   isMatched: isMatched,
-                                   timestamp: now,
-                                   parsedData: parsedData,
-                                   hasLostSignal: false
-                                )
-            self.allPackets[identifier] = packet
+            let generalPacket = BLEPacket(deviceID: deviceId,
+                                          identifier: identifier,
+                                          deviceName: deviceName,
+                                          rssi: rssiValue,
+                                          rawData: rawDataStr,
+                                          mask: maskStr,
+                                          data: dataStr,
+                                          isMatched: isMatched,
+                                          timestamp: now,
+                                          parsedData: parsedData,
+                                          hasLostSignal: false
+            )
+            self.allPackets[identifier] = generalPacket
             
             if isMatched {
-                self.matchedPackets[deviceId] = packet
+                self.matchedPackets[deviceId] = generalPacket
             }
+            
         }
-
-    }
-    func parseHexInput(_ input: String) -> [UInt8]? {
-        let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
-        guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
-
-        var result: [UInt8] = []
-        var index = cleaned.startIndex
-
-        while index < cleaned.endIndex {
-            let nextIndex = cleaned.index(index, offsetBy: 2)
-            let hexPair = String(cleaned[index..<nextIndex])
-            if let byte = UInt8(hexPair, radix: 16) {
-                result.append(byte)
-            } else {
-                return nil  // 只要其中一組轉換失敗就整體失敗
+        func parseHexInput(_ input: String) -> [UInt8]? {
+            let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
+            guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
+            
+            var result: [UInt8] = []
+            var index = cleaned.startIndex
+            
+            while index < cleaned.endIndex {
+                let nextIndex = cleaned.index(index, offsetBy: 2)
+                let hexPair = String(cleaned[index..<nextIndex])
+                if let byte = UInt8(hexPair, radix: 16) {
+                    result.append(byte)
+                } else {
+                    return nil  // 只要其中一組轉換失敗就整體失敗
+                }
+                index = nextIndex
             }
-            index = nextIndex
+            return result
         }
-        return result
+        
+        func asciiStringToBytes(_ input: String) -> [UInt8] {
+            print("asciiStringToBytes Input: \(input)")
+            return Array(input.utf8)
+        }
+        
+        func bytesToHexString(_ bytes: [UInt8]) -> String {
+            print("bytesToHexString Input: \(bytes)")
+            return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
+        }
+        
+        
     }
-    
-    func asciiStringToBytes(_ input: String) -> [UInt8] {
-        print("asciiStringToBytes Input: \(input)")
-        return Array(input.utf8)
-    }
-
-    func bytesToHexString(_ bytes: [UInt8]) -> String {
-        print("bytesToHexString Input: \(bytes)")
-        return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
-    }
-
-    
 }
 extension String {
     func chunks(of length: Int) -> [String] {
