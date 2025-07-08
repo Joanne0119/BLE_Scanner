@@ -16,8 +16,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "466"
             endingLineNumber = "466"
-            landmarkName = "makeBody(configuration:)"
-            landmarkType = "7">
+            landmarkName = "iOSCheckboxToggleStyle"
+            landmarkType = "14">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

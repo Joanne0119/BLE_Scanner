@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/07/07
+//  最後更新 2025/07/08
 //
 
 import SwiftUI
@@ -15,6 +15,9 @@ struct BLEPacketRowView: View {
     let packetStore: SavedPacketsStore
     
     private var signalColor: Color {
+        if packet.hasLostSignal {
+            return .gray
+        }
         if packet.rssi > -70 {
             return .green
         } else if packet.rssi > -90 {
@@ -42,10 +45,10 @@ struct BLEPacketRowView: View {
                 Spacer()
                 
                 // 中間的訊號圖示
-                SignalStrengthView(rssi: packet.rssi)
+                SignalStrengthView(rssi: packet.rssi, hasLostSignal: packet.hasLostSignal)
                 
-                let rssi = if packet.rssi != 127 { "\(packet.rssi)" } else { "Error" }
-                
+                let rssi = if (packet.hasLostSignal) { "Lost" } else if (packet.rssi != 127) { "\(packet.rssi)" }else { "Error" }
+                 
                 // 右側的 RSSI 數值
                 Text("\(rssi)")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -59,9 +62,13 @@ struct BLEPacketRowView: View {
 
 struct SignalStrengthView: View {
     let rssi: Int
+    var hasLostSignal: Bool = false
     
     // 根據 RSSI 值決定顏色
     private var signalColor: Color {
+        if hasLostSignal {
+            return .gray
+        }
         if rssi == 127 {
             return .red
         } else if rssi > -70 {
@@ -75,7 +82,7 @@ struct SignalStrengthView: View {
     
     // 根據 RSSI 值決定要顯示幾格訊號
     private var numberOfBars: Int {
-        if rssi == 127 {
+        if (rssi == 127 || hasLostSignal) {
             return 0
         }
         else if rssi > -65 {

@@ -4,7 +4,7 @@
 //
 //  Created by 劉丞恩 on 2025/4/12.
 //  最後更新 2025/06/27
-//  最後更新 2025/07/07
+//  最後更新 2025/07/08
 
 import SwiftUI
 import AVFoundation
@@ -211,7 +211,7 @@ struct BLEBroadcasterView: View {
             Text("\n快速廣播")
                 .font(.system(size: 20, weight: .medium))
             HStack {
-                Button("重設") {
+                Button("設定廣播") {
                     inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
                     inputData = "7F"
                     inputID = "7F"
@@ -222,7 +222,7 @@ struct BLEBroadcasterView: View {
                 .font(.system(size: 20, weight: .medium))
                 .disabled(broadcaster.isRepeatAdv)
                 
-                Button("重啟") {
+                Button("重新啟動") {
                     inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
                     inputData = "7F"
                     inputID = "7E"

@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/5/27.
-//  最後更新 2025/07/07
+//  最後更新 2025/07/08
 
 import SwiftUI
 import Foundation
@@ -118,7 +118,7 @@ struct ScannerLogView: View {
                                                     
                                                     Text("\(String(format: "%.1f", device.receptionRate)) 次/秒")
                                                         .font(.system(size: 14, weight: .bold))
-                                                        .foregroundColor(device.count >= 100 ? .green : .primary)
+                                                        .foregroundColor(device.count >= 30 ? .green : .primary)
                                                 }
                                             }
                                         }

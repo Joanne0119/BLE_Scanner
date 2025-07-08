@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/20.
-//  最後更新 2025/07/07
+//  最後更新 2025/07/08
 //
 import SwiftUI
 

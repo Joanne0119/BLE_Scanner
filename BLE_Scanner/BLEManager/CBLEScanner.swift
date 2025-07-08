@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12
-//  最後更新 2025/07/07
+//  最後更新 2025/07/08
 //
 
 import Foundation
@@ -23,6 +23,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     private var matchedCount = 0
     private var scanTimeoutTask: DispatchWorkItem?
     private let dataParser = BLEDataParser()
+    private var cleanupTimer: Timer?
 
     override init() {
         super.init()
@@ -42,6 +43,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                     CBCentralManagerScanOptionAllowDuplicatesKey: true
                 ])
                 print("開始掃描中...")
+                
+                self.setupCleanupTimer()
 
                 // 開始倒數幾秒後檢查是否有匹配
                 self.scanTimeoutTask?.cancel()
@@ -68,8 +71,49 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     
     func stopScanning() {
         centralManager.stopScan()
+                cleanupTimer = nil
         isScanning = false
         print("停止掃描")
+    }
+    
+    private func setupCleanupTimer() {
+        // 先停止任何已存在的計時器，以防萬一
+        cleanupTimer?.invalidate()
+        
+        // 建立一個新的計時器，每 2 秒執行一次 checkStaleDevices 方法
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            self?.checkStaleDevices()
+        }
+    }
+
+    private func checkStaleDevices() {
+        let now = Date()
+        let staleThreshold: TimeInterval = 5.0 // 5 秒沒收到信號就標記為失聯
+
+        DispatchQueue.main.async {
+            var hasChanges = false
+            // 遍歷所有已匹配的裝置
+            for deviceID in self.matchedPackets.keys {
+                guard var packet = self.matchedPackets[deviceID] else { continue }
+
+                // 如果裝置尚未被標記為失聯
+                if !packet.hasLostSignal {
+                    // 檢查是否超過時限
+                    if now.timeIntervalSince(packet.timestamp) > staleThreshold {
+                        print("裝置 \(packet.deviceID) 已失聯，更新其狀態。")
+                        // 更新狀態並標記有變更
+                        self.matchedPackets[deviceID]?.hasLostSignal = true
+                        hasChanges = true
+                    }
+                }
+            }
+
+            // 如果沒有任何變更，就不需要觸發 UI 刷新，這可以優化性能
+            if hasChanges {
+                // 透過賦值給 self.objectWillChange.send() 來手動觸發 UI 更新
+                self.objectWillChange.send()
+            }
+        }
     }
 
 
@@ -85,7 +129,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                         advertisementData: [String: Any],
                         rssi RSSI: NSNumber) {
         let identifier = peripheral.identifier.uuidString
-        var deviceName = peripheral.name ?? "Unknown"
+        let deviceName = peripheral.name ?? "Unknown"
         let rssiValue = RSSI.intValue
         var deviceId = ""
 
@@ -175,7 +219,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                    data: dataStr,
                                    isMatched: isMatched,
                                    timestamp: now,
-                                   parsedData: parsedData
+                                   parsedData: parsedData,
+                                   hasLostSignal: false
                                 )
             self.allPackets[identifier] = packet
             

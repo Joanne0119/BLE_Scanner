@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/07/07
+//  最後更新 2025/07/08
 
 import SwiftUI
 import Foundation
@@ -162,17 +162,24 @@ struct BLEScannerDetailView: View {
                 // 右側指南針按鈕
                 ToolbarItem(placement: .navigationBarTrailing) {
                     
+//                    HStack {
+//                        Text("\(direction(from: compassManager.heading))")
+//                            .font(.system(size: 12, weight: .medium))
+//                            .foregroundColor(.white)
+//                        
+//                        Image(systemName: "location.north.circle")
+//                            .resizable()
+//                            .frame(width: 20, height: 20)
+//                            .rotationEffect(Angle(degrees: -compassManager.heading))
+//                            .animation(.easeInOut, value: compassManager.heading)
+//                            .foregroundColor(.white)
+//                    }
+                    
                     HStack {
-                        Text("\(direction(from: compassManager.heading))")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white)
-                        
-                        Image(systemName: "location.north.circle")
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                            .rotationEffect(Angle(degrees: -compassManager.heading))
-                            .animation(.easeInOut, value: compassManager.heading)
-                            .foregroundColor(.white)
+                        Button("", systemImage: "trash") {
+                            packetStore.delete(packet)
+                        }
+                        .tint(.white)
                     }
                     
                 }
@@ -242,19 +249,19 @@ struct BLEScannerDetailView: View {
         }
     }
     
-    private func direction(from heading: Double) -> String {
-        switch heading {
-        case 0..<22.5, 337.5..<360: return "北"
-        case 22.5..<67.5: return "東北"
-        case 67.5..<112.5: return "東"
-        case 112.5..<157.5: return "東南"
-        case 157.5..<202.5: return "南"
-        case 202.5..<247.5: return "西南"
-        case 247.5..<292.5: return "西"
-        case 292.5..<337.5: return "西北"
-        default: return "未知"
-        }
-    }
+//    private func direction(from heading: Double) -> String {
+//        switch heading {
+//        case 0..<22.5, 337.5..<360: return "北"
+//        case 22.5..<67.5: return "東北"
+//        case 67.5..<112.5: return "東"
+//        case 112.5..<157.5: return "東南"
+//        case 157.5..<202.5: return "南"
+//        case 202.5..<247.5: return "西南"
+//        case 247.5..<292.5: return "西"
+//        case 292.5..<337.5: return "西北"
+//        default: return "未知"
+//        }
+//    }
 }
 
 
@@ -292,7 +299,7 @@ struct DeviceStatusCardsView: View {
     // 將所有數據按 deviceId 分組
     private var groupedDevices: [String: [DeviceInfo]] {
         let sorted = allHistoricalDevices.sorted { $0.timestamp > $1.timestamp }
-        let recentRecords = sorted.prefix(30)
+        let recentRecords = sorted.prefix(100)
         return Dictionary(grouping: recentRecords, by: { $0.deviceId })
     }
 
@@ -304,12 +311,29 @@ struct DeviceStatusCardsView: View {
         }.sorted { $0.receptionRate > $1.receptionRate }
     }
     
+    private func getAverageRate(for deviceId: String) -> Double {
+        // 根據 ID 取得該裝置的所有歷史數據
+        guard let deviceHistory = groupedDevices[deviceId], !deviceHistory.isEmpty else {
+            return 0.0
+        }
+        
+        // 將所有 receptionRate 加總
+        let totalRate = deviceHistory.reduce(0.0) { $0 + $1.receptionRate }
+        
+        // 計算平均值並回傳
+        return totalRate / Double(deviceHistory.count)
+    }
+    
     var body: some View {
         VStack(spacing: 6) {
             ForEach(currentDisplayDevices) { currentDevice in
                 VStack(spacing: 0) {
                     // 第一層：顯示即時數據
-                    DeviceCardView(device: currentDevice)
+                    DeviceCardView(
+                        device: currentDevice,
+                        isHistory: false,
+                        averageRate: getAverageRate(for: currentDevice.deviceId)
+                    )
                         .onTapGesture {
                             withAnimation(.spring()) {
                                 expandedDeviceId = (expandedDeviceId == currentDevice.deviceId) ? nil : currentDevice.deviceId
@@ -321,7 +345,7 @@ struct DeviceStatusCardsView: View {
                         let historicalDevices = groupedDevices[currentDevice.deviceId]?.dropFirst() ?? []
                         
                         ForEach(Array(historicalDevices)) { historicalDevice in
-                            DeviceCardView(device: historicalDevice, isHistory: true)
+                            DeviceCardView(device: historicalDevice, isHistory: true, averageRate: 0)
                                 .transition(.asymmetric(
                                     insertion: .opacity.combined(with: .move(edge: .top)),
                                     removal: .opacity.combined(with: .move(edge: .bottom))
@@ -337,12 +361,14 @@ struct DeviceStatusCardsView: View {
 struct DeviceCardView: View {
     let device: DeviceInfo
     var isHistory: Bool = false // 用來區分是否為歷史紀錄
+    let averageRate: Double
     
     private let suggestion: DeviceSuggestion
     
-    init(device: DeviceInfo, isHistory: Bool = false) {
+    init(device: DeviceInfo, isHistory: Bool = false, averageRate: Double) {
         self.device = device
         self.isHistory = isHistory
+        self.averageRate = averageRate
         self.suggestion = DeviceSuggestion(rate: device.receptionRate)
     }
 
@@ -355,16 +381,20 @@ struct DeviceCardView: View {
                     .foregroundColor(isHistory ? .white.opacity(0.8) : .white)
                 
                 Spacer()
-                
-                if !isHistory && device.count >= 100 {
-                    Text("已達標")
-                        .font(.caption2)
-                        .bold()
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .foregroundColor(suggestion.color)
-                        .background(Color.white)
-                        .cornerRadius(8)
+                HStack {
+                    if !isHistory && device.count >= 100 {
+                        Text("已達標")
+                            .font(.caption2)
+                            .bold()
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .foregroundColor(suggestion.color)
+                            .background(Color.white)
+                            .cornerRadius(8)
+                    }
+                    if !isHistory {
+                        Text("平均 \(String(format: "%.1f", averageRate)) 次/秒") 
+                    }
                 }
             }
             

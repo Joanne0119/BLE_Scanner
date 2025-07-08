@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/07/04
+//  最後更新 2025/07/08
 //
 
 import SwiftUI
@@ -112,15 +112,24 @@ extension BLEScannerView {
             .font(.system(size: 20, weight: .medium))
             .buttonStyle(.borderedProminent)
             .tint(scanner.isScanning ? .red : .blue)
+            
+            Button("常用遮罩掃描") {
+                maskText = "FFFFFFFFFFFFFFFFFFFFFFFFFF"
+                handleStartScan()
+            }
+            .font(.system(size: 20, weight: .medium))
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+            .disabled(scanner.isScanning)
         }
     }
     
     private func startScanningIfValid() {
         let isMaskEmpty = maskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         maskTextEmpty = isMaskEmpty
-        maskError = "請輸入遮罩"
         
         if isMaskEmpty {
+            maskError = "請輸入遮罩"
             return
         }
         handleStartScan()
