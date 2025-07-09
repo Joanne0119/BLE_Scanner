@@ -105,6 +105,13 @@
 			);
 			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
 		};
+		F56CA65C2E1E3511007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WatchScannerListView.swift,
+			);
+			target = F5B34AA12DA907E700A47FEE /* BLE_Scanner */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -113,7 +120,7 @@
 		F535E9F02E16325700026E17 /* Manager */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F56CA6402E1E1057007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Manager; sourceTree = "<group>"; };
 		F535E9F12E16327100026E17 /* MQTTView */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MQTTView; sourceTree = "<group>"; };
 		F535E9F82E16597800026E17 /* DataStructure */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = DataStructure; sourceTree = "<group>"; };
-		F56CA5FA2E1E046E007AB995 /* WatchBLE Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch App"; sourceTree = "<group>"; };
+		F56CA5FA2E1E046E007AB995 /* WatchBLE Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F56CA65C2E1E3511007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch App"; sourceTree = "<group>"; };
 		F56CA6082E1E0470007AB995 /* WatchBLE Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch AppTests"; sourceTree = "<group>"; };
 		F56CA6122E1E0470007AB995 /* WatchBLE Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch AppUITests"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -469,14 +476,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WatchBLE;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.blueAdv.v4;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.blueAdv.v5;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v5.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -499,14 +506,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = WatchBLE;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.blueAdv.v4;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.blueAdv.v5;
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v5.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -741,7 +748,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v5;
 				PRODUCT_NAME = BlueAdv;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -776,7 +783,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v5;
 				PRODUCT_NAME = BlueAdv;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
