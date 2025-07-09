@@ -527,11 +527,3 @@ struct CustomSegmentedControl: View {
         .cornerRadius(12)
     }
 }
-
-// MARK: - String Extension
-extension String {
-    var cleanedHex: String {
-        return self.components(separatedBy: .whitespacesAndNewlines).joined()
-                   .components(separatedBy: CharacterSet(charactersIn: ",，")).joined()
-    }
-}

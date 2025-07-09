@@ -167,7 +167,5 @@ struct ScannerLogView: View {
         return formatter.string(from: date)
     }
 }
-extension Notification.Name {
-    static let packetsUpdated = Notification.Name("packetsUpdated")
-}
+
 

@@ -10,20 +10,66 @@
 		F5202E392DE58CC500257750 /* ScannerLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5202E382DE58CB900257750 /* ScannerLogView.swift */; };
 		F535E9FA2E1659AE00026E17 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F535E9F92E1659AE00026E17 /* LaunchScreen.storyboard */; };
 		F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */; };
+		F56CA6192E1E0471007AB995 /* WatchBLE Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F56CA5F92E1E046E007AB995 /* WatchBLE Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F56CA6312E1E0B7F007AB995 /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F56CA6302E1E0B7F007AB995 /* MQTTNIO */; };
+		F56CA6332E1E0BBB007AB995 /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F56CA6322E1E0BBB007AB995 /* MQTTNIO */; };
+		F56CA6482E1E1521007AB995 /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CA6472E1E1521007AB995 /* Extension.swift */; };
+		F56CA6492E1E1521007AB995 /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CA6472E1E1521007AB995 /* Extension.swift */; };
 		F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */; };
 		F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA72DA907E700A47FEE /* ContentView.swift */; };
 		F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B34AA92DA907E900A47FEE /* Assets.xcassets */; };
 		F5B34AAD2DA907E900A47FEE /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B34AAC2DA907E900A47FEE /* Preview Assets.xcassets */; };
 		F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AB92DAA216800A47FEE /* BLEBroadcasterView.swift */; };
 		F5CB0FC62DCDE74000B7C152 /* SettingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5CB0FC52DCDE71500B7C152 /* SettingView.swift */; };
-		F5D6C9392E010BBE0037982D /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F5D6C9382E010BBE0037982D /* MQTTNIO */; };
 		F5D6C9452E1133CB0037982D /* HelpButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D6C9442E1133BF0037982D /* HelpButtonView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F56CA6062E1E0470007AB995 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5B34A9A2DA907E700A47FEE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F56CA5F82E1E046E007AB995;
+			remoteInfo = "WatchBLE Watch App";
+		};
+		F56CA6102E1E0470007AB995 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5B34A9A2DA907E700A47FEE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F56CA5F82E1E046E007AB995;
+			remoteInfo = "WatchBLE Watch App";
+		};
+		F56CA6172E1E0471007AB995 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5B34A9A2DA907E700A47FEE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F56CA5F82E1E046E007AB995;
+			remoteInfo = "WatchBLE Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F56CA61A2E1E0471007AB995 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F56CA6192E1E0471007AB995 /* WatchBLE Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F5202E382DE58CB900257750 /* ScannerLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerLogView.swift; sourceTree = "<group>"; };
 		F535E9F92E1659AE00026E17 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressureCorrectionView.swift; sourceTree = "<group>"; };
+		F56CA5F92E1E046E007AB995 /* WatchBLE Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WatchBLE Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F56CA6052E1E0470007AB995 /* WatchBLE Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "WatchBLE Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F56CA60F2E1E0470007AB995 /* WatchBLE Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "WatchBLE Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F56CA6472E1E1521007AB995 /* Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extension.swift; sourceTree = "<group>"; };
 		F5B34AA22DA907E700A47FEE /* BlueAdv.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlueAdv.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLE_ScannerApp.swift; sourceTree = "<group>"; };
 		F5B34AA72DA907E700A47FEE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -35,30 +81,92 @@
 		F5D6C9442E1133BF0037982D /* HelpButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpButtonView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F56CA6402E1E1057007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CompassManager.swift,
+			);
+			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
+		};
+		F56CA6432E1E1266007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CurrentStatusView.swift,
+				DeviceStatusCardsView.swift,
+				SignalStrengthView.swift,
+			);
+			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
+		};
+		F56CA64B2E1E162C007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				CBLEScanner.swift,
+			);
+			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		F535E9ED2E1631E200026E17 /* BLEManager */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BLEManager; sourceTree = "<group>"; };
-		F535E9EE2E16321000026E17 /* ScannerView */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ScannerView; sourceTree = "<group>"; };
-		F535E9F02E16325700026E17 /* Manager */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Manager; sourceTree = "<group>"; };
+		F535E9ED2E1631E200026E17 /* BLEManager */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F56CA64B2E1E162C007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BLEManager; sourceTree = "<group>"; };
+		F535E9EE2E16321000026E17 /* ScannerView */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F56CA6432E1E1266007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ScannerView; sourceTree = "<group>"; };
+		F535E9F02E16325700026E17 /* Manager */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (F56CA6402E1E1057007AB995 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Manager; sourceTree = "<group>"; };
 		F535E9F12E16327100026E17 /* MQTTView */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MQTTView; sourceTree = "<group>"; };
 		F535E9F82E16597800026E17 /* DataStructure */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = DataStructure; sourceTree = "<group>"; };
+		F56CA5FA2E1E046E007AB995 /* WatchBLE Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch App"; sourceTree = "<group>"; };
+		F56CA6082E1E0470007AB995 /* WatchBLE Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch AppTests"; sourceTree = "<group>"; };
+		F56CA6122E1E0470007AB995 /* WatchBLE Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "WatchBLE Watch AppUITests"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		F56CA5F62E1E046E007AB995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F56CA6312E1E0B7F007AB995 /* MQTTNIO in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F56CA6022E1E0470007AB995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F56CA60C2E1E0470007AB995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F5B34A9F2DA907E700A47FEE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F5D6C9392E010BBE0037982D /* MQTTNIO in Frameworks */,
+				F56CA6332E1E0BBB007AB995 /* MQTTNIO in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F56CA62D2E1E0B76007AB995 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F5B34A992DA907E700A47FEE = {
 			isa = PBXGroup;
 			children = (
 				F5B34AA42DA907E700A47FEE /* BLE_Scanner */,
+				F56CA5FA2E1E046E007AB995 /* WatchBLE Watch App */,
+				F56CA6082E1E0470007AB995 /* WatchBLE Watch AppTests */,
+				F56CA6122E1E0470007AB995 /* WatchBLE Watch AppUITests */,
+				F56CA62D2E1E0B76007AB995 /* Frameworks */,
 				F5B34AA32DA907E700A47FEE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -67,6 +175,9 @@
 			isa = PBXGroup;
 			children = (
 				F5B34AA22DA907E700A47FEE /* BlueAdv.app */,
+				F56CA5F92E1E046E007AB995 /* WatchBLE Watch App.app */,
+				F56CA6052E1E0470007AB995 /* WatchBLE Watch AppTests.xctest */,
+				F56CA60F2E1E0470007AB995 /* WatchBLE Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -78,6 +189,7 @@
 				F535E9F92E1659AE00026E17 /* LaunchScreen.storyboard */,
 				F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */,
 				F5B34AA72DA907E700A47FEE /* ContentView.swift */,
+				F56CA6472E1E1521007AB995 /* Extension.swift */,
 				F535E9F02E16325700026E17 /* Manager */,
 				F535E9ED2E1631E200026E17 /* BLEManager */,
 				F535E9EE2E16321000026E17 /* ScannerView */,
@@ -105,6 +217,77 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F56CA6212E1E0471007AB995 /* Build configuration list for PBXNativeTarget "WatchBLE Watch App" */;
+			buildPhases = (
+				F56CA5F52E1E046E007AB995 /* Sources */,
+				F56CA5F62E1E046E007AB995 /* Frameworks */,
+				F56CA5F72E1E046E007AB995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F535E9F02E16325700026E17 /* Manager */,
+				F535E9F82E16597800026E17 /* DataStructure */,
+				F56CA5FA2E1E046E007AB995 /* WatchBLE Watch App */,
+			);
+			name = "WatchBLE Watch App";
+			packageProductDependencies = (
+				F56CA6302E1E0B7F007AB995 /* MQTTNIO */,
+			);
+			productName = "WatchBLE Watch App";
+			productReference = F56CA5F92E1E046E007AB995 /* WatchBLE Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F56CA6042E1E0470007AB995 /* WatchBLE Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F56CA6222E1E0471007AB995 /* Build configuration list for PBXNativeTarget "WatchBLE Watch AppTests" */;
+			buildPhases = (
+				F56CA6012E1E0470007AB995 /* Sources */,
+				F56CA6022E1E0470007AB995 /* Frameworks */,
+				F56CA6032E1E0470007AB995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F56CA6072E1E0470007AB995 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F56CA6082E1E0470007AB995 /* WatchBLE Watch AppTests */,
+			);
+			name = "WatchBLE Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "WatchBLE Watch AppTests";
+			productReference = F56CA6052E1E0470007AB995 /* WatchBLE Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F56CA60E2E1E0470007AB995 /* WatchBLE Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F56CA6232E1E0471007AB995 /* Build configuration list for PBXNativeTarget "WatchBLE Watch AppUITests" */;
+			buildPhases = (
+				F56CA60B2E1E0470007AB995 /* Sources */,
+				F56CA60C2E1E0470007AB995 /* Frameworks */,
+				F56CA60D2E1E0470007AB995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F56CA6112E1E0470007AB995 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F56CA6122E1E0470007AB995 /* WatchBLE Watch AppUITests */,
+			);
+			name = "WatchBLE Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "WatchBLE Watch AppUITests";
+			productReference = F56CA60F2E1E0470007AB995 /* WatchBLE Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		F5B34AA12DA907E700A47FEE /* BLE_Scanner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F5B34AB02DA907E900A47FEE /* Build configuration list for PBXNativeTarget "BLE_Scanner" */;
@@ -112,10 +295,12 @@
 				F5B34A9E2DA907E700A47FEE /* Sources */,
 				F5B34A9F2DA907E700A47FEE /* Frameworks */,
 				F5B34AA02DA907E700A47FEE /* Resources */,
+				F56CA61A2E1E0471007AB995 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F56CA6182E1E0471007AB995 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F535E9ED2E1631E200026E17 /* BLEManager */,
@@ -136,9 +321,20 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1540;
+				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
+					F56CA5F82E1E046E007AB995 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					F56CA6042E1E0470007AB995 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = F56CA5F82E1E046E007AB995;
+					};
+					F56CA60E2E1E0470007AB995 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = F56CA5F82E1E046E007AB995;
+					};
 					F5B34AA12DA907E700A47FEE = {
 						CreatedOnToolsVersion = 15.4;
 					};
@@ -154,18 +350,42 @@
 			);
 			mainGroup = F5B34A992DA907E700A47FEE;
 			packageReferences = (
-				F5D6C9372E010BBE0037982D /* XCRemoteSwiftPackageReference "mqtt-nio" */,
+				F56CA62C2E1E0AAE007AB995 /* XCRemoteSwiftPackageReference "mqtt-nio" */,
 			);
 			productRefGroup = F5B34AA32DA907E700A47FEE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				F5B34AA12DA907E700A47FEE /* BLE_Scanner */,
+				F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */,
+				F56CA6042E1E0470007AB995 /* WatchBLE Watch AppTests */,
+				F56CA60E2E1E0470007AB995 /* WatchBLE Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		F56CA5F72E1E046E007AB995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F56CA6032E1E0470007AB995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F56CA60D2E1E0470007AB995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F5B34AA02DA907E700A47FEE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -179,6 +399,28 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		F56CA5F52E1E046E007AB995 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F56CA6492E1E1521007AB995 /* Extension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F56CA6012E1E0470007AB995 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F56CA60B2E1E0470007AB995 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F5B34A9E2DA907E700A47FEE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -186,6 +428,7 @@
 				F5B34ABA2DAA216800A47FEE /* BLEBroadcasterView.swift in Sources */,
 				F5CB0FC62DCDE74000B7C152 /* SettingView.swift in Sources */,
 				F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */,
+				F56CA6482E1E1521007AB995 /* Extension.swift in Sources */,
 				F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */,
 				F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */,
 				F5D6C9452E1133CB0037982D /* HelpButtonView.swift in Sources */,
@@ -195,7 +438,163 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		F56CA6072E1E0470007AB995 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
+			targetProxy = F56CA6062E1E0470007AB995 /* PBXContainerItemProxy */;
+		};
+		F56CA6112E1E0470007AB995 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
+			targetProxy = F56CA6102E1E0470007AB995 /* PBXContainerItemProxy */;
+		};
+		F56CA6182E1E0471007AB995 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F56CA5F82E1E046E007AB995 /* WatchBLE Watch App */;
+			targetProxy = F56CA6172E1E0471007AB995 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		F56CA61B2E1E0471007AB995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = WatchBLE;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.blueAdv.v4;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		F56CA61C2E1E0471007AB995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = WatchBLE;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.blueAdv.v4;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v4.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
+		F56CA61D2E1E0471007AB995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Joanne.WatchBLE-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchBLE Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WatchBLE Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		F56CA61E2E1E0471007AB995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Joanne.WatchBLE-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchBLE Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WatchBLE Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
+		F56CA61F2E1E0471007AB995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Joanne.WatchBLE-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "WatchBLE Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		F56CA6202E1E0471007AB995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3CZA3RR964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Joanne.WatchBLE-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "WatchBLE Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
 		F5B34AAE2DA907E900A47FEE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -388,6 +787,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		F56CA6212E1E0471007AB995 /* Build configuration list for PBXNativeTarget "WatchBLE Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F56CA61B2E1E0471007AB995 /* Debug */,
+				F56CA61C2E1E0471007AB995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F56CA6222E1E0471007AB995 /* Build configuration list for PBXNativeTarget "WatchBLE Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F56CA61D2E1E0471007AB995 /* Debug */,
+				F56CA61E2E1E0471007AB995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F56CA6232E1E0471007AB995 /* Build configuration list for PBXNativeTarget "WatchBLE Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F56CA61F2E1E0471007AB995 /* Debug */,
+				F56CA6202E1E0471007AB995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F5B34A9D2DA907E700A47FEE /* Build configuration list for PBXProject "BLE_Scanner" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -409,7 +835,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		F5D6C9372E010BBE0037982D /* XCRemoteSwiftPackageReference "mqtt-nio" */ = {
+		F56CA62C2E1E0AAE007AB995 /* XCRemoteSwiftPackageReference "mqtt-nio" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/swift-server-community/mqtt-nio.git";
 			requirement = {
@@ -420,9 +846,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		F5D6C9382E010BBE0037982D /* MQTTNIO */ = {
+		F56CA6302E1E0B7F007AB995 /* MQTTNIO */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F5D6C9372E010BBE0037982D /* XCRemoteSwiftPackageReference "mqtt-nio" */;
+			package = F56CA62C2E1E0AAE007AB995 /* XCRemoteSwiftPackageReference "mqtt-nio" */;
+			productName = MQTTNIO;
+		};
+		F56CA6322E1E0BBB007AB995 /* MQTTNIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F56CA62C2E1E0AAE007AB995 /* XCRemoteSwiftPackageReference "mqtt-nio" */;
 			productName = MQTTNIO;
 		};
 /* End XCSwiftPackageProductDependency section */

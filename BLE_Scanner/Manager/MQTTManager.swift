@@ -18,7 +18,7 @@ class MQTTManager: ObservableObject {
     private let dataParser = BLEDataParser()
     private var mqttClient: MQTTClient?
     private var eventLoopGroup: MultiThreadedEventLoopGroup?
-    private let clientID = "BLE_Scanner_\(UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString)"
+    private let clientID = "BLE_Scanner_\(UUID().uuidString)"
     private let host = "152.42.241.75"
     private let port = 1883
     private let username = "root"
