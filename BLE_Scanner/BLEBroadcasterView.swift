@@ -30,11 +30,11 @@ struct BLEBroadcasterView: View {
     
     @Binding var maskSuggestions: [String]
     @Binding var dataSuggestions: [String]
+    private let idSuggestions: [String] = ["7F", "7E", "01", "02", "03", "04", "05", "06", "07", "08", "09", "0A", "0B", "0C", "0D", "0E", "0F", "10", "11", "12", "13", "14"]
     
     @State private var maskError: String?
     @State private var dataError: String?
     @State private var idError: String?
-
     
     var body: some View {
         NavigationView {
@@ -86,7 +86,7 @@ struct BLEBroadcasterView: View {
                             }
                         )
                         
-                        // ID 輸入區塊 (沒有 suggestions)
+                        // ID 輸入區塊
                         BroadcastInputSectionView(
                             title: "ID：",
                             placeholder: "ex: 01",
@@ -94,9 +94,11 @@ struct BLEBroadcasterView: View {
                             error: $idError,
                             focusedField: $focusedField,
                             fieldCase: .id,
-                            suggestions: nil, // 傳入 nil
+                            suggestions: idSuggestions,
                             onInputChange: { validateID() },
-                            onSuggestionTap: { _ in } // 不需要操作
+                            onSuggestionTap: { suggestion in
+                                handleSuggestionTap(for: .id, suggestion: suggestion)
+                            }
                         )
 
                     }
@@ -479,7 +481,7 @@ struct BroadcastInputSectionView: View {
     
     // 用於判斷焦點和顯示建議
     let fieldCase: BLEBroadcasterView.Field
-    let suggestions: [String]? // ID 輸入框沒有建議，所以設為可選
+    let suggestions: [String]?
     
     // 將操作回傳給父視圖處理
     let onInputChange: () -> Void

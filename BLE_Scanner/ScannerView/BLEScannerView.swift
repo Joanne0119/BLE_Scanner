@@ -150,6 +150,11 @@ extension BLEScannerView {
             .buttonStyle(.borderedProminent)
             .tint(.orange)
             .disabled(scanner.isScanning)
+            
+            Button("", systemImage: "trash") {
+                scanner.matchedPackets.removeAll()
+            }
+            .tint(.red)
         }
     }
     

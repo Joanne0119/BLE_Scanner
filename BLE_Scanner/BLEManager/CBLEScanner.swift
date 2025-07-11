@@ -32,7 +32,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     
     func startScanning() {
         allPackets.removeAll()
-        matchedPackets.removeAll()
+//        matchedPackets.removeAll()
         matchedCount = 0
         noMatchFound = false
         centralManager.stopScan()
