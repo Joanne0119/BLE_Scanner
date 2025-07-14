@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/07/08
+//  最後更新 2025/07/14
 
 import SwiftUI
 import Foundation
@@ -137,7 +137,9 @@ struct BLEScannerDetailView: View {
                     
                     HStack {
                         Button("", systemImage: "trash") {
-                            packetStore.delete(packet)
+                            if let packetToClear = storedPacket {
+                                packetStore.clearDeviceHistory(for: packetToClear.id)
+                            }
                         }
                         .tint(.white)
                     }

@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/5/27.
-//  最後更新 2025/07/08
+//  最後更新 2025/07/14
 
 import SwiftUI
 import Foundation
@@ -13,6 +13,8 @@ struct ScannerLogView: View {
     @State private var isExpanded: Bool = false
     @State private var idText: String = ""
     @ObservedObject var packetStore: SavedPacketsStore
+    
+    @State private var listId = UUID()
     
     var filteredPackets: [BLEPacket] {
         if idText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -137,6 +139,7 @@ struct ScannerLogView: View {
                                 }
                             }
                         }
+                        .id(listId)
                     }
                 }
                 .navigationTitle("掃描Log")
@@ -160,6 +163,8 @@ struct ScannerLogView: View {
     }
     private func loadSavedPackets() {
         packetStore.reload()
+        
+        listId = UUID()
     }
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()

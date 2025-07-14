@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/17.
-//  最後更新 2025/07/08
+//  最後更新 2025/07/14
 
 import MQTTNIO
 import Foundation

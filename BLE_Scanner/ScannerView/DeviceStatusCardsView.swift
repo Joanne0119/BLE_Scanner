@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/7/9.
-//
+//  最後更新 2025/07/14
 
 import Foundation
 import SwiftUI
@@ -76,15 +76,17 @@ struct DeviceStatusCardsView: View {
     
     private func getAverageRate(for deviceId: String) -> Double {
         // 根據 ID 取得該裝置的所有歷史數據
-        guard let deviceHistory = groupedDevices[deviceId], !deviceHistory.isEmpty else {
+        guard let deviceHistory = groupedDevices[deviceId], deviceHistory.count > 1 else {
             return 0.0
         }
         
+        let historicalRecords = deviceHistory.dropFirst()
+        
         // 將所有 receptionRate 加總
-        let totalRate = deviceHistory.reduce(0.0) { $0 + $1.receptionRate }
+        let totalRate = historicalRecords.reduce(0.0) { $0 + $1.receptionRate }
         
         // 計算平均值並回傳
-        return totalRate / Double(deviceHistory.count)
+        return totalRate / Double(historicalRecords.count)
     }
     
     var body: some View {

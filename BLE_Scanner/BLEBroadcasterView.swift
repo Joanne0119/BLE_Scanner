@@ -4,7 +4,7 @@
 //
 //  Created by 劉丞恩 on 2025/4/12.
 //  最後更新 2025/06/27
-//  最後更新 2025/07/08
+//  最後更新 2025/07/14
 
 import SwiftUI
 import AVFoundation
@@ -30,7 +30,7 @@ struct BLEBroadcasterView: View {
     
     @Binding var maskSuggestions: [String]
     @Binding var dataSuggestions: [String]
-    private let idSuggestions: [String] = ["7F", "7E", "01", "02", "03", "04", "05", "06", "07", "08", "09", "0A", "0B", "0C", "0D", "0E", "0F", "10", "11", "12", "13", "14"]
+    private let idSuggestions: [String] = ["7F", "7E", "01", "02", "03", "04", "05", "06", "07", "08", "09", "0A", "0B", "0C", "0D", "0E", "0F", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "1A", "1B", "1C", "1D", "1E", "1F", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "2A", "2B", "2C", "2D", "2E", "2F", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"]
     
     @State private var maskError: String?
     @State private var dataError: String?
@@ -213,7 +213,7 @@ struct BLEBroadcasterView: View {
             Text("\n快速廣播")
                 .font(.system(size: 20, weight: .medium))
             HStack {
-                Button("設定廣播") {
+                Button("全部設定廣播") {
                     inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
                     inputData = "7F"
                     inputID = "7F"
@@ -224,7 +224,7 @@ struct BLEBroadcasterView: View {
                 .font(.system(size: 20, weight: .medium))
                 .disabled(broadcaster.isRepeatAdv)
                 
-                Button("重新啟動") {
+                Button("全部重新啟動") {
                     inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
                     inputData = "7F"
                     inputID = "7E"

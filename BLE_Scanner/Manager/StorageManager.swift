@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/5/27.
-//  最後更新 2025/07/08
+//  最後更新 2025/07/14
 
 import Foundation
 import SwiftUI
@@ -46,32 +46,58 @@ class SavedPacketsStore: ObservableObject {
     
     func updateOrAppendDeviceHistory(for incomingPacket: BLEPacket) {
         guard let incomingParsedData = incomingPacket.parsedData else { return }
-            
-        var packetToSave = incomingPacket
-        
-        // 嘗試尋找本地儲存中是否已存在相同 id 的封包
+
+        // 尋找本地儲存中是否已存在相同 deviceID 的封包
         if let existingIndex = self.packets.firstIndex(where: { $0.deviceID == incomingPacket.deviceID }) {
-            // 記錄原本的封包
-            let oldPacket = self.packets[existingIndex]
-            // 記錄舊的封包裝置info和新的封包裝置info，然後合併
-            let oldDevices = oldPacket.parsedData?.devices ?? []
+            // 如果存在，則進行合併更新
+            var existingPacket = self.packets[existingIndex]
+            
+            // 取得舊的歷史裝置資訊
+            let oldDevices = existingPacket.parsedData?.devices ?? []
             let newDevices = incomingParsedData.devices
+            
+            // 合併新舊裝置資訊
             let combinedDevices = oldDevices + newDevices
             
-            packetToSave.parsedData?.devices = combinedDevices
+            //【修改建議】更安全地更新 ParsedBLEData
+            if var existingParsedData = existingPacket.parsedData {
+                // 更新裝置列表
+                existingParsedData.devices = combinedDevices
+                // 同時更新為最新的秒數、溫度等資訊
+                existingParsedData.seconds = incomingParsedData.seconds
+                existingParsedData.temperature = incomingParsedData.temperature
+                existingParsedData.atmosphericPressure = incomingParsedData.atmosphericPressure
+                existingParsedData.hasReachedTarget = incomingParsedData.hasReachedTarget
+                
+                // 將修改後的 parsedData 賦值回 packet
+                existingPacket.parsedData = existingParsedData
+            } else {
+                // 如果舊的沒有 parsedData，就直接用新的
+                existingPacket.parsedData = incomingParsedData
+            }
             
-            self.packets[existingIndex] = packetToSave
+            // 更新其他最即時的資訊，例如 RSSI 和時間戳
+            existingPacket.rssi = incomingPacket.rssi
+            existingPacket.timestamp = incomingPacket.timestamp
+            existingPacket.hasLostSignal = incomingPacket.hasLostSignal
             
-            print("合併的device封包\(combinedDevices)，已更新 deviceID: \(packetToSave.deviceID) 的歷史紀錄。")
+            // 將完整更新後的封包存回陣列
+            self.packets[existingIndex] = existingPacket
+            
+            print("已合併並更新 deviceID: \(existingPacket.deviceID) 的歷史紀錄。")
+            
+            // 發布到 MQTT 的應該是完整更新後的封包
+            mqttManager.publishLog(existingPacket)
+
+        } else {
+            // 如果不存在，直接新增
+            self.packets.append(incomingPacket)
+            print("封包為首次儲存，已加入: \(incomingPacket.deviceID)")
+            mqttManager.publishLog(incomingPacket)
         }
-        else {
-            self.packets.append(packetToSave)
-            print("封包沒有被加入過，已加入")
-        }
-        // --- 同步與儲存 ---
+        
+        // 儲存到本地
         StorageManager.save(packets: self.packets)
-        mqttManager.publishLog(packetToSave) // 發布包含完整歷史的封包到 MQTT
-        print("已儲存並合併了 deviceID: \(packetToSave.deviceID) 的歷史紀錄。")
     }
     
     func updateOrAppend(contentsOf newPackets: [BLEPacket]) {
@@ -159,6 +185,34 @@ class SavedPacketsStore: ObservableObject {
             // 通知 MQTT 刪除這筆日誌，呼叫新的 deleteLog 函式
             mqttManager.deleteLog(packetId: packet.identifier)
         }
+    }
+    
+    func clearDeviceHistory(for packetID: String) {
+        // 1. 根據唯一的 identifier 找到日誌在陣列中的位置
+        guard let index = self.packets.firstIndex(where: { $0.id == packetID }) else {
+            print("錯誤：找不到 ID 為 \(packetID) 的日誌來清除歷史。")
+            return
+        }
+        
+        // 2. 確保該日誌有 parsedData
+        guard self.packets[index].parsedData != nil else {
+            print("警告：ID 為 \(packetID) 的日誌沒有 parsedData，無需清除。")
+            return
+        }
+        
+        // 3. 清空 devices 陣列
+        self.packets[index].parsedData?.devices.removeAll()
+        
+        // 4. 將 hasReachedTarget 狀態重設為 false
+        self.packets[index].parsedData?.hasReachedTarget = false
+        
+        // 5. 儲存變更到本地
+        StorageManager.save(packets: self.packets)
+        
+        // 6. （可選）通知 MQTT 伺服器此筆日誌已更新
+        mqttManager.publishLog(self.packets[index])
+        
+        print("成功清除日誌 ID \(packetID) 的裝置接收狀況。")
     }
     
     /// 清除所有日誌（同時會發布刪除指令到 MQTT）
