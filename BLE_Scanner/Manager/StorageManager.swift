@@ -52,6 +52,10 @@ class SavedPacketsStore: ObservableObject {
             // 如果存在，則進行合併更新
             var existingPacket = self.packets[existingIndex]
             
+            existingPacket.rawData = incomingPacket.rawData
+            existingPacket.mask = incomingPacket.mask
+            existingPacket.data = incomingPacket.data
+            
             // 取得舊的歷史裝置資訊
             let oldDevices = existingPacket.parsedData?.devices ?? []
             let newDevices = incomingParsedData.devices

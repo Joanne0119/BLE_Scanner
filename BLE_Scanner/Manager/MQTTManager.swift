@@ -275,6 +275,7 @@ class MQTTManager: ObservableObject {
     func publishLog(_ packet: BLEPacket) {
         let timestampString = MQTTManager.logDateFormatter.string(from: packet.timestamp)
         let payloadString = "\(packet.rawData),\(packet.rssi),\(timestampString)"
+        print("publish log \(payloadString)")
         publish(to: logUploadTopic, payload: payloadString)
     }
 
