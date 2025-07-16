@@ -273,10 +273,12 @@ class MQTTManager: ObservableObject {
 
     // MARK: - 發布訊息 (掃描 Log)
     func publishLog(_ packet: BLEPacket) {
+        let testGroupID = TestSessionManager.shared.getCurrentTestID()
         let timestampString = MQTTManager.logDateFormatter.string(from: packet.timestamp)
-        let payloadString = "\(packet.rawData),\(packet.rssi),\(timestampString)"
-        print("publish log \(payloadString)")
-        publish(to: logUploadTopic, payload: payloadString)
+        let finalPayloadString = "\(packet.rawData),\(packet.rssi),\(timestampString),\(testGroupID)"
+        
+        print("publish log with TestID: \(finalPayloadString)")
+        publish(to: logUploadTopic, payload: finalPayloadString)
     }
 
     func deleteLog(packetId: String) {

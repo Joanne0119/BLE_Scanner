@@ -28,6 +28,8 @@ struct BLEScannerView: View {
     @State private var selectedDeviceID: String? = nil //用於儲存使用者點擊的裝置 ID，以便傳遞給 DetailView
     @State private var isLinkActive: Bool = false
     
+    @State private var isTestInProgress = false
+    
     var filteredPackets: [BLEPacket] {
         scanner.matchedPackets.values.filter { packet in
             let rssiMatch = packet.rssi >= -Int(rssiValue)
@@ -130,31 +132,58 @@ extension BLEScannerView {
 // MARK: - 按鈕區塊
 extension BLEScannerView {
     private var buttonSection: some View {
-        HStack {
-            Button(scanner.isScanning ? "停止掃描" : "開始掃描") {
-                if scanner.isScanning {
-                    scanner.stopScanning()
-                } else {
-                    startScanningIfValid()
+        VStack {
+            if isTestInProgress {
+                // 如果測試正在進行，顯示「完成測試」按鈕
+                Button("結束此測試", systemImage: "minus.circle.fill") {
+                    isTestInProgress = false
+                    if scanner.isScanning {
+                        scanner.stopScanning()
+                    }
+                    TestSessionManager.shared.startNewTestSession()
                 }
+                .font(.system(size: 20, weight: .medium))
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                
+                HStack {
+                    Button(scanner.isScanning ? "停止掃描" : "開始掃描") {
+                        if scanner.isScanning {
+                            scanner.stopScanning()
+                        } else {
+                            startScanningIfValid()
+                        }
+                    }
+                    .font(.system(size: 20, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(scanner.isScanning ? .red : .blue)
+                    
+                    Button("常用遮罩掃描") {
+                        maskText = "FFFFFFFFFFFFFFFFFFFFFFFFFF"
+                        handleStartScan()
+                    }
+                    .font(.system(size: 20, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    .disabled(scanner.isScanning)
+                    
+                    Button("", systemImage: "trash") {
+                        scanner.matchedPackets.removeAll()
+                    }
+                    .tint(.red)
+                }
+                
+            } else {
+                // 如果沒有測試在進行，顯示「新測試」按鈕
+                Button("新測試", systemImage: "plus.circle.fill") {
+                    isTestInProgress = true
+                    TestSessionManager.shared.startNewTestSession()
+                    scanner.matchedPackets.removeAll()
+                }
+                .font(.system(size: 20, weight: .medium))
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
             }
-            .font(.system(size: 20, weight: .medium))
-            .buttonStyle(.borderedProminent)
-            .tint(scanner.isScanning ? .red : .blue)
-            
-            Button("常用遮罩掃描") {
-                maskText = "FFFFFFFFFFFFFFFFFFFFFFFFFF"
-                handleStartScan()
-            }
-            .font(.system(size: 20, weight: .medium))
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
-            .disabled(scanner.isScanning)
-            
-            Button("", systemImage: "trash") {
-                scanner.matchedPackets.removeAll()
-            }
-            .tint(.red)
         }
     }
     
