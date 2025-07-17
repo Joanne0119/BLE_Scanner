@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/7/1.
-//  最後更新 2025/07/08
+//  最後更新 2025/07/17
 
 import Foundation
 import CoreLocation

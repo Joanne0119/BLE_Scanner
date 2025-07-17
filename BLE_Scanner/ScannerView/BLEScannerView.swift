@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/07/08
+//  最後更新 2025/07/17
 //
 
 import SwiftUI
@@ -29,6 +29,7 @@ struct BLEScannerView: View {
     @State private var isLinkActive: Bool = false
     
     @State private var isTestInProgress = false
+    @State private var isShowingChartView = false
     
     var filteredPackets: [BLEPacket] {
         scanner.matchedPackets.values.filter { packet in
@@ -55,6 +56,11 @@ struct BLEScannerView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         MQTTToolbarStatusView()
+                    }
+                }
+                .sheet(isPresented: $isShowingChartView) {
+                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
+                        SafariView(url: url)
                     }
                 }
             }
@@ -135,16 +141,28 @@ extension BLEScannerView {
         VStack {
             if isTestInProgress {
                 // 如果測試正在進行，顯示「完成測試」按鈕
-                Button("結束此測試", systemImage: "minus.circle.fill") {
-                    isTestInProgress = false
-                    if scanner.isScanning {
-                        scanner.stopScanning()
+                HStack {
+                    Button("結束此測試", systemImage: "minus.circle.fill") {
+                        isTestInProgress = false
+                        if scanner.isScanning {
+                            scanner.stopScanning()
+                        }
+                        TestSessionManager.shared.startNewTestSession()
                     }
-                    TestSessionManager.shared.startNewTestSession()
+                    .font(.system(size: 20, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    
+                    Button(action: {
+                        isShowingChartView = true
+                    }) {
+                        Label("查看圖表", systemImage: "chart.bar.xaxis")
+                    }
+                    .font(.system(size: 20, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.purple)
                 }
-                .font(.system(size: 20, weight: .medium))
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
+                .padding()
                 
                 HStack {
                     Button(scanner.isScanning ? "停止掃描" : "開始掃描") {
@@ -175,14 +193,26 @@ extension BLEScannerView {
                 
             } else {
                 // 如果沒有測試在進行，顯示「新測試」按鈕
-                Button("新測試", systemImage: "plus.circle.fill") {
-                    isTestInProgress = true
-                    TestSessionManager.shared.startNewTestSession()
-                    scanner.matchedPackets.removeAll()
+                HStack {
+                    Button("新測試", systemImage: "plus.circle.fill") {
+                        isTestInProgress = true
+                        TestSessionManager.shared.startNewTestSession()
+                        scanner.matchedPackets.removeAll()
+                    }
+                    .font(.system(size: 20, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
+                    
+                    Button(action: {
+                        isShowingChartView = true
+                    }) {
+                        Label("查看圖表", systemImage: "chart.bar.xaxis")
+                    }
+                    .font(.system(size: 20, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.purple)
                 }
-                .font(.system(size: 20, weight: .medium))
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
+                .padding()
             }
         }
     }

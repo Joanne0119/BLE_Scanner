@@ -1,4 +1,4 @@
-//  最後更新 2025/07/08
+//  最後更新 2025/07/17
 
 import SwiftUI
 import AVFoundation
