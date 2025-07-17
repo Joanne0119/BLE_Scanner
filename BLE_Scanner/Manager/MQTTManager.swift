@@ -19,10 +19,10 @@ class MQTTManager: ObservableObject {
     private var mqttClient: MQTTClient?
     private var eventLoopGroup: MultiThreadedEventLoopGroup?
     private let clientID = "BLE_Scanner_\(UUID().uuidString)"
-    private let host = "152.42.241.75"
-    private let port = 1883
-    private let username = "root"
-    private let password = "RwWq2LB-^^JR%+s"
+    private var host = ""
+    private var port = 0
+    private var username = ""
+    private var password = ""
     
     // MARK: - 主題定義
     private let pressureUploadTopic = "pressure/offset/upload"
@@ -74,6 +74,7 @@ class MQTTManager: ObservableObject {
     
     
     init() {
+        loadCredentials()
         loadSuggestionsFromLocal()
         setupMQTT()
     }
@@ -88,6 +89,30 @@ class MQTTManager: ObservableObject {
     }
     
     // MARK: - MQTT 設定
+    private func loadCredentials() {
+        guard let path = Bundle.main.path(forResource: "MQTTCredentials", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] else {
+            // 如果檔案不存在或格式錯誤，直接讓 App Crash，因為這是開發階段必須解決的問題
+            fatalError("❌ MQTTCredentials.plist not found or is invalid.")
+        }
+        
+        // 從字典中讀取值
+        guard let host = dict["host"] as? String,
+              let port = dict["port"] as? Int,
+              let username = dict["username"] as? String,
+              let password = dict["password"] as? String else {
+            fatalError("❌ MQTTCredentials.plist is missing required keys.")
+        }
+        
+        // 將讀取到的值賦給屬性
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+        
+        print("✅ MQTT 憑證載入成功")
+    }
+    
     private func setupMQTT() {
         mqttQueue.async { [weak self] in
             self?.performSetupMQTT()
