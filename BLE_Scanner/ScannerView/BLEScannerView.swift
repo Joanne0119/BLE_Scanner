@@ -3,11 +3,12 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12.
-//  最後更新 2025/07/17
+//  最後更新 2025/07/08
 //
 
 import SwiftUI
 import CoreBluetooth
+
 
 enum BLEScannerField: Hashable {
     case mask
@@ -21,7 +22,7 @@ struct BLEScannerView: View {
     @State private var idText: String = ""
     @State private var maskTextEmpty: Bool = false
     @State private var isExpanded: Bool = false
-    @State private var rssiValue: Double = 100
+    @State private var rssiValue: Double = 200
     @State private var maskError: String?
     @FocusState private var focusedField: BLEScannerField?
     @Binding var maskSuggestions: [String]
@@ -29,7 +30,6 @@ struct BLEScannerView: View {
     @State private var isLinkActive: Bool = false
     
     @State private var isTestInProgress = false
-    @State private var isShowingChartView = false
     
     var filteredPackets: [BLEPacket] {
         scanner.matchedPackets.values.filter { packet in
@@ -56,11 +56,6 @@ struct BLEScannerView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         MQTTToolbarStatusView()
-                    }
-                }
-                .sheet(isPresented: $isShowingChartView) {
-                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
-                        SafariView(url: url)
                     }
                 }
             }
@@ -153,14 +148,14 @@ extension BLEScannerView {
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
                     
-                    Button(action: {
-                        isShowingChartView = true
-                    }) {
-                        Label("查看圖表", systemImage: "chart.bar.xaxis")
+                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
+                        Link(destination: url) {
+                            Label("", systemImage: "chart.bar.xaxis")
+                        }
+                        .font(.system(size: 20, weight: .medium))
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
                     }
-                    .font(.system(size: 20, weight: .medium))
-                    .buttonStyle(.borderedProminent)
-                    .tint(.purple)
                 }
                 .padding()
                 
@@ -203,14 +198,14 @@ extension BLEScannerView {
                     .buttonStyle(.borderedProminent)
                     .tint(.green)
                     
-                    Button(action: {
-                        isShowingChartView = true
-                    }) {
-                        Label("查看圖表", systemImage: "chart.bar.xaxis")
+                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
+                        Link(destination: url) {
+                            Label("查看圖表", systemImage: "chart.bar.xaxis")
+                        }
+                        .font(.system(size: 20, weight: .medium))
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
                     }
-                    .font(.system(size: 20, weight: .medium))
-                    .buttonStyle(.borderedProminent)
-                    .tint(.purple)
                 }
                 .padding()
             }

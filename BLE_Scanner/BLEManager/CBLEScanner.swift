@@ -102,7 +102,7 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                         print("裝置 \(packet.deviceID) 已失聯，更新其狀態。")
                         // 更新狀態，UI 會自動變為灰色
                         self.matchedPackets[deviceID]?.hasLostSignal = true
-                        self.matchedPackets[deviceID]?.rssi = -99
+                        self.matchedPackets[deviceID]?.rssi = -199
                     }
                 }
             }

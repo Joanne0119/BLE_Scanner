@@ -24,6 +24,16 @@ class MQTTManager: ObservableObject {
     private var username = ""
     private var password = ""
     
+    // MARK: - 連接監控相關
+    private var connectionMonitorTimer: Timer?
+    private var reconnectTimer: Timer?
+    private var isReconnecting = false
+    private let connectionCheckInterval: TimeInterval = 5.0  // 每5秒檢查一次
+    private let reconnectInterval: TimeInterval = 3.0       // 重連間隔3秒
+    private let maxReconnectAttempts = 5
+    private var reconnectAttempts = 0
+    
+    
     // MARK: - 主題定義
     private let pressureUploadTopic = "pressure/offset/upload"
     private let pressureDeleteTopic = "pressure/offset/delete"
@@ -77,14 +87,125 @@ class MQTTManager: ObservableObject {
         loadCredentials()
         loadSuggestionsFromLocal()
         setupMQTT()
+        startConnectionMonitoring()
     }
     
     deinit {
+        stopConnectionMonitoring()
         disconnect()
         if let eventLoopGroup = eventLoopGroup {
             DispatchQueue.global(qos: .background).async {
                 try? eventLoopGroup.syncShutdownGracefully()
             }
+        }
+    }
+    
+    // MARK: - 連接監控
+    private func startConnectionMonitoring() {
+        stopConnectionMonitoring() // 先停止現有的監控
+        
+        connectionMonitorTimer = Timer.scheduledTimer(withTimeInterval: connectionCheckInterval, repeats: true) { [weak self] _ in
+            self?.checkConnectionStatus()
+        }
+        
+        print("開始連接監控，每 \(connectionCheckInterval) 秒檢查一次")
+    }
+    
+    private func stopConnectionMonitoring() {
+        connectionMonitorTimer?.invalidate()
+        connectionMonitorTimer = nil
+        
+        reconnectTimer?.invalidate()
+        reconnectTimer = nil
+        
+        print("停止連接監控")
+    }
+    
+    private func checkConnectionStatus() {
+        // 檢查客戶端是否存在且表面上已連接
+        guard let mqttClient = mqttClient else {
+            handleConnectionLost()
+            return
+        }
+        
+        // 嘗試發送一個輕量級的測試訊息來檢查連接狀態
+        // 使用一個不存在的主題，這樣不會影響正常業務
+        let testPayload = ByteBuffer(string: "ping")
+        
+        mqttClient.publish(to: "connection/test/ping", payload: testPayload, qos: .atMostOnce).whenComplete { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    // 發送成功，連接正常
+                    if !(self?.isConnected ?? false) {
+                        self?.isConnected = true
+                        self?.connectionStatus = "已連接"
+                        self?.reconnectAttempts = 0
+                        print("連接狀態恢復正常")
+                    }
+                case .failure(let error):
+                    // 發送失敗，連接可能有問題
+                    print("連接檢查失敗: \(error)")
+                    self?.handleConnectionLost()
+                }
+            }
+        }
+    }
+    
+    private func handleConnectionLost() {
+        DispatchQueue.main.async {
+            if self.isConnected {
+                self.isConnected = false
+                self.connectionStatus = "連接中斷"
+                print("檢測到連接中斷")
+            }
+        }
+        
+        // 開始重連流程
+        startReconnectProcess()
+    }
+    
+    private func startReconnectProcess() {
+        guard !isReconnecting else { return }
+        
+        isReconnecting = true
+        reconnectAttempts += 1
+        
+        DispatchQueue.main.async {
+            self.connectionStatus = "重連中... (第 \(self.reconnectAttempts) 次)"
+        }
+        
+        print("開始重連流程，第 \(reconnectAttempts) 次嘗試")
+        
+        // 如果超過最大重連次數，停止重連
+        if reconnectAttempts > maxReconnectAttempts {
+            isReconnecting = false
+            DispatchQueue.main.async {
+                self.connectionStatus = "重連失敗，已停止嘗試"
+            }
+            print("重連次數超過限制，停止重連")
+            return
+        }
+        
+        // 延遲重連
+        reconnectTimer = Timer.scheduledTimer(withTimeInterval: reconnectInterval, repeats: false) { [weak self] _ in
+            self?.performReconnect()
+        }
+    }
+    
+    private func performReconnect() {
+        print("執行重連...")
+        
+        // 先清理舊連接
+        disconnect()
+        
+        // 重新初始化MQTT
+        setupMQTT()
+        
+        // 延遲一下再連接
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.connect()
+            self.isReconnecting = false
         }
     }
     
@@ -200,6 +321,7 @@ class MQTTManager: ObservableObject {
                 case .success:
                     self?.isConnected = true
                     self?.connectionStatus = "已連接"
+                    self?.reconnectAttempts = 0
                     print("MQTT 連接成功")
                     
                     DispatchQueue.global(qos: .userInitiated).async {
@@ -211,6 +333,8 @@ class MQTTManager: ObservableObject {
                     self?.isConnected = false
                     self?.connectionStatus = "連接失敗: \(error.localizedDescription)"
                     print("MQTT 連接失敗: \(error)")
+                    
+                    self?.startReconnectProcess()
                 }
             }
         }
@@ -233,6 +357,7 @@ class MQTTManager: ObservableObject {
     }
     
     func disconnect() {
+        stopConnectionMonitoring()
         guard let mqttClient = mqttClient else { return }
         
         mqttClient.disconnect().whenComplete { [weak self] result in
@@ -248,6 +373,27 @@ class MQTTManager: ObservableObject {
                 print("MQTT 斷開連接失敗: \(error)")
             }
         }
+    }
+    
+    private func setupConnectionMonitoring() {
+        guard let mqttClient = mqttClient else { return }
+        // 監控連接狀態變化
+        mqttClient.addCloseListener(named: "ConnectionMonitor") { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isConnected = false
+                self?.connectionStatus = "連接中斷"
+                print("MQTT 連接已中斷")
+            }
+            
+            self?.startReconnectProcess()
+        }
+    }
+    
+    // 手動重連方法
+    func forceReconnect() {
+        print("強制重連...")
+        reconnectAttempts = 0
+        startReconnectProcess()
     }
     
     // MARK: - 訂閱主題
