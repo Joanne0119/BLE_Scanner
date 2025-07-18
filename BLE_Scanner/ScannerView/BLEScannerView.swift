@@ -150,7 +150,7 @@ extension BLEScannerView {
                     
                     if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
                         Link(destination: url) {
-                            Label("", systemImage: "chart.bar.xaxis")
+                            Label("查看圖表", systemImage: "chart.bar.xaxis")
                         }
                         .font(.system(size: 20, weight: .medium))
                         .buttonStyle(.borderedProminent)

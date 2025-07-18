@@ -33,6 +33,10 @@ class MQTTManager: ObservableObject {
     private let maxReconnectAttempts = 5
     private var reconnectAttempts = 0
     
+    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
+    private var isInBackground = false
+    private var isShuttingDown = false
+    
     
     // MARK: - 主題定義
     private let pressureUploadTopic = "pressure/offset/upload"
@@ -88,24 +92,86 @@ class MQTTManager: ObservableObject {
         loadSuggestionsFromLocal()
         setupMQTT()
         startConnectionMonitoring()
+        setupBackgroundNotifications()
     }
     
     deinit {
+        print("MQTTManager 正在釋放...")
         stopConnectionMonitoring()
-        disconnect()
-        if let eventLoopGroup = eventLoopGroup {
-            DispatchQueue.global(qos: .background).async {
-                try? eventLoopGroup.syncShutdownGracefully()
-            }
-        }
+        cleanupGracefully()
     }
     
+    // MARK: - 背景模式處理
+    private func setupBackgroundNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func appDidEnterBackground() {
+        print("App 進入背景模式")
+        isInBackground = true
+        
+        // 開始背景任務
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+        
+        // 暫停連線監控
+        stopConnectionMonitoring()
+        
+        // 保持連線但停止主動檢查
+        print("背景模式：暫停連線監控")
+    }
+    
+    @objc private func appWillEnterForeground() {
+        print("App 即將進入前台")
+        isInBackground = false
+        
+        // 結束背景任務
+        endBackgroundTask()
+        
+        // 重新開始連線監控
+        startConnectionMonitoring()
+        
+        // 檢查連線狀態
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.checkConnectionStatus()
+        }
+        
+        print("前台模式：恢復連線監控")
+    }
+    
+    private func endBackgroundTask() {
+        if backgroundTaskID != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTaskID)
+            backgroundTaskID = .invalid
+        }
+    }
     // MARK: - 連接監控
     private func startConnectionMonitoring() {
-        stopConnectionMonitoring() // 先停止現有的監控
+        // 背景模式下不啟動監控
+        guard !isInBackground else {
+            print("背景模式下跳過連線監控")
+            return
+        }
+        
+        stopConnectionMonitoring()
         
         connectionMonitorTimer = Timer.scheduledTimer(withTimeInterval: connectionCheckInterval, repeats: true) { [weak self] _ in
-            self?.checkConnectionStatus()
+            // 再次檢查是否在背景模式
+            guard let self = self, !self.isInBackground, !self.isShuttingDown else { return }
+            self.checkConnectionStatus()
         }
         
         print("開始連接監控，每 \(connectionCheckInterval) 秒檢查一次")
@@ -122,34 +188,59 @@ class MQTTManager: ObservableObject {
     }
     
     private func checkConnectionStatus() {
-        // 檢查客戶端是否存在且表面上已連接
+        guard !isInBackground, !isShuttingDown else { return }
+        
         guard let mqttClient = mqttClient else {
             handleConnectionLost()
             return
         }
         
-        // 嘗試發送一個輕量級的測試訊息來檢查連接狀態
-        // 使用一個不存在的主題，這樣不會影響正常業務
-        let testPayload = ByteBuffer(string: "ping")
+        // 檢查網路可達性
+        if !isNetworkReachable() {
+            print("網路不可達，跳過連線檢查")
+            DispatchQueue.main.async {
+                self.connectionStatus = "網路不可達"
+                self.isConnected = false
+            }
+            return
+        }
         
-        mqttClient.publish(to: "connection/test/ping", payload: testPayload, qos: .atMostOnce).whenComplete { [weak self] result in
+        // 使用更可靠的連接檢查方法
+        checkMQTTConnectionReliably(mqttClient)
+    }
+    
+    private func checkMQTTConnectionReliably(_ mqttClient: MQTTClient) {
+        // 嘗試訂閱一個測試主題來檢查連接
+        let testSubscription = MQTTSubscribeInfo(topicFilter: "connection/test/\(clientID)", qos: .atMostOnce)
+        
+        mqttClient.subscribe(to: [testSubscription]).whenComplete { [weak self] result in
+            guard let self = self, !self.isInBackground, !self.isShuttingDown else { return }
+            
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    // 發送成功，連接正常
-                    if !(self?.isConnected ?? false) {
-                        self?.isConnected = true
-                        self?.connectionStatus = "已連接"
-                        self?.reconnectAttempts = 0
-                        print("連接狀態恢復正常")
+                    if !self.isConnected {
+                        print("連接狀態檢查：連接正常")
+                        self.isConnected = true
+                        self.connectionStatus = "已連接"
+                        self.reconnectAttempts = 0
                     }
+                    
+                    // 取消訂閱測試主題
+                    mqttClient.unsubscribe(from: ["connection/test/\(self.clientID)"]).whenComplete { _ in }
+                    
                 case .failure(let error):
-                    // 發送失敗，連接可能有問題
                     print("連接檢查失敗: \(error)")
-                    self?.handleConnectionLost()
+                    self.handleConnectionLost()
                 }
             }
         }
+    }
+    
+    private func isNetworkReachable() -> Bool {
+        // 簡單的網路檢查
+        // 你可以使用 Network framework 做更詳細的檢查
+        return true // 暫時返回 true，可以根據需要實現
     }
     
     private func handleConnectionLost() {
@@ -166,18 +257,18 @@ class MQTTManager: ObservableObject {
     }
     
     private func startReconnectProcess() {
-        guard !isReconnecting else { return }
+        guard !isInBackground, !isShuttingDown, !isReconnecting else { return }
         
         isReconnecting = true
         reconnectAttempts += 1
         
         DispatchQueue.main.async {
+            self.isConnected = false
             self.connectionStatus = "重連中... (第 \(self.reconnectAttempts) 次)"
         }
         
         print("開始重連流程，第 \(reconnectAttempts) 次嘗試")
         
-        // 如果超過最大重連次數，停止重連
         if reconnectAttempts > maxReconnectAttempts {
             isReconnecting = false
             DispatchQueue.main.async {
@@ -187,23 +278,39 @@ class MQTTManager: ObservableObject {
             return
         }
         
-        // 延遲重連
-        reconnectTimer = Timer.scheduledTimer(withTimeInterval: reconnectInterval, repeats: false) { [weak self] _ in
-            self?.performReconnect()
+        // 先確實斷開現有連接
+        if let mqttClient = mqttClient {
+            mqttClient.disconnect().whenComplete { [weak self] _ in
+                // 等待斷開完成後再重連
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    self?.performReconnect()
+                }
+            }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + reconnectInterval) {
+                self.performReconnect()
+            }
         }
     }
     
     private func performReconnect() {
-        print("執行重連...")
+        guard !isInBackground, !isShuttingDown else {
+            isReconnecting = false
+            return
+        }
         
-        // 先清理舊連接
-        disconnect()
+        print("執行重連...")
         
         // 重新初始化MQTT
         setupMQTT()
         
-        // 延遲一下再連接
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        // 等待初始化完成後再連接
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            guard !self.isInBackground, !self.isShuttingDown else {
+                self.isReconnecting = false
+                return
+            }
+            
             self.connect()
             self.isReconnecting = false
         }
@@ -242,7 +349,7 @@ class MQTTManager: ObservableObject {
     
     private func performSetupMQTT() {
         // 清理舊的資源
-        cleanupResources()
+        cleanupGracefully()
         
         // 創建新的 EventLoopGroup
         eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
@@ -278,18 +385,38 @@ class MQTTManager: ObservableObject {
     }
     
     
-    private func cleanupResources() {
+    private func cleanupGracefully() {
+        isShuttingDown = true
+        
+        // 停止所有 Timer
+        stopConnectionMonitoring()
+        
+        // 先斷開 MQTT 連接
+        if let mqttClient = mqttClient {
+            mqttClient.disconnect().whenComplete { [weak self] _ in
+                self?.finalizeCleanup()
+            }
+        } else {
+            finalizeCleanup()
+        }
+    }
+    
+    private func finalizeCleanup() {
         mqttClient = nil
         
+        // 更安全地關閉 EventLoopGroup
         if let eventLoopGroup = eventLoopGroup {
-            eventLoopGroup.shutdownGracefully { error in
-                if let error = error {
-                    print("EventLoopGroup 關閉錯誤: \(error)")
-                } else {
-                    print("EventLoopGroup 已成功關閉")
+            let group = eventLoopGroup
+            self.eventLoopGroup = nil
+            
+            DispatchQueue.global(qos: .background).async {
+                do {
+                    try group.syncShutdownGracefully()
+                    print("EventLoopGroup 已安全關閉")
+                } catch {
+                    print("EventLoopGroup 關閉時發生錯誤: \(error)")
                 }
             }
-            self.eventLoopGroup = nil
         }
     }
     
@@ -302,40 +429,42 @@ class MQTTManager: ObservableObject {
     
     private func performConnect() {
         guard let mqttClient = mqttClient else {
-           print("MQTT 客戶端未初始化，正在重新初始化...")
-           performSetupMQTT()
-           
-           DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
-               self.performConnect()
-           }
-           return
-       }
+            print("MQTT 客戶端未初始化，正在重新初始化...")
+            performSetupMQTT()
+            
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+                self.performConnect()
+            }
+            return
+        }
         
         DispatchQueue.main.async {
             self.connectionStatus = "連接中..."
+            self.isConnected = false // 確保連接狀態為 false
         }
         
         mqttClient.connect().whenComplete { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    self?.isConnected = true
-                    self?.connectionStatus = "已連接"
-                    self?.reconnectAttempts = 0
-                    print("MQTT 連接成功")
-                    
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        self?.setupListenersAndSubscribe()
-                        self?.requestAllInitialData()
-                    }
-                    
-                case .failure(let error):
+            switch result {
+            case .success:
+                print("MQTT 連接成功，等待連接穩定...")
+                
+                // 不要立即設置 isConnected = true
+                DispatchQueue.main.async {
+                    self?.connectionStatus = "連接成功，正在初始化..."
+                }
+                
+                // 延遲一下再設置監聽器和訂閱
+                DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.5) {
+                    self?.setupListenersAndSubscribe()
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
                     self?.isConnected = false
                     self?.connectionStatus = "連接失敗: \(error.localizedDescription)"
-                    print("MQTT 連接失敗: \(error)")
-                    
-                    self?.startReconnectProcess()
                 }
+                print("MQTT 連接失敗: \(error)")
+                self?.startReconnectProcess()
             }
         }
     }
@@ -343,16 +472,27 @@ class MQTTManager: ObservableObject {
     private func setupListenersAndSubscribe() {
         guard let mqttClient = mqttClient else { return }
         
+        // 設置訊息監聽器
         mqttClient.addPublishListener(named: "MessageHandler") { [weak self] result in
             switch result {
             case .success(let publishInfo):
-                // 使用增強版處理器
                 self?.enhancedHandleReceivedMessage(publishInfo)
             case .failure(let error):
                 print("收到訊息時發生錯誤: \(error)")
             }
         }
         
+        // 設置連接關閉監聽器
+        mqttClient.addCloseListener(named: "ConnectionMonitor") { [weak self] result in
+            print("MQTT 連接已關閉")
+            DispatchQueue.main.async {
+                self?.isConnected = false
+                self?.connectionStatus = "連接中斷"
+            }
+            self?.startReconnectProcess()
+        }
+        
+        // 開始訂閱
         subscribeToTopics()
     }
     
@@ -398,7 +538,11 @@ class MQTTManager: ObservableObject {
     
     // MARK: - 訂閱主題
     private func subscribeToTopics() {
-        guard let mqttClient = mqttClient, isConnected else { return }
+        guard let mqttClient = mqttClient else { return }
+        
+        DispatchQueue.main.async {
+            self.connectionStatus = "正在訂閱主題..."
+        }
         
         let subscriptions = [
             // 壓力校正主題
@@ -409,21 +553,36 @@ class MQTTManager: ObservableObject {
             MQTTSubscribeInfo(topicFilter: logDownloadTopic, qos: .atLeastOnce),
             MQTTSubscribeInfo(topicFilter: "\(logRequestTopic)/response", qos: .atLeastOnce),
             MQTTSubscribeInfo(topicFilter: logDeleteTopic, qos: .atLeastOnce),
-            
-            // Suggestion 主題 (使用通配符+)
+            // Suggestion 主題
             MQTTSubscribeInfo(topicFilter: "suggestion/+/download", qos: .atLeastOnce)
         ]
         
-        mqttClient.subscribe(to: subscriptions).whenComplete { result in
-            switch result {
-            case .success(let subAckReturnCodes):
-                print("訂閱成功，返回碼: \(subAckReturnCodes)")
-            case .failure(let error):
-                print("訂閱失敗: \(error)")
+        mqttClient.subscribe(to: subscriptions).whenComplete { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let subAckReturnCodes):
+                    print("訂閱成功，返回碼: \(subAckReturnCodes)")
+                    // 只有在訂閱成功後才設置為已連接
+                    self?.isConnected = true
+                    self?.connectionStatus = "已連接"
+                    self?.reconnectAttempts = 0
+                    
+                    // 訂閱成功後請求初始資料
+                    DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.5) {
+                        self?.requestAllInitialData()
+                    }
+                    
+                case .failure(let error):
+                    print("訂閱失敗: \(error)")
+                    self?.isConnected = false
+                    self?.connectionStatus = "訂閱失敗: \(error.localizedDescription)"
+                    // 訂閱失敗時重新連接
+                    self?.startReconnectProcess()
+                }
             }
         }
         
-        printSubscribedTopics() // 印所有訂閱的主題
+        printSubscribedTopics()
     }
     
     // MARK: - 發布訊息 (壓力校正)
@@ -624,18 +783,36 @@ class MQTTManager: ObservableObject {
     }
 
     private func publish(to topic: String, payload: String) {
-        guard let mqttClient = mqttClient, isConnected else {
+        guard let mqttClient = mqttClient else {
+            print("MQTT 客戶端未初始化，無法發送訊息到主題: \(topic)")
+            return
+        }
+        
+        // 檢查連接狀態
+        guard isConnected else {
             print("MQTT 未連接，無法發送訊息到主題: \(topic)")
+            // 嘗試重新連接
+            if !isReconnecting {
+                startReconnectProcess()
+            }
             return
         }
         
         let buffer = ByteBuffer(string: payload)
-        mqttClient.publish(to: topic, payload: buffer, qos: .atLeastOnce).whenComplete { result in
+        mqttClient.publish(to: topic, payload: buffer, qos: .atLeastOnce).whenComplete { [weak self] result in
             switch result {
             case .success:
                 print("訊息發送成功 -> 主題: \(topic), 內容: \(payload)")
             case .failure(let error):
                 print("訊息發送失敗 -> 主題: \(topic), 錯誤: \(error)")
+                // 發送失敗時檢查連接狀態
+                if error.localizedDescription.contains("noConnection") {
+                    DispatchQueue.main.async {
+                        self?.isConnected = false
+                        self?.connectionStatus = "連接中斷"
+                    }
+                    self?.startReconnectProcess()
+                }
             }
         }
     }
