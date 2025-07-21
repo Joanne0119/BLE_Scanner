@@ -36,7 +36,7 @@ struct MQTTStatusView: View {
             .animation(.easeInOut, value: mqttManager.isConnected)
 
             // 狀態文字
-            Text(mqttManager.connectionStatus)
+            Text(statusText)
                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                 .foregroundColor(.white)
                 .lineLimit(1)
@@ -177,6 +177,14 @@ struct MQTTStatusView: View {
                 isReconnecting = false
             }
         }
+    }
+    
+    // MARK: - 緩衝訊息計算
+    private var statusText: String {
+        if !mqttManager.isConnected && mqttManager.pendingMessageCount > 0 {
+            return "\(mqttManager.connectionStatus) (\(mqttManager.pendingMessageCount) 則訊息待發送)"
+        }
+        return mqttManager.connectionStatus
     }
 }
 

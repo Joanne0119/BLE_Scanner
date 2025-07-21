@@ -63,7 +63,7 @@ struct BLEScannerDetailView: View {
            let current = currentPacket {
             
             // 檢查是否有對應的歷史數據需要合併
-            if var basePacket = getPacket(for: testGroupID) {
+            if let basePacket = getPacket(for: testGroupID) {
                 // 將歷史數據添加到即時數據後面
                 if let historyDevices = basePacket.parsedData?.devices {
                     let currentDevices = current.parsedData?.devices ?? []
