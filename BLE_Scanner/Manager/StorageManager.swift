@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/5/27.
-//  最後更新 2025/07/17
+//  最後更新 2025/07/21
 
 import Foundation
 import SwiftUI
@@ -235,5 +235,125 @@ class SavedPacketsStore: ObservableObject {
     /// 重新從本地加載資料
     func reload() {
         packets = StorageManager.load()
+    }
+    
+    //MARK: - TestGroup Related
+    func updateOrAppendByTestGroupID(contentsOf newPackets: [BLEPacket]) {
+        for newPacket in newPackets {
+            updateOrAppendByTestGroupID(for: newPacket)
+        }
+    }
+
+    func updateOrAppendByTestGroupID(for incomingPacket: BLEPacket) {
+        guard let incomingTestGroupID = incomingPacket.testGroupID else {
+            // 如果沒有 testGroupID，就當作新封包直接新增
+            self.packets.append(incomingPacket)
+            print("封包沒有 testGroupID，直接新增: \(incomingPacket.deviceID)")
+            mqttManager.publishLog(incomingPacket)
+            StorageManager.save(packets: self.packets)
+            return
+        }
+        
+        // 尋找本地儲存中是否已存在相同 testGroupID 的封包
+        if let existingIndex = self.packets.firstIndex(where: { $0.testGroupID == incomingTestGroupID }) {
+            // 找到相同 testGroupID，進行覆蓋 + 歷史合併
+            var existingPacket = self.packets[existingIndex]
+            
+            // === 合併裝置歷史資料 ===
+            if let incomingParsedData = incomingPacket.parsedData {
+                // 取得舊的歷史裝置資訊
+                let oldDevices = existingPacket.parsedData?.devices ?? []
+                let newDevices = incomingParsedData.devices
+                
+                // 合併新舊裝置資訊（保留歷史）
+                let combinedDevices = oldDevices + newDevices
+                
+                // 更新 ParsedBLEData
+                if var existingParsedData = existingPacket.parsedData {
+                    // 保留歷史裝置 + 新增當前裝置
+                    existingParsedData.devices = combinedDevices
+                    
+                    // 更新為最新的即時資訊
+                    existingParsedData.seconds = incomingParsedData.seconds
+                    existingParsedData.temperature = incomingParsedData.temperature
+                    existingParsedData.atmosphericPressure = incomingParsedData.atmosphericPressure
+                    existingParsedData.hasReachedTarget = incomingParsedData.hasReachedTarget
+                    
+                    existingPacket.parsedData = existingParsedData
+                } else {
+                    // 如果舊的沒有 parsedData，直接用新的
+                    existingPacket.parsedData = incomingParsedData
+                }
+            }
+            
+            // === 覆蓋其他資料 ===
+            existingPacket.deviceID = incomingPacket.deviceID
+            existingPacket.deviceName = incomingPacket.deviceName
+            existingPacket.rawData = incomingPacket.rawData
+            existingPacket.mask = incomingPacket.mask
+            existingPacket.data = incomingPacket.data
+            existingPacket.rssi = incomingPacket.rssi
+            existingPacket.timestamp = incomingPacket.timestamp
+            existingPacket.hasLostSignal = incomingPacket.hasLostSignal
+            existingPacket.isMatched = incomingPacket.isMatched
+            
+            // === 保留相同的 testGroupID 和 identifier ===
+            // existingPacket.testGroupID 保持不變
+            // existingPacket.identifier 保持不變
+            
+            // 將更新後的封包存回陣列
+            self.packets[existingIndex] = existingPacket
+            
+            print("已覆蓋並合併 testGroupID: \(incomingTestGroupID) 的歷史紀錄。")
+            print("歷史裝置數量: \(existingPacket.parsedData?.devices.count ?? 0)")
+            
+            // 發布更新後的封包到 MQTT
+            mqttManager.publishLog(existingPacket)
+            
+        } else {
+            // 沒有找到相同 testGroupID，直接新增
+            self.packets.append(incomingPacket)
+            print("testGroupID: \(incomingTestGroupID) 為首次儲存，已新增")
+            mqttManager.publishLog(incomingPacket)
+        }
+        
+        // 儲存到本地
+        StorageManager.save(packets: self.packets)
+    }
+    
+    // 額外的輔助方法：根據 testGroupID 查找封包
+    func findPacket(byTestGroupID testGroupID: String) -> BLEPacket? {
+        return self.packets.first(where: { $0.testGroupID == testGroupID })
+    }
+
+    // 額外的輔助方法：根據 testGroupID 清除特定測試組的歷史
+    func clearDeviceHistoryByTestGroup(testGroupID: String) {
+        guard let index = self.packets.firstIndex(where: { $0.testGroupID == testGroupID }) else {
+            print("錯誤：找不到 testGroupID 為 \(testGroupID) 的日誌來清除歷史。")
+            return
+        }
+        
+        // 清空該測試組的 devices 陣列
+        self.packets[index].parsedData?.devices.removeAll()
+        self.packets[index].parsedData?.hasReachedTarget = false
+        
+        // 儲存變更
+        StorageManager.save(packets: self.packets)
+        mqttManager.publishLog(self.packets[index])
+        
+        print("成功清除 testGroupID \(testGroupID) 的裝置接收狀況。")
+    }
+
+    // 額外的輔助方法：刪除特定測試組
+    func deleteByTestGroupID(_ testGroupID: String) {
+        if let index = self.packets.firstIndex(where: { $0.testGroupID == testGroupID }) {
+            let packet = self.packets[index]
+            self.packets.remove(at: index)
+            StorageManager.save(packets: self.packets)
+            
+            // 通知 MQTT 刪除
+            mqttManager.deleteLog(packetId: packet.identifier)
+            print("已刪除 testGroupID: \(testGroupID) 的封包")
+        }
     }
 }

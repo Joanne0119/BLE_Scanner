@@ -12,8 +12,7 @@
 		F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */; };
 		F56CA6332E1E0BBB007AB995 /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F56CA6322E1E0BBB007AB995 /* MQTTNIO */; };
 		F56CA6482E1E1521007AB995 /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CA6472E1E1521007AB995 /* Extension.swift */; };
-		F56CA6632E289EA1007AB995 /* MQTTCredentials.plist in Resources */ = {isa = PBXBuildFile; fileRef = F56CA6612E289E95007AB995 /* MQTTCredentials.plist */; };
-		F56CA6672E289FA2007AB995 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F56CA6662E289F98007AB995 /* .gitignore */; };
+		F56CA6742E2DF264007AB995 /* MQTTCredentials.plist in Resources */ = {isa = PBXBuildFile; fileRef = F56CA6722E2DF25F007AB995 /* MQTTCredentials.plist */; };
 		F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */; };
 		F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA72DA907E700A47FEE /* ContentView.swift */; };
 		F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5B34AA92DA907E900A47FEE /* Assets.xcassets */; };
@@ -41,8 +40,7 @@
 		F535E9F92E1659AE00026E17 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PressureCorrectionView.swift; sourceTree = "<group>"; };
 		F56CA6472E1E1521007AB995 /* Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extension.swift; sourceTree = "<group>"; };
-		F56CA6612E289E95007AB995 /* MQTTCredentials.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = MQTTCredentials.plist; sourceTree = "<group>"; };
-		F56CA6662E289F98007AB995 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		F56CA6722E2DF25F007AB995 /* MQTTCredentials.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = MQTTCredentials.plist; sourceTree = "<group>"; };
 		F5B34AA22DA907E700A47FEE /* BlueAdv.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlueAdv.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLE_ScannerApp.swift; sourceTree = "<group>"; };
 		F5B34AA72DA907E700A47FEE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -102,8 +100,7 @@
 			isa = PBXGroup;
 			children = (
 				F5B34ABB2DAA626900A47FEE /* BLE-Scanner-Info.plist */,
-				F56CA6612E289E95007AB995 /* MQTTCredentials.plist */,
-				F56CA6662E289F98007AB995 /* .gitignore */,
+				F56CA6722E2DF25F007AB995 /* MQTTCredentials.plist */,
 				F535E9F92E1659AE00026E17 /* LaunchScreen.storyboard */,
 				F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */,
 				F5B34AA72DA907E700A47FEE /* ContentView.swift */,
@@ -201,11 +198,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F56CA6672E289FA2007AB995 /* .gitignore in Resources */,
 				F535E9FA2E1659AE00026E17 /* LaunchScreen.storyboard in Resources */,
 				F5B34AAD2DA907E900A47FEE /* Preview Assets.xcassets in Resources */,
 				F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */,
-				F56CA6632E289EA1007AB995 /* MQTTCredentials.plist in Resources */,
+				F56CA6742E2DF264007AB995 /* MQTTCredentials.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

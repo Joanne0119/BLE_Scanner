@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/4/12
-//  最後更新 2025/07/17
+//  最後更新 2025/07/21
 //
 
 import Foundation
@@ -213,7 +213,8 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
                                           isMatched: isMatched,
                                           timestamp: now,
                                           parsedData: parsedData,
-                                          hasLostSignal: false
+                                          hasLostSignal: false,
+                                          testGroupID: TestSessionManager.shared.getCurrentTestID() 
             )
             self.allPackets[identifier] = generalPacket
             
