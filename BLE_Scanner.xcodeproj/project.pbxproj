@@ -12,7 +12,6 @@
 		F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */; };
 		F56CA6332E1E0BBB007AB995 /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F56CA6322E1E0BBB007AB995 /* MQTTNIO */; };
 		F56CA6482E1E1521007AB995 /* Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56CA6472E1E1521007AB995 /* Extension.swift */; };
-		F56CA6742E2DF264007AB995 /* MQTTCredentials.plist in Resources */ = {isa = PBXBuildFile; fileRef = F56CA6722E2DF25F007AB995 /* MQTTCredentials.plist */; };
 		F56CA7FA2E30B2AD007AB995 /* MQTTCredentials_example.plist in Resources */ = {isa = PBXBuildFile; fileRef = F56CA7F92E30B2A5007AB995 /* MQTTCredentials_example.plist */; };
 		F5B34AA62DA907E700A47FEE /* BLE_ScannerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA52DA907E700A47FEE /* BLE_ScannerApp.swift */; };
 		F5B34AA82DA907E700A47FEE /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B34AA72DA907E700A47FEE /* ContentView.swift */; };
@@ -205,7 +204,6 @@
 				F5B34AAD2DA907E900A47FEE /* Preview Assets.xcassets in Resources */,
 				F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */,
 				F56CA7FA2E30B2AD007AB995 /* MQTTCredentials_example.plist in Resources */,
-				F56CA6742E2DF264007AB995 /* MQTTCredentials.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
