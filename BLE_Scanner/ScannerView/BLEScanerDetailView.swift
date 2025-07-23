@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/07/21
+//  最後更新 2025/07/23
 
 import SwiftUI
 import Foundation
@@ -115,9 +115,11 @@ struct BLEScannerDetailView: View {
                         currentDeviceIDs: Set((currentPacket?.parsedData?.devices ?? []).map { $0.deviceId }),
                         isCurrentGroup: selectedGroupID == currentTestGroupID,  // 標示是否為當前測試組
                         onClearHistory: {
-                            if let packetToClear = getPacket(for: selectedGroupID) {
-                                packetStore.clearDeviceHistoryByTestGroup(testGroupID: selectedGroupID)
-                            }
+                            packetStore.deleteByTestGroupID(selectedGroupID)
+                            selectedTestGroupID = currentTestGroupID ?? testGroups.first
+//                            if getPacket(for: selectedGroupID) != nil {
+//                                packetStore.clearDeviceHistoryByTestGroup(testGroupID: selectedGroupID)
+//                            }
                         }
                     )
                 } else {
