@@ -235,6 +235,16 @@ struct BLEBroadcasterView: View {
                 .font(.system(size: 20, weight: .medium))
                 .disabled(broadcaster.isRepeatAdv)
             }
+            Button("Profile廣播") {
+                inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
+                inputData = "7F"
+                inputID = "7D"
+                broadcaster.startRepeatingAdvertising(mask: [0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F], id: [0x7D], customData: [0x7F])
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.pink)
+            .font(.system(size: 20, weight: .medium))
+            .disabled(broadcaster.isRepeatAdv)
         }
     }
 

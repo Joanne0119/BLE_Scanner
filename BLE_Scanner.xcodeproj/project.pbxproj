@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F5202E392DE58CC500257750 /* ScannerLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5202E382DE58CB900257750 /* ScannerLogView.swift */; };
+		F5271EE32E38C5CF00D4164B /* MQTTCredentials.plist in Resources */ = {isa = PBXBuildFile; fileRef = F56CA6722E2DF25F007AB995 /* MQTTCredentials.plist */; };
 		F535E9FA2E1659AE00026E17 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F535E9F92E1659AE00026E17 /* LaunchScreen.storyboard */; };
 		F55A69C82DFBDD4300095DF4 /* PressureCorrectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F55A69C72DFBDCF700095DF4 /* PressureCorrectionView.swift */; };
 		F56CA6332E1E0BBB007AB995 /* MQTTNIO in Frameworks */ = {isa = PBXBuildFile; productRef = F56CA6322E1E0BBB007AB995 /* MQTTNIO */; };
@@ -200,6 +201,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F5271EE32E38C5CF00D4164B /* MQTTCredentials.plist in Resources */,
 				F535E9FA2E1659AE00026E17 /* LaunchScreen.storyboard in Resources */,
 				F5B34AAD2DA907E900A47FEE /* Preview Assets.xcassets in Resources */,
 				F5B34AAA2DA907E900A47FEE /* Assets.xcassets in Resources */,
@@ -376,7 +378,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v10;
 				PRODUCT_NAME = BlueAdv;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -411,7 +413,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.blueAdv.v10;
 				PRODUCT_NAME = BlueAdv;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
