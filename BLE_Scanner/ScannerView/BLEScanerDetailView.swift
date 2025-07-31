@@ -3,7 +3,7 @@
 //  BLE_Scanner
 //
 //  Created by 劉丞恩 on 2025/6/27.
-//  最後更新 2025/07/23
+//  最後更新 2025/07/31
 
 import SwiftUI
 import Foundation
@@ -13,10 +13,23 @@ struct BLEScannerDetailView: View {
     @ObservedObject var scanner: CBLEScanner
     let deviceID: String
     @Environment(\.dismiss) var dismiss
+    @State private var showSheet = false;
     
     @State private var hasBeenSaved = false
     @State private var lastSavedCycle: Date?
     @State private var selectedTestGroupID: String?
+    
+    let mockItem = BLEProfileItem(
+        deviceID: "04",
+        txRate: [5.2, 4.8, 3.2, 5.0, 4.5, 2.9],
+        txRssi: [-65, -72, -81, -68, -75, -83],
+        rxRate: [5.0, 4.6, 3.0, 4.9, 4.4, 2.8],
+        rxRssi: [-68, -75, -84, -70, -77, -85],
+        antenna: ["vertical", "horizental", "vertical", "horizental", "vertical", "horizental"],
+        distance: [5, 5, 10, 10, 15, 15],
+        timestamp: [Date(), Date(), Date(), Date(), Date(), Date()],
+        test_group: [nil, nil,nil,nil,nil,nil]
+    )
     
     private var currentPacket: BLEPacket? {
         scanner.matchedPackets[deviceID]
@@ -26,13 +39,13 @@ struct BLEScannerDetailView: View {
     private var testGroups: [String] {
         var groups = Set<String>()
         
-        // 1. 從儲存的封包中獲取歷史測試組
+        // 從儲存的封包中獲取歷史測試組
         let storedGroups = packetStore.packets
             .filter { $0.deviceID == deviceID }
             .compactMap { $0.testGroupID }
         groups.formUnion(storedGroups)
         
-        // 2. 從即時封包中獲取當前測試組
+        // 從即時封包中獲取當前測試組
         if let currentTestGroupID = currentPacket?.testGroupID {
             groups.insert(currentTestGroupID)
         }
@@ -102,7 +115,7 @@ struct BLEScannerDetailView: View {
                 TestGroupSelectorView(
                     testGroups: testGroups,
                     selectedTestGroupID: $selectedTestGroupID,
-                    currentTestGroupID: currentTestGroupID  // 傳遞當前測試組ID
+                    currentTestGroupID: currentTestGroupID
                 )
                 
                 // === 選中測試組的詳細數據 ===
@@ -135,7 +148,7 @@ struct BLEScannerDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             // 左側返回按鈕
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button(action: { dismiss() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
@@ -166,6 +179,16 @@ struct BLEScannerDetailView: View {
                     }
                 }
             }
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: { showSheet.toggle() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 20, weight: .medium))
+                    }
+                    .foregroundColor(.white)
+                }
+            }
         }
         .onChange(of: currentPacket) { newPacket in
             handlePacketChange(newPacket)
@@ -179,17 +202,19 @@ struct BLEScannerDetailView: View {
             }
         }
         .onAppear {
-            // 初始化時優先選擇當前即時測試組
             if selectedTestGroupID == nil {
                 selectedTestGroupID = currentTestGroupID ?? testGroups.first
             }
+        }
+        .sheet(isPresented: $showSheet) {
+            SheetView(item: mockItem)
+                .padding()
         }
     }
     
     private func handlePacketChange(_ newPacket: BLEPacket?) {
         print("onChange 觸發")
         
-        // 檢查是否需要重置狀態
         if shouldResetState() {
             print("--- 檢測到重置條件，重置狀態 ---")
             hasBeenSaved = false
@@ -197,7 +222,6 @@ struct BLEScannerDetailView: View {
             return
         }
         
-        // 檢查是否需要保存
         guard let packetToSave = newPacket,
               packetToSave.parsedData?.hasReachedTarget == true,
               !hasBeenSaved,
@@ -205,7 +229,6 @@ struct BLEScannerDetailView: View {
             return
         }
         
-        // 防止短時間內重複保存
         let currentTime = Date()
         if let lastSaved = lastSavedCycle,
            currentTime.timeIntervalSince(lastSaved) < 5.0 {
@@ -214,36 +237,284 @@ struct BLEScannerDetailView: View {
         
         print("--- 自動儲存觸發！Device ID: \(packetToSave.deviceID), TestGroup: \(testGroupID) ---")
         
-        // 保存封包
         packetStore.updateOrAppendByTestGroupID(for: packetToSave)
         
-        // 自動切換到當前測試組
         selectedTestGroupID = testGroupID
         
-        // 設定保存狀態
         hasBeenSaved = true
         lastSavedCycle = currentTime
     }
 }
 
-// === 測試組選擇器視圖 ===
+// === Sheet View ===
+struct SheetView: View {
+    let item: BLEProfileItem
+    
+    var body: some View {
+        let newDistances = item.distance.removingDuplicates()
+        
+        VStack {
+        
+            Text(item.id)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .frame(width: 70, height: 70)
+                .background(Circle().fill(.gray))
+        
+            HStack {
+                Text(" ")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("天線方向")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(newDistances, id: \.self) { dis in
+                    Text("\(String(format: "%.1f",dis)) m")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(Color.white)
+                        .overlay(
+                            Rectangle().stroke(Color.gray, lineWidth: 1)
+                        )
+                }
+                
+            }
+            HStack {
+                Text("Tx (次/秒)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("垂直")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.txRate.enumerated()), id: \.offset) { index, tx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+                            Text("\(String(format: "%.1f",tx))")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Tx (dBm)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("垂直")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.txRssi.enumerated()), id: \.offset) { index, tx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+                            Text("\(tx)")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Tx (次/秒)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("水平")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.txRate.enumerated()), id: \.offset) { index, tx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+                            Text("\(String(format: "%.1f",tx))")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Tx (dBm)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("水平")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.txRssi.enumerated()), id: \.offset) { index, tx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+                            Text("\(tx)")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Rx (次/秒)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("垂直")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.rxRate.enumerated()), id: \.offset) { index, rx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+                            Text("\(String(format: "%.1f",rx))")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Rx (dBm)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("垂直")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.rxRssi.enumerated()), id: \.offset) { index, rx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+                            Text("\(rx)")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Rx (次/秒)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("水平")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.rxRate.enumerated()), id: \.offset) { index, rx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+                            Text("\(String(format: "%.1f",rx))")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            HStack {
+                Text("Rx (dBm)")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                Text("水平")
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(Color.white)
+                    .overlay(
+                        Rectangle().stroke(Color.gray, lineWidth: 1)
+                    )
+                ForEach(Array(item.rxRssi.enumerated()), id: \.offset) { index, rx in
+                    ForEach(newDistances, id: \.self){ dis in
+                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+                            Text("\(rx)")
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .background(Color.white)
+                                .overlay(
+                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+            }
+            
+        }
+    }
+}
+
+// === Test Group Selector Group ===
 struct TestGroupSelectorView: View {
     let testGroups: [String]
     @Binding var selectedTestGroupID: String?
-    let currentTestGroupID: String?  // 新增：當前測試組ID
+    let currentTestGroupID: String?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 內層橫向 ScrollView
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     
-                    // 現有測試組標籤
                     ForEach(testGroups, id: \.self) { groupID in
                         TestGroupTagView(
                             testGroupID: groupID,
                             isSelected: selectedTestGroupID == groupID,
-                            isCurrent: groupID == currentTestGroupID,  // 新增：是否為當前測試組
+                            isCurrent: groupID == currentTestGroupID,
                             onTap: {
                                 selectedTestGroupID = groupID
                             }
@@ -259,11 +530,11 @@ struct TestGroupSelectorView: View {
     }
 }
 
-// === 測試組標籤視圖 ===
+// === Test Group Label ===
 struct TestGroupTagView: View {
     let testGroupID: String
     let isSelected: Bool
-    let isCurrent: Bool  // 新增：是否為當前即時測試組
+    let isCurrent: Bool
     let onTap: () -> Void
     
     private var displayName: String {
@@ -286,7 +557,7 @@ struct TestGroupTagView: View {
                     Text(displayName)
                         .font(.system(size: 18, weight: .medium))
                     
-                    // 當前測試組指示器
+                    
                     if isCurrent {
                         Circle()
                             .fill(Color.green)
@@ -312,24 +583,24 @@ struct TestGroupTagView: View {
     }
 }
 
-// === 測試組詳細視圖 ===
+// === Test Group Info ===
 struct TestGroupDetailView: View {
     let packet: BLEPacket
     let testGroupID: String
     let currentDeviceIDs: Set<String>
-    let isCurrentGroup: Bool  // 新增：是否為當前測試組
+    let isCurrentGroup: Bool
     let onClearHistory: () -> Void
     
     var body: some View {
         VStack(spacing: 16) {
-            // 測試組信息
+            
             HStack {
                 VStack(alignment: .leading) {
                     HStack {
                         Text("\(testGroupID)")
                             .font(.headline)
                         
-                        // 當前測試組標示
+                        
                         if isCurrentGroup {
                             Text("LIVE")
                                 .font(.caption)
@@ -360,7 +631,6 @@ struct TestGroupDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             
-            // 裝置狀態卡片
             if let parsedData = packet.parsedData {
                 DeviceStatusCardsView(
                     allHistoricalDevices: parsedData.devices,
@@ -370,7 +640,6 @@ struct TestGroupDetailView: View {
         }
         .padding()
         .background(
-            // 當前測試組用不同的背景色
             (isCurrentGroup ? Color.green.opacity(0.05) : Color.gray.opacity(0.05))
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))

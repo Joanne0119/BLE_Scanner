@@ -40,7 +40,7 @@ struct BLEPacketRowView: View {
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(width: 70, height: 70)
-                    .background(Circle().fill(signalColor)) // signalColor 在這裡可以被正確找到
+                    .background(Circle().fill(signalColor)) 
 
                 Spacer()
                 
