@@ -13,7 +13,7 @@ struct BLEPacketRowView: View {
     
     let scanner: CBLEScanner
     let packetStore: SavedPacketsStore
-    let onSelect: (String) -> Void
+    let onSelect: (BLEPacket) -> Void
     
     private var signalColor: Color {
         if packet.hasLostSignal {
@@ -31,16 +31,25 @@ struct BLEPacketRowView: View {
     var body: some View {
         // button 作為 Row 的一部分
         Button(action: {
-            // 當按鈕被點擊時，呼叫傳入的 onSelect 閉包，並把 deviceID 傳出去
-            onSelect(packet.deviceID)
+            onSelect(packet)
         }) {
             HStack(spacing: 16) {
                 // 左側的圓圈 ID
                 Text(packet.deviceID)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 29, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(width: 70, height: 70)
-                    .background(Circle().fill(signalColor)) 
+                    .background(
+                        Group {
+                            if packet.profileData != nil {
+                                // Profile
+                                RoundedRectangle(cornerRadius: 12).fill(signalColor)
+                            } else {
+                                // Neighbor
+                                Circle().fill(signalColor)
+                            }
+                        }
+                    )
 
                 Spacer()
                 
@@ -51,7 +60,7 @@ struct BLEPacketRowView: View {
                  
                 // 右側的 RSSI 數值
                 Text("\(rssi)")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: 37, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
                     .frame(width: 80, alignment: .leading)
             }

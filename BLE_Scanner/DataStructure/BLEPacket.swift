@@ -19,6 +19,8 @@ struct BLEPacket: Identifiable, Codable, Equatable {
     var isMatched: Bool
     var timestamp: Date
     var parsedData: ParsedBLEData?
+    var profileData: ProfileData?
     var hasLostSignal: Bool = false
     var testGroupID: String?
+    var receptionCount: Int = 1
 }

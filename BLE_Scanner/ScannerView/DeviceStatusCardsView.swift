@@ -166,17 +166,17 @@ struct DeviceCardView: View {
             // 中間的主要資訊
             HStack {
                 Text(device.deviceId)
-                    .font(isHistory ? .title : .system(size: 50, weight: .bold, design: .rounded))
+                    .font(isHistory ? .title : .system(size: 55, weight: .bold, design: .rounded))
                 
                 Spacer()
                 
                 VStack(alignment: .trailing) {
                     Text("\(String(format: "%.1f", device.receptionRate)) 次/秒")
-                        .font(isHistory ? .body : .system(size: 25, weight: .semibold, design: .rounded))
+                        .font(isHistory ? .body : .system(size: 30, weight: .semibold, design: .rounded))
                     
                     if !isHistory {
                         Text(suggestion.message)
-                            .font(.system(size: 25, weight: .semibold, design: .rounded))
+                            .font(.system(size: 30, weight: .semibold, design: .rounded))
                     }
                 }
             }

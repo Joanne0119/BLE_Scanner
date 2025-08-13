@@ -30,7 +30,7 @@ struct BLEBroadcasterView: View {
     
     @Binding var maskSuggestions: [String]
     @Binding var dataSuggestions: [String]
-    private let idSuggestions: [String] = ["7F", "7E", "01", "02", "03", "04", "05", "06", "07", "08", "09", "0A", "0B", "0C", "0D", "0E", "0F", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "1A", "1B", "1C", "1D", "1E", "1F", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "2A", "2B", "2C", "2D", "2E", "2F", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"]
+    private let idSuggestions: [String] = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "0A", "0B", "0C", "0D", "0E", "0F", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "1A", "1B", "1C", "1D", "1E", "1F", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "2A", "2B", "2C", "2D", "2E", "2F", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"]
     
     @State private var maskError: String?
     @State private var dataError: String?
@@ -108,16 +108,16 @@ struct BLEBroadcasterView: View {
                     
                     if broadcaster.nameStr != "N/A" && broadcaster.isRepeatAdv{
                         Text("廣播中...")
-                            .font(.system(size: 15, weight: .light))
+                            .font(.system(size: 20, weight: .light))
                         Text("Payload: \(broadcaster.nameStr)")
-                            .font(.system(size: 15, weight: .light))
+                            .font(.system(size: 20, weight: .light))
                             .foregroundStyle(.primary)
                             .padding(.bottom)
                             .padding(.top, 6)
                     }
                     else {
                         Text("Ex: Payload: 7A000101030F3E0001")
-                            .font(.system(size: 15, weight: .light))
+                            .font(.system(size: 20, weight: .light))
                             .foregroundStyle(.secondary)
                             .padding()
                     }
@@ -128,7 +128,7 @@ struct BLEBroadcasterView: View {
                         MQTTToolbarStatusView()
                     }
                 }
-                .padding()
+                .padding(20)
                 .onTapGesture {
                     if focusedField != nil{
                         focusedField = nil
@@ -146,17 +146,17 @@ struct BLEBroadcasterView: View {
             HStack {
                 if let error = combinedError  {
                     Text(error)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(.red)
                 }
                 else {
                     Text("\(currentByte) byte")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(.blue)
                 }
                 
                 Text("/ 26 byte")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 25, weight: .bold))
             }
             
             HStack {
@@ -166,14 +166,14 @@ struct BLEBroadcasterView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         VStack(alignment: .center) {
                             Text("封包格式 = 遮罩 ＋ 內容 ＋ ID")
-                                .font(.system(size: 25, weight: .bold))
+                                .font(.system(size: 30, weight: .bold))
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 .background(Color.blue.opacity(0.1))
                                 .cornerRadius(12)
                         }
                         Text("廣播端的封包請輸入 01 ~ 7F 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C）")
-                            .font(.system(size: 20, weight: .medium))
+                            .font(.system(size: 25, weight: .medium))
                             
                     }
                     .padding()
@@ -203,7 +203,7 @@ struct BLEBroadcasterView: View {
                 }
 
             }
-            .font(.system(size: 20, weight: .medium))
+            .font(.system(size: 25, weight: .medium))
             .buttonStyle(.borderedProminent)
             .tint(broadcaster.isRepeatAdv ? .red : .blue)
             .alert(alertMessage, isPresented: $showAlert) {
@@ -211,7 +211,7 @@ struct BLEBroadcasterView: View {
             }
             .disabled(maskError != nil || dataError != nil || idError != nil)
             Text("\n快速廣播")
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 25, weight: .medium))
             HStack {
                 Button("全部設定廣播") {
                     inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
@@ -221,7 +221,7 @@ struct BLEBroadcasterView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 25, weight: .medium))
                 .disabled(broadcaster.isRepeatAdv)
                 
                 Button("全部重新啟動") {
@@ -232,19 +232,32 @@ struct BLEBroadcasterView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.orange)
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 25, weight: .medium))
                 .disabled(broadcaster.isRepeatAdv)
             }
-            Button("Profile廣播") {
-                inputMask = "7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F"
-                inputData = "7F"
-                inputID = "7D"
-                broadcaster.startRepeatingAdvertising(mask: [0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F], id: [0x7D], customData: [0x7F])
+            HStack {
+                Button("Profile廣播") {
+                    inputMask = "7F7F7F7F7F 0101010101 7F7F7F7F7F 0101010101 7F7F7F7F"
+                    inputData = "7F"
+    //                inputID = ""
+    //                broadcaster.startRepeatingAdvertising(mask: [0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x01, 0x01, 0x01, 0x01, 0x01, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x01, 0x01, 0x01, 0x01, 0x01, 0x7F, 0x7F, 0x7F, 0x7F], id: [0x7F], customData: [0x7F])
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.pink)
+                .font(.system(size: 25, weight: .medium))
+                .disabled(broadcaster.isRepeatAdv)
+                Button("Profile重啟") {
+                    inputMask = "7F7F7F7F7F 0101010101 7F7F7F7F7F 0101010101 7F7F7F7F"
+                    inputData = "7F"
+                    inputID = "7E"
+                    broadcaster.startRepeatingAdvertising(mask: [0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x01, 0x01, 0x01, 0x01, 0x01, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x01, 0x01, 0x01, 0x01, 0x01, 0x7F, 0x7F, 0x7F, 0x7F], id: [0x7E], customData: [0x7F])
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.pink)
+                .font(.system(size: 25, weight: .medium))
+                .disabled(broadcaster.isRepeatAdv)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.pink)
-            .font(.system(size: 20, weight: .medium))
-            .disabled(broadcaster.isRepeatAdv)
+            
         }
     }
 
@@ -455,7 +468,7 @@ struct SuggestionsView: View {
                                 onSuggestionTap(suggestion)
                             }) {
                                 Text(suggestion)
-                                    .font(.system(size: 16, weight: .medium))
+                                    .font(.system(size: 21, weight: .medium))
                                     .padding(.vertical, 12)
                                     .padding(.horizontal, 16)
                                     .frame(minWidth: 50, minHeight: 40)
@@ -501,13 +514,13 @@ struct BroadcastInputSectionView: View {
         VStack(alignment: .leading) {
             HStack {
                 Text(title)
-                    .font(.system(size: 18, weight: .bold))
-                    .frame(width: 60, alignment: .leading)
+                    .font(.system(size: 23, weight: .bold))
+                    .frame(width: 90, alignment: .leading)
                 
                 ZStack {
                     HStack {
                         TextField(placeholder, text: $text)
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 23, weight: .bold))
                             .keyboardType(.asciiCapable)
                             .padding(.horizontal)
                             .focused($focusedField, equals: fieldCase)

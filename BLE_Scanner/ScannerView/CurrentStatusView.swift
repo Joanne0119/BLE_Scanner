@@ -14,13 +14,13 @@ struct CurrentStatusView: View {
     var body: some View {
         HStack {
             Label("\(parsedData.seconds) s", systemImage: "clock")
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 25, weight: .medium))
             Spacer()
             Label("\(Int(parsedData.temperature)) °C", systemImage: "thermometer.medium")
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 25, weight: .medium))
             Spacer()
             Label("\(String(format: "%.2f", parsedData.atmosphericPressure)) hPa", systemImage: "gauge.medium")
-                .font(.system(size: 20, weight: .medium))
+                .font(.system(size: 25, weight: .medium))
         }
         .font(.headline)
         .padding()

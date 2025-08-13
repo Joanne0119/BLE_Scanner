@@ -18,32 +18,51 @@ enum BLEScannerField: Hashable {
 struct BLEScannerView: View {
     @StateObject private var scanner = CBLEScanner()
     @ObservedObject var packetStore: SavedPacketsStore
+    
     @State private var maskText: String = ""
     @State private var idText: String = ""
+    
     @State private var maskTextEmpty: Bool = false
     @State private var isExpanded: Bool = false
     @State private var rssiValue: Double = 200
     @State private var maskError: String?
     @FocusState private var focusedField: BLEScannerField?
-    @Binding var maskSuggestions: [String]
-    @State private var selectedDeviceID: String? = nil //用於儲存使用者點擊的裝置 ID，以便傳遞給 DetailView
-    @State private var isLinkActive: Bool = false
     
+    @Binding var maskSuggestions: [String]
+    
+    @State private var selectedDeviceID: String? = nil
+    @State private var isLinkActive: Bool = false
     @State private var isTestInProgress = false
     
+    @State private var selectedPacket: BLEPacket? = nil
+    @State private var navigateToStandardDetail = false
+    @State private var navigateToProfileDetail = false
+    
     var filteredPackets: [BLEPacket] {
-        scanner.matchedPackets.values.filter { packet in
-            let rssiMatch = packet.rssi >= -Int(rssiValue)
-            return rssiMatch
+        let allMatched = scanner.matchedPackets.values
+        let filterMask = maskText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if filterMask.isEmpty {
+            return allMatched
+                .filter { $0.rssi >= -Int(rssiValue) } 
+                .sorted(by: { $0.rssi > $1.rssi })
+        } else {
+            return allMatched.filter { packet in
+                let packetMaskString = packet.mask.replacingOccurrences(of: " ", with: "").uppercased()
+                let filterMaskString = filterMask.replacingOccurrences(of: " ", with: "").uppercased()
+                
+                let rssiMatch = packet.rssi >= -Int(rssiValue)
+                let maskMatch = packetMaskString.hasPrefix(filterMaskString)
+                return maskMatch && rssiMatch
+            }
+            .sorted(by: { $0.rssi > $1.rssi })
         }
-        .sorted(by: { $0.rssi > $1.rssi })
     }
 
     var body: some View {
         NavigationView {
             ZStack {
                 backgroundTapGesture
-                backgroundNavigationLink
+                backgroundNavigationLinks
                 
                 VStack(spacing: 20) {
                     inputSection
@@ -51,7 +70,7 @@ struct BLEScannerView: View {
                     noMatchMessageView
                     deviceListView
                 }
-                .padding()
+                .padding(20)
                 .navigationTitle("掃描端")
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
@@ -63,25 +82,28 @@ struct BLEScannerView: View {
         .navigationBarHidden(false)
         .navigationViewStyle(StackNavigationViewStyle())
     }
-    private var backgroundNavigationLink: some View {
-        NavigationLink(
-            destination: detailViewDestination,
-            isActive: $isLinkActive,
-            label: { EmptyView() }
-        )
-    }
+    
     @ViewBuilder
-    private var detailViewDestination: some View {
-        // 確保我們有選中的 deviceID 才建立 DetailView
-        if let deviceID = selectedDeviceID {
-            BLEScannerDetailView(
-                packetStore: packetStore,
-                scanner: scanner,
-                deviceID: deviceID
+    private var backgroundNavigationLinks: some View {
+        if let packet = selectedPacket {
+            NavigationLink(
+                destination: BLEScannerDetailView(
+                    packetStore: packetStore,
+                    scanner: scanner,
+                    deviceID: packet.deviceID
+                ),
+                isActive: $navigateToStandardDetail,
+                label: { EmptyView() }
             )
-        } else {
-            // 如果沒有 deviceID，為了安全提供一個空的 View
-            EmptyView()
+            
+            NavigationLink(
+                destination: ProfileDetailView(
+                    scanner: scanner,
+                    deviceID: packet.deviceID
+                ),
+                isActive: $navigateToProfileDetail,
+                label: { EmptyView() }
+            )
         }
     }
 }
@@ -104,7 +126,7 @@ extension BLEScannerView {
         Group {
             if scanner.noMatchFound {
                 Text("找不到符合條件的裝置")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 23, weight: .bold))
                     .foregroundColor(.red)
             }
         }
@@ -119,10 +141,14 @@ extension BLEScannerView {
                             packet: packet,
                             scanner: scanner,
                             packetStore: packetStore,
-                            onSelect: { deviceID in
-                                // 當一個 Row 被點擊時執行的程式碼
-                                self.selectedDeviceID = deviceID
-                                self.isLinkActive = true
+                            onSelect: { selectedPacket in
+                                self.selectedPacket = selectedPacket
+                                
+                                if selectedPacket.profileData != nil {
+                                    self.navigateToProfileDetail = true
+                                } else {
+                                    self.navigateToStandardDetail = true
+                                }
                             }
                         )
         }
@@ -144,18 +170,18 @@ extension BLEScannerView {
                         }
                         TestSessionManager.shared.startNewTestSession()
                     }
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 25, weight: .medium))
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
                     
-                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
-                        Link(destination: url) {
-                            Label("查看圖表", systemImage: "chart.bar.xaxis")
-                        }
-                        .font(.system(size: 20, weight: .medium))
-                        .buttonStyle(.borderedProminent)
-                        .tint(.purple)
-                    }
+//                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
+//                        Link(destination: url) {
+//                            Label("查看圖表", systemImage: "chart.bar.xaxis")
+//                        }
+//                        .font(.system(size: 25, weight: .medium))
+//                        .buttonStyle(.borderedProminent)
+//                        .tint(.purple)
+//                    }
                 }
                 .padding()
                 
@@ -167,23 +193,35 @@ extension BLEScannerView {
                             startScanningIfValid()
                         }
                     }
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 25, weight: .medium))
                     .buttonStyle(.borderedProminent)
                     .tint(scanner.isScanning ? .red : .blue)
                     
-                    Button("常用遮罩掃描") {
-                        maskText = "FFFFFFFFFFFFFFFFFFFFFFFFFF"
-                        handleStartScan()
-                    }
-                    .font(.system(size: 20, weight: .medium))
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
-                    .disabled(scanner.isScanning)
                     
                     Button("", systemImage: "trash") {
                         scanner.matchedPackets.removeAll()
                     }
                     .tint(.red)
+                }
+                
+                HStack {
+                    Button("常用遮罩掃描") {
+                        maskText = "FFFFFFFFFFFFFFFFFFFFFFFFFF"
+                        handleStartScan()
+                    }
+                    .font(.system(size: 25, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    .disabled(scanner.isScanning)
+                    
+                    Button("Profile遮罩掃描") {
+                        maskText = "000000000000000000000000000000000000000000000000000000"
+                        handleStartScan()
+                    }
+                    .font(.system(size: 25, weight: .medium))
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    .disabled(scanner.isScanning)
                 }
                 
             } else {
@@ -194,18 +232,18 @@ extension BLEScannerView {
                         TestSessionManager.shared.startNewTestSession()
                         scanner.matchedPackets.removeAll()
                     }
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 25, weight: .medium))
                     .buttonStyle(.borderedProminent)
                     .tint(.green)
                     
-                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
-                        Link(destination: url) {
-                            Label("查看圖表", systemImage: "chart.bar.xaxis")
-                        }
-                        .font(.system(size: 20, weight: .medium))
-                        .buttonStyle(.borderedProminent)
-                        .tint(.purple)
-                    }
+//                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
+//                        Link(destination: url) {
+//                            Label("查看圖表", systemImage: "chart.bar.xaxis")
+//                        }
+//                        .font(.system(size: 25, weight: .medium))
+//                        .buttonStyle(.borderedProminent)
+//                        .tint(.purple)
+//                    }
                 }
                 .padding()
             }
@@ -248,12 +286,12 @@ extension BLEScannerView {
     private var maskInputField: some View {
         HStack {
             Text("遮罩： ")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 23, weight: .bold))
             
             ZStack {
                 HStack {
                     TextField("ex：01 02 03", text: $maskText)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 23, weight: .bold))
                         .onChange(of: maskText) { newValue in
                             scanner.expectedMaskText = newValue
                             validateField(originalInput: newValue, errorBinding: $maskError)
@@ -301,12 +339,12 @@ struct InputHeaderView: View {
     private var currentByteCount: some View {
         HStack {
             Text("目前Byte數: ")
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: 25, weight: .bold))
                 .foregroundStyle(.blue)
             
             if let error = maskError {
                 Text(error)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 25, weight: .bold))
                     .foregroundStyle(.red)
             } else {
                 byteCountText
@@ -319,16 +357,16 @@ struct InputHeaderView: View {
             let currentInput = maskText
             if currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text("0 byte")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 25, weight: .bold))
                     .foregroundStyle(.blue)
             } else {
                 if let bytes = parseHexInput(currentInput) {
                     Text("\(bytes.count) byte")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(.blue)
                 } else {
                     Text("0 byte")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 25, weight: .bold))
                         .foregroundStyle(.blue)
                 }
             }
@@ -339,9 +377,9 @@ struct InputHeaderView: View {
         HelpButtonView {
             VStack {
                 Text("掃描端篩選用的遮罩請輸入 00 ~ FF 十六進位的數字\n每一數字可用空白或逗點隔開（ex: 1A 2B, 3C）\n也可以不隔開（ex: 1A2B3C)\n")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 25, weight: .medium))
                 Text("輸入遮罩後可按下「開始掃描」按鈕，即可獲得符合條件的裝置列表，列表中的內容為裝置ID與該裝置的rssi，點擊該裝置即可鎖定裝置，並進入裝置的詳細資料內容。\n詳細內容內可查看一定數據中最短的接收封包的時間、溫度、大氣壓力，以及該裝置鄰近裝置的ID與建議佈件移動方位。")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 25, weight: .medium))
             }
             .padding()
         }
@@ -381,7 +419,7 @@ struct MaskSuggestionsView: View {
             maskText = suggestion
         }) {
             Text(suggestion)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 21, weight: .medium))
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
                 .frame(minWidth: 50, minHeight: 40)

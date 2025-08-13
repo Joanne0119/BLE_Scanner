@@ -44,6 +44,10 @@ class SavedPacketsStore: ObservableObject {
         requestAllLogsFromServer()
     }
     
+    func save() {
+        StorageManager.save(packets: self.packets)
+    }
+    
     func updateOrAppendDeviceHistory(for incomingPacket: BLEPacket) {
         guard let incomingParsedData = incomingPacket.parsedData else { return }
 

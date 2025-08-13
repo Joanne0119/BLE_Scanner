@@ -59,7 +59,7 @@ struct ChartLoadErrorView: View {
             VStack(spacing: 20) {
                 // 錯誤圖示
                 Image(systemName: "wifi.exclamationmark")
-                    .font(.system(size: 80))
+                    .font(.system(size: 85))
                     .foregroundColor(.red)
                 
                 // 錯誤訊息
@@ -88,7 +88,7 @@ struct ChartLoadErrorView: View {
                             Image(systemName: "arrow.clockwise")
                             Text("重試")
                         }
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 23, weight: .medium))
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -107,7 +107,7 @@ struct ChartLoadErrorView: View {
                             Image(systemName: "safari")
                             Text("用瀏覽器開啟")
                         }
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 23, weight: .medium))
                         .foregroundColor(.blue)
                         .padding()
                         .frame(maxWidth: .infinity)
@@ -119,7 +119,7 @@ struct ChartLoadErrorView: View {
                     Button("關閉") {
                         isPresented = false
                     }
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 23, weight: .medium))
                     .foregroundColor(.gray)
                     .padding()
                 }

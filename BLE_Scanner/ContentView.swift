@@ -62,6 +62,10 @@ struct ContentView: View {
                 .tabItem {
                     Label("自訂輸入", systemImage: "rectangle.and.pencil.and.ellipsis")
                 }
+            ResultsSummaryView()
+                .tabItem {
+                    Label("Profile Log", systemImage: "rectangle.and.pencil.and.ellipsis")
+                }
 //            PressureCorrectionView(offsetManager: offsetManager, maskSuggestions: $mqttManager.maskSuggestions)
 //                .tabItem {
 //                    Label("大氣壓力校正", systemImage: "checkmark.circle.badge.questionmark")

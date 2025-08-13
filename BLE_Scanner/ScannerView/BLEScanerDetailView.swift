@@ -19,18 +19,6 @@ struct BLEScannerDetailView: View {
     @State private var lastSavedCycle: Date?
     @State private var selectedTestGroupID: String?
     
-    let mockItem = BLEProfileItem(
-        deviceID: "04",
-        txRate: [5.2, 4.8, 3.2, 5.0, 4.5, 2.9],
-        txRssi: [-65, -72, -81, -68, -75, -83],
-        rxRate: [5.0, 4.6, 3.0, 4.9, 4.4, 2.8],
-        rxRssi: [-68, -75, -84, -70, -77, -85],
-        antenna: ["vertical", "horizental", "vertical", "horizental", "vertical", "horizental"],
-        distance: [5, 5, 10, 10, 15, 15],
-        timestamp: [Date(), Date(), Date(), Date(), Date(), Date()],
-        test_group: [nil, nil,nil,nil,nil,nil]
-    )
-    
     private var currentPacket: BLEPacket? {
         scanner.matchedPackets[deviceID]
     }
@@ -152,7 +140,7 @@ struct BLEScannerDetailView: View {
                 Button(action: { dismiss() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 20, weight: .medium))
+                            .font(.system(size: 25, weight: .medium))
                     }
                     .foregroundColor(.white)
                 }
@@ -162,7 +150,7 @@ struct BLEScannerDetailView: View {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 10) {
                     Text(deviceID)
-                        .font(.system(size: 26, weight: .bold))
+                        .font(.system(size: 31, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.leading, 3)
                     
@@ -173,7 +161,7 @@ struct BLEScannerDetailView: View {
                                   (current.rssi != 127 ? "\(current.rssi) dBm" : "Error")
                         
                         Text(rssi)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 23, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                             .padding(.trailing, 10)
                     }
@@ -184,7 +172,7 @@ struct BLEScannerDetailView: View {
                 Button(action: { showSheet.toggle() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle")
-                            .font(.system(size: 20, weight: .medium))
+                            .font(.system(size: 25, weight: .medium))
                     }
                     .foregroundColor(.white)
                 }
@@ -206,10 +194,10 @@ struct BLEScannerDetailView: View {
                 selectedTestGroupID = currentTestGroupID ?? testGroups.first
             }
         }
-        .sheet(isPresented: $showSheet) {
-            SheetView(item: mockItem)
-                .padding()
-        }
+//        .sheet(isPresented: $showSheet) {
+//            SheetView(item: mockItem)
+//                .padding()
+//        }
     }
     
     private func handlePacketChange(_ newPacket: BLEPacket?) {
@@ -247,257 +235,259 @@ struct BLEScannerDetailView: View {
 }
 
 // === Sheet View ===
-struct SheetView: View {
-    let item: BLEProfileItem
-    
-    var body: some View {
-        let newDistances = item.distance.removingDuplicates()
-        
-        VStack {
-        
-            Text(item.id)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .frame(width: 70, height: 70)
-                .background(Circle().fill(.gray))
-        
-            HStack {
-                Text(" ")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("天線方向")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(newDistances, id: \.self) { dis in
-                    Text("\(String(format: "%.1f",dis)) m")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .background(Color.white)
-                        .overlay(
-                            Rectangle().stroke(Color.gray, lineWidth: 1)
-                        )
-                }
-                
-            }
-            HStack {
-                Text("Tx (次/秒)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("垂直")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.txRate.enumerated()), id: \.offset) { index, tx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
-                            Text("\(String(format: "%.1f",tx))")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Tx (dBm)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("垂直")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.txRssi.enumerated()), id: \.offset) { index, tx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
-                            Text("\(tx)")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Tx (次/秒)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("水平")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.txRate.enumerated()), id: \.offset) { index, tx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
-                            Text("\(String(format: "%.1f",tx))")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Tx (dBm)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("水平")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.txRssi.enumerated()), id: \.offset) { index, tx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
-                            Text("\(tx)")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Rx (次/秒)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("垂直")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.rxRate.enumerated()), id: \.offset) { index, rx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
-                            Text("\(String(format: "%.1f",rx))")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Rx (dBm)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("垂直")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.rxRssi.enumerated()), id: \.offset) { index, rx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
-                            Text("\(rx)")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Rx (次/秒)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("水平")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.rxRate.enumerated()), id: \.offset) { index, rx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
-                            Text("\(String(format: "%.1f",rx))")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            HStack {
-                Text("Rx (dBm)")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                Text("水平")
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .background(Color.white)
-                    .overlay(
-                        Rectangle().stroke(Color.gray, lineWidth: 1)
-                    )
-                ForEach(Array(item.rxRssi.enumerated()), id: \.offset) { index, rx in
-                    ForEach(newDistances, id: \.self){ dis in
-                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
-                            Text("\(rx)")
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .background(Color.white)
-                                .overlay(
-                                    Rectangle().stroke(Color.gray, lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-            }
-            
-        }
-    }
-}
+
+
+//struct SheetView: View {
+//    let item: BLEProfileItem
+//    
+//    var body: some View {
+//        let newDistances = item.distance.removingDuplicates()
+//        
+//        VStack {
+//        
+//            Text(item.id)
+//                .font(.system(size: 29, weight: .bold, design: .rounded))
+//                .foregroundColor(.white)
+//                .frame(width: 70, height: 70)
+//                .background(Circle().fill(.gray))
+//        
+//            HStack {
+//                Text(" ")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("天線方向")
+//                    .font(.system(size: 25, weight: .bold, design: .rounded))
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(newDistances, id: \.self) { dis in
+//                    Text("\(String(format: "%.1f",dis)) m")
+//                        .font(.system(size: 25, weight: .bold, design: .rounded))
+//                        .frame(maxWidth: .infinity, minHeight: 40)
+//                        .background(Color.white)
+//                        .overlay(
+//                            Rectangle().stroke(Color.gray, lineWidth: 1)
+//                        )
+//                }
+//                
+//            }
+//            HStack {
+//                Text("Tx (次/秒)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("垂直")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.txRate.enumerated()), id: \.offset) { index, tx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+//                            Text("\(String(format: "%.1f",tx))")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Tx (dBm)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("垂直")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.txRssi.enumerated()), id: \.offset) { index, tx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+//                            Text("\(tx)")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Tx (次/秒)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("水平")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.txRate.enumerated()), id: \.offset) { index, tx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+//                            Text("\(String(format: "%.1f",tx))")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Tx (dBm)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("水平")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.txRssi.enumerated()), id: \.offset) { index, tx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+//                            Text("\(tx)")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Rx (次/秒)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("垂直")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.rxRate.enumerated()), id: \.offset) { index, rx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+//                            Text("\(String(format: "%.1f",rx))")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Rx (dBm)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("垂直")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.rxRssi.enumerated()), id: \.offset) { index, rx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "vertical") {
+//                            Text("\(rx)")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Rx (次/秒)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("水平")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.rxRate.enumerated()), id: \.offset) { index, rx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+//                            Text("\(String(format: "%.1f",rx))")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            HStack {
+//                Text("Rx (dBm)")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                Text("水平")
+//                    .frame(maxWidth: .infinity, minHeight: 40)
+//                    .background(Color.white)
+//                    .overlay(
+//                        Rectangle().stroke(Color.gray, lineWidth: 1)
+//                    )
+//                ForEach(Array(item.rxRssi.enumerated()), id: \.offset) { index, rx in
+//                    ForEach(newDistances, id: \.self){ dis in
+//                        if(item.distance[index] == dis && item.antenna[index] == "horizental") {
+//                            Text("\(rx)")
+//                                .frame(maxWidth: .infinity, minHeight: 40)
+//                                .background(Color.white)
+//                                .overlay(
+//                                    Rectangle().stroke(Color.gray, lineWidth: 1)
+//                                )
+//                        }
+//                    }
+//                }
+//            }
+//            
+//        }
+//    }
+//}
 
 // === Test Group Selector Group ===
 struct TestGroupSelectorView: View {
@@ -555,7 +545,7 @@ struct TestGroupTagView: View {
             VStack(spacing: 4) {
                 HStack(spacing: 4) {
                     Text(displayName)
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 23, weight: .medium))
                     
                     
                     if isCurrent {
