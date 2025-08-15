@@ -42,6 +42,8 @@ struct ProfileDetailView: View {
     
     @Environment(\.dismiss) var dismiss
     
+    @State private var showDeleteConfirmAlert = false
+    
     private var currentPacket: BLEPacket? {
         scanner.matchedPackets[deviceID]
     }
@@ -89,9 +91,6 @@ struct ProfileDetailView: View {
                             onEdit: { packetID in
                                 self.editingPacketID = packetID
                                 self.showEditSheet = true
-                            },
-                            onComplete: { packetID, avgTx, avgRx in
-                                self.saveResult(for: packetID, avgTx: avgTx, avgRx: avgRx)
                             }
                         )
                     }
@@ -100,6 +99,16 @@ struct ProfileDetailView: View {
             }
         }
         .onAppear(perform: setupInitialPackets)
+        .onReceive(scanner.profileResultPublisher) { result in
+            // 當收到廣播結果時，直接呼叫儲存函式
+            self.saveResult(
+                for: result.packetID,
+                avgTx: result.avgTx,
+                avgRx: result.avgRx,
+                capturedTxs: result.capturedTxs,
+                capturedRxs: result.capturedRxs
+            )
+        }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -110,6 +119,15 @@ struct ProfileDetailView: View {
                let index = savedPacketsStore.packets.firstIndex(where: { $0.id == editingID }) {
                 ProfileEditSheet(packet: $savedPacketsStore.packets[index])
             }
+        }
+        .alert("確認刪除", isPresented: $showDeleteConfirmAlert) {
+            Button("取消", role: .cancel) { }
+            Button("確定刪除", role: .destructive) {
+                savedPacketsStore.deleteAllProfileData(for: deviceID)
+                dismiss()
+            }
+        } message: {
+            Text("確定要刪除節點 \(deviceID) 的所有 Profile 測試資料嗎？此操作無法復原")
         }
     }
     
@@ -161,19 +179,22 @@ struct ProfileDetailView: View {
          savedPacketsStore.save()
     }
     
-    private func saveResult(for packetID: String, avgTx: Double, avgRx: Double) {
-        guard let index = savedPacketsStore.packets.firstIndex(where: { $0.id == packetID }) else {
-            print("儲存失敗：找不到 packet ID \(packetID)")
-            return
-        }
-        if savedPacketsStore.packets[index].profileData != nil {
-            savedPacketsStore.packets[index].profileData?.avgTx = avgTx
-            savedPacketsStore.packets[index].profileData?.avgRx = avgRx
-             savedPacketsStore.save()
-            print("已儲存 packet \(packetID) 的結果: Tx=\(avgTx), Rx=\(avgRx)")
-        } else {
-            print("儲存失敗：packet \(packetID) 的 profileData 為 nil")
-        }
+    private func saveResult(
+        for packetID: String,
+        avgTx: Double,
+        avgRx: Double,
+        capturedTxs: [Int],
+        capturedRxs: [Int8]
+    ) {
+        savedPacketsStore.saveAndPublishProfileResult(
+            for: packetID,
+            avgTx: avgTx,
+            avgRx: avgRx,
+            capturedTxs: capturedTxs,
+            capturedRxs: capturedRxs
+        )
+        
+        print("儲存與發布指令已觸發 (Packet ID: \(packetID))")
     }
 
 
@@ -201,6 +222,14 @@ struct ProfileDetailView: View {
                         .font(.system(size: 23, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                 }
+            }
+        }
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button(role: .destructive) {
+                showDeleteConfirmAlert = true
+            } label: {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
             }
         }
     }

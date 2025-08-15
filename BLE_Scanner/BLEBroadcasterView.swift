@@ -236,7 +236,7 @@ struct BLEBroadcasterView: View {
                 .disabled(broadcaster.isRepeatAdv)
             }
             HStack {
-                Button("Profile廣播") {
+                Button("Profile遮罩與內容填寫") {
                     inputMask = "7F7F7F7F7F 0101010101 7F7F7F7F7F 0101010101 7F7F7F7F"
                     inputData = "7F"
     //                inputID = ""

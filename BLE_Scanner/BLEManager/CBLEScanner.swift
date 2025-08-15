@@ -8,6 +8,15 @@
 
 import Foundation
 import CoreBluetooth
+import Combine
+
+struct ProfileResult {
+    let packetID: String
+    let avgTx: Double
+    let avgRx: Double
+    let capturedTxs: [Int]
+    let capturedRxs: [Int8]
+}
 
 class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     private var centralManager: CBCentralManager!
@@ -29,9 +38,15 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     private var cleanupTimer: Timer?
     static let standardDataMask: [UInt8] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
     static let profileDataMask: [UInt8] = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-    private var averagingTimer: Timer?
-    var averagingPacketID: String? // 追蹤正在計算哪個 packet
-    private var rssiCaptures: [(tx: Int, rx: Int8)] = []
+
+   let profileResultPublisher = PassthroughSubject<ProfileResult, Never>()
+   private var isAveragingInProgress = false
+   var averagingPacketID: String?
+   private var averagingTargetDeviceID: String?
+   
+   // --- 數據捕獲屬性 ---
+   private var txCaptureSession: [Int] = []
+   private var rxCaptureSession: [Int8] = []
     
     
     override init() {
@@ -119,103 +134,61 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
         }
     }
     
-    func startAveragingRSSI(for packetID: String, deviceID: String, completion: @escaping (Double, Double) -> Void) {
-        
-        averagingTimer?.invalidate()
-        
-        self.averagingPacketID = packetID
-        
-        var capturedTxs: [Int] = []
-        var capturedRxs: [Int8] = []
-        
-
-        let startTime = Date()
-        self.averagingTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] timer in
-            guard let self = self else {
-                timer.invalidate()
-                return
+    func startAveragingRSSI(for packetID: String, deviceID: String, completion: @escaping (Double, Double, [Int], [Int8]) -> Void) {
+            // 如果已有任務在執行，先停止
+            if isAveragingInProgress {
+                stopAveraging()
             }
             
-            // 從 matchedPackets 取得最新的即時數值
-            if let currentPacket = self.matchedPackets[deviceID],
-               let profileData = currentPacket.profileData {
-                
-                capturedTxs.append(currentPacket.rssi)
-                capturedRxs.append(profileData.phone_rssi)
-            }
+            print("開始為 Packet ID \(packetID) 捕獲數據...")
             
-            if Date().timeIntervalSince(startTime) >= 10.0 {
-                timer.invalidate() // 停止計時器
-
-                let avgTx = capturedTxs.isEmpty ? 0.0 : Double(capturedTxs.reduce(0, +)) / Double(capturedTxs.count)
-                let avgRx = capturedRxs.isEmpty ? 0.0 : Double(capturedRxs.reduce(0) { $0 + Int($1) }) / Double(capturedRxs.count)
-                
-                self.averagingPacketID = nil
-                
-                DispatchQueue.main.async {
-                    completion(avgTx, avgRx)
-                }
-            }
+            // 設定狀態
+            self.averagingPacketID = packetID
+            self.isAveragingInProgress = true
+            self.averagingTargetDeviceID = deviceID
+            
+            // 清空上次的數據
+            self.txCaptureSession.removeAll()
+            self.rxCaptureSession.removeAll()
         }
-    }
     
-    /// 停止計算流程
+    // 停止
     func stopAveraging() {
-        averagingTimer?.invalidate()
-        averagingTimer = nil
+        print("停止數據捕獲流程。")
+        isAveragingInProgress = false
         averagingPacketID = nil
-        rssiCaptures.removeAll()
-        print("RSSI 平均值計算已停止。")
+        averagingTargetDeviceID = nil
+        txCaptureSession.removeAll()
+        rxCaptureSession.removeAll()
     }
     
     // --- 新增私有方法，處理計時器邏輯 ---
-    
-    private func captureAndContinue(for deviceID: String) {
-        guard averagingPacketID != nil else {
+    private func finishProfileCapture() {
+        print("已成功捕獲 30 筆數據，正在計算與回傳結果...")
+        
+        guard let finishedPacketID = self.averagingPacketID else {
             stopAveraging()
             return
         }
         
-        // 從 matchedPackets 中獲取最新的即時數據
-        if let livePacket = self.matchedPackets[deviceID] {
-            let tx = livePacket.rssi
-            let rx = livePacket.profileData?.phone_rssi ?? 0
-            rssiCaptures.append((tx: tx, rx: rx))
-            print("第 \(rssiCaptures.count) 次數據抓取: TX=\(tx), RX=\(rx)")
-        } else {
-            // 如果剛好沒收到，就補 0
-            rssiCaptures.append((tx: 0, rx: 0))
-            print("第 \(rssiCaptures.count) 次數據抓取: 找不到裝置，數據為 0")
-        }
+        let avgTx = txCaptureSession.isEmpty ? 0.0 : Double(txCaptureSession.reduce(0, +)) / Double(txCaptureSession.count)
+        let avgRx = rxCaptureSession.isEmpty ? 0.0 : Double(rxCaptureSession.reduce(0) { $0 + Int($1) }) / Double(rxCaptureSession.count)
         
-        // 如果已抓取 3 次數據，就結束並計算平均值
-        if rssiCaptures.count >= 3 {
-            calculateAndStoreAverage()
-        }
-    }
-    
-    private func calculateAndStoreAverage() {
-        guard let packetID = self.averagingPacketID, !rssiCaptures.isEmpty else {
-            stopAveraging()
-            return
-        }
+        // 建立結果物件
+        let result = ProfileResult(
+            packetID: finishedPacketID,
+            avgTx: avgTx,
+            avgRx: avgRx,
+            capturedTxs: self.txCaptureSession,
+            capturedRxs: self.rxCaptureSession
+        )
         
-        print("抓取滿 3 次，開始計算平均值...")
-        
-        let totalTx = rssiCaptures.reduce(0) { $0 + $1.tx }
-        let totalRx = rssiCaptures.reduce(0) { Int($0) + Int($1.rx) }
-        
-        let avgTx = Double(totalTx) / Double(rssiCaptures.count)
-        let avgRx = Double(totalRx) / Double(rssiCaptures.count)
-        
-        // 將結果儲存在 @Published 字典中，UI 會自動收到通知
         DispatchQueue.main.async {
-            self.averagedResults[packetID] = (tx: avgTx, rx: avgRx)
-            print("計算完成 -> Packet ID: \(packetID), Avg TX: \(avgTx), Avg RX: \(avgRx)")
-            self.stopAveraging() // 停止計時器和流程
+            self.profileResultPublisher.send(result)
         }
+        
+        stopAveraging()
     }
-    
     
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         if central.state == .poweredOn {
@@ -225,177 +198,118 @@ class CBLEScanner: NSObject, ObservableObject, CBCentralManagerDelegate {
     }
     
     func centralManager(_ central: CBCentralManager,
-                        didDiscover peripheral: CBPeripheral,
+                            didDiscover peripheral: CBPeripheral,
                         advertisementData: [String: Any],
                         rssi RSSI: NSNumber) {
         let identifier = peripheral.identifier.uuidString
         let deviceName = peripheral.name ?? "Unknown"
         let rssiValue = RSSI.intValue
         let now = Date()
-        if let lastUpdate = lastUpdateTimes[identifier],
-           now.timeIntervalSince(lastUpdate) < 1.0 {
-            // 如果距離上次更新不到 1 秒，就不處理
+
+        if let lastUpdate = lastUpdateTimes[identifier], now.timeIntervalSince(lastUpdate) < 0.3 {
             return
         }
         lastUpdateTimes[identifier] = now
         
+        guard let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data else { return }
+
+        // --- 在背景執行緒解析封包 ---
+        let manufacturerBytes = Array(manufacturerData)
+        var deviceId = ""
+        var maskStr = ""
+        var dataStr = ""
+        var isMatched = false
+        var parsedData: ParsedBLEData? = nil
+        var profileData: ProfileData? = nil
         
-        if let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data {
-            if manufacturerData.count >= 29 {
-                print("收到製造商數據：\(manufacturerData)")
-                print("full packet: ")
-                let manufacturerBytes = Array(manufacturerData)
+        // 嘗試解析 Profile 封包
+        let profileMaskLength = CBLEScanner.profileDataMask.count
+        if manufacturerBytes.count >= profileMaskLength {
+            let receivedMask = Array(manufacturerBytes.prefix(profileMaskLength))
+            if receivedMask == CBLEScanner.profileDataMask {
+                isMatched = true
+                let idLength = 1
+                let dataRange = profileMaskLength..<(manufacturerBytes.count - idLength)
+                let dataBytes = Array(manufacturerBytes[dataRange])
+                let idBytes = Array(manufacturerBytes.suffix(idLength))
+                dataStr = bytesToHexString(dataBytes)
+                maskStr = bytesToHexString(receivedMask)
+                deviceId = idBytes.map { String($0) }.joined()
                 
-                var deviceId = ""
-                let rawDataStr = bytesToHexString(manufacturerBytes)
-                var maskStr = ""
-                var dataStr = ""
-                var isMatched = false
-                var parsedData: ParsedBLEData? = nil
-                var profileData: ProfileData? = nil
-                
-                print(rawDataStr)
-                
-                let profileMaskLength = CBLEScanner.profileDataMask.count
-                if manufacturerBytes.count >= profileMaskLength {
-                    let receivedMask = Array(manufacturerBytes.prefix(profileMaskLength))
-                    print("Thought is Profile Mode")
-                    print(receivedMask)
-                    
-                    // Profile Mode
-                    if receivedMask == CBLEScanner.profileDataMask {
-                        isMatched = true
-                        matchedCount += 1
-                        print("Match Profile Packet")
-                        
-                        _ = 1
-                        let idLength = 1
-                        
-                        let dataRange = profileMaskLength..<(manufacturerBytes.count - idLength)
-                        let dataBytes = Array(manufacturerBytes[dataRange])
-                        let idBytes = Array(manufacturerBytes.suffix(idLength))
-                        
-                        dataStr = bytesToHexString(dataBytes)
-                        maskStr = bytesToHexString(receivedMask)
-                        deviceId = idBytes.map { String($0) }.joined()
-                        
-                        let currentTestMethod = testMethod
-                        if let result = dataProfile.parseDataBytes(dataBytes) {
-                            profileData = result
-                            profileData?.testMethod = currentTestMethod
-                        }
-                    }
+                if let result = dataProfile.parseDataBytes(dataBytes) {
+                    profileData = result
+                    profileData?.testMethod = self.testMethod // 使用 class 屬性
                 }
-                
-                
-                if !isMatched {
-                    let standardMaskLength = CBLEScanner.standardDataMask.count
-                    if manufacturerBytes.count >= standardMaskLength {
-                        let receivedMask = Array(manufacturerBytes.prefix(standardMaskLength))
-                        print("Thought is Neighbor Mode")
-                        print(receivedMask)
-                        // Neighbor mode
-                        if receivedMask == CBLEScanner.standardDataMask {
-                            let standardDataLength = 15
-                            let idLength = 1
-                            let requiredTotalLength = standardMaskLength + standardDataLength + idLength
-                            
-                            if manufacturerBytes.count >= requiredTotalLength {
-                                isMatched = true
-                                matchedCount += 1
-                                print("Match Neighbor Packet")
-                                
-                                // 根據 [Mask][Data][ID] 結構解析
-                                let dataRange = standardMaskLength..<(manufacturerBytes.count - idLength)
-                                let dataBytes = Array(manufacturerBytes[dataRange])
-                                let idBytes = Array(manufacturerBytes.suffix(idLength))
-                                
-                                dataStr = bytesToHexString(dataBytes)
-                                maskStr = bytesToHexString(receivedMask)
-                                deviceId = idBytes.map { String($0) }.joined()
-                                
-                                if let result = dataParser.parseDataBytes(dataBytes) {
-                                    parsedData = result
-                                    print(dataParser.formatParseResult(result))
-                                }
-                            } else {
-                                print("標準數據封包長度不足，期望至少 \(requiredTotalLength) bytes，實際: \(manufacturerBytes.count)")
-                            }
-                        }
-                    }
-                    
-                    
-                    
-                }
-                
-                DispatchQueue.main.async {
-                    var newReceptionCount = 1
-                    if let existingPacket = self.allPackets[identifier] {
-                        newReceptionCount = existingPacket.receptionCount + 1
-                    }
-                    
-                    let generalPacket = BLEPacket(deviceID: deviceId,
-                                                  identifier: identifier,
-                                                  deviceName: deviceName,
-                                                  rssi: rssiValue,
-                                                  rawData: rawDataStr,
-                                                  mask: maskStr,
-                                                  data: dataStr,
-                                                  isMatched: isMatched,
-                                                  timestamp: now,
-                                                  parsedData: parsedData,
-                                                  profileData: profileData,
-                                                  hasLostSignal: false,
-                                                  testGroupID: TestSessionManager.shared.getCurrentTestID(),
-                                                  receptionCount: newReceptionCount
-                    )
-                    self.allPackets[identifier] = generalPacket
-                    
-                    if isMatched {
-                        var newMatchedCount = 1
-                        if let existingMatchedPacket = self.matchedPackets[deviceId] {
-                            newMatchedCount = existingMatchedPacket.receptionCount + 1
-                        }
-                        
-                        var matchedPacket = generalPacket
-                        matchedPacket.receptionCount = newMatchedCount
-                        self.matchedPackets[deviceId] = matchedPacket
-                    }
-                    
-                }
-                func parseHexInput(_ input: String) -> [UInt8]? {
-                    let cleaned = input.components(separatedBy: CharacterSet(charactersIn: " ,，")).joined()
-                    guard cleaned.count % 2 == 0 else { return nil }  // 字數必須是偶數，否則不是合法的 hex byte 序列
-                    
-                    var result: [UInt8] = []
-                    var index = cleaned.startIndex
-                    
-                    while index < cleaned.endIndex {
-                        let nextIndex = cleaned.index(index, offsetBy: 2)
-                        let hexPair = String(cleaned[index..<nextIndex])
-                        if let byte = UInt8(hexPair, radix: 16) {
-                            result.append(byte)
-                        } else {
-                            return nil  // 只要其中一組轉換失敗就整體失敗
-                        }
-                        index = nextIndex
-                    }
-                    return result
-                }
-                
-                func asciiStringToBytes(_ input: String) -> [UInt8] {
-                    print("asciiStringToBytes Input: \(input)")
-                    return Array(input.utf8)
-                }
-                
-                func bytesToHexString(_ bytes: [UInt8]) -> String {
-                    print("bytesToHexString Input: \(bytes)")
-                    return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
-                }
-                
-                
             }
         }
+        
+        // 嘗試解析 Neighbor 封包
+        if !isMatched {
+            let standardMaskLength = CBLEScanner.standardDataMask.count
+            if manufacturerBytes.count >= (standardMaskLength + 15 + 1) { // 確保長度足夠
+                let receivedMask = Array(manufacturerBytes.prefix(standardMaskLength))
+                if receivedMask == CBLEScanner.standardDataMask {
+                    isMatched = true
+                    let idLength = 1
+                    let dataRange = standardMaskLength..<(manufacturerBytes.count - idLength)
+                    let dataBytes = Array(manufacturerBytes[dataRange])
+                    let idBytes = Array(manufacturerBytes.suffix(idLength))
+                    dataStr = bytesToHexString(dataBytes)
+                    maskStr = bytesToHexString(receivedMask)
+                    deviceId = idBytes.map { String($0) }.joined()
+                    parsedData = dataParser.parseDataBytes(dataBytes)
+                }
+            }
+        }
+        
+        guard isMatched, !deviceId.isEmpty else { return }
+
+        // --- 切換到主執行緒來更新 @Published 屬性並執行捕獲邏輯 ---
+        DispatchQueue.main.async { [self] in
+            self.matchedCount = isMatched ? self.matchedCount + 1 : self.matchedCount
+            
+            // 建立或更新 BLEPacket
+            var packet = BLEPacket(
+                deviceID: deviceId,
+                identifier: identifier,
+                deviceName: deviceName,
+                rssi: rssiValue,
+                rawData: self.bytesToHexString(manufacturerBytes),
+                mask: maskStr, // 可以在解析時填充
+                data: dataStr, // 可以在解析時填充
+                isMatched: isMatched,
+                timestamp: now,
+                parsedData: parsedData,
+                profileData: profileData,
+                hasLostSignal: false,
+                testGroupID: TestSessionManager.shared.getCurrentTestID(),
+                receptionCount: (self.matchedPackets[deviceId]?.receptionCount ?? 0) + 1
+            )
+            
+            self.allPackets[identifier] = packet
+            self.matchedPackets[deviceId] = packet
+            
+            
+            if self.isAveragingInProgress,
+               let targetDeviceID = self.averagingTargetDeviceID,
+               packet.deviceID == targetDeviceID,
+               let currentProfileData = packet.profileData {
+                
+                if self.txCaptureSession.count < 30 {
+                    self.txCaptureSession.append(packet.rssi)
+                    self.rxCaptureSession.append(currentProfileData.phone_rssi)
+                    
+                    print("  捕獲第 \(self.txCaptureSession.count)/30 筆數據: TX=\(packet.rssi), RX=\(currentProfileData.phone_rssi)")
+                    
+                    if self.txCaptureSession.count == 30 {
+                        self.finishProfileCapture()
+                    }
+                }
+            }
+        }
+    }
+    private func bytesToHexString(_ bytes: [UInt8]) -> String {
+        return bytes.map { String(format: "%02X", $0) }.joined(separator: " ")
     }
 }
 extension String {

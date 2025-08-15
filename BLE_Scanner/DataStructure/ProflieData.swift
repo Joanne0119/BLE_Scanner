@@ -15,6 +15,8 @@ struct ProfileData: Codable, Equatable {
     var testMethod: String
     var avgTx: Double?
     var avgRx: Double?
+    var capturedTxs: [Int]?
+    var capturedRxs: [Int8]?
 }
 
 class ProfileDataGenerator {

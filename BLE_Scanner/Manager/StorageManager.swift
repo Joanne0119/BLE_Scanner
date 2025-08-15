@@ -47,6 +47,55 @@ class SavedPacketsStore: ObservableObject {
     func save() {
         StorageManager.save(packets: self.packets)
     }
+    func saveAndPublishProfileResult(
+        for packetID: String,
+        avgTx: Double,
+        avgRx: Double,
+        capturedTxs: [Int],
+        capturedRxs: [Int8]
+    ) {
+        guard let index = self.packets.firstIndex(where: { $0.id == packetID }) else {
+            print("儲存與發布失敗：找不到 packet ID \(packetID)")
+            return
+        }
+        
+        self.packets[index].profileData?.avgTx = avgTx
+        self.packets[index].profileData?.avgRx = avgRx
+        self.packets[index].profileData?.capturedTxs = capturedTxs
+        self.packets[index].profileData?.capturedRxs = capturedRxs
+        
+        self.save()
+        
+        let packetToPublish = self.packets[index]
+        guard let profileData = packetToPublish.profileData,
+              let testGroupID = packetToPublish.testGroupID else {
+            print("MQTT 發布失敗：缺少 ProfileData 或 TestGroupID")
+            return
+        }
+        
+        self.mqttManager.publishProfileResult(
+            deviceID: packetToPublish.deviceID,
+            avgTx: avgTx,
+            avgRx: avgRx,
+            testMethod: profileData.testMethod,
+            timestamp: packetToPublish.timestamp,
+            testGroupID: testGroupID,
+            capturedTxs: capturedTxs,
+            capturedRxs: capturedRxs  
+        )
+    }
+    
+    func deleteAllProfileData(for deviceID: String) {
+        let initialCount = packets.count
+        packets.removeAll { $0.deviceID == deviceID && $0.profileData != nil }
+        let removedCount = initialCount - packets.count
+        
+        if removedCount > 0 {
+            print("從本地移除了 \(removedCount) 筆 deviceID: \(deviceID) 的 Profile 封包。")
+            save()
+        }
+        mqttManager.publishDeleteAllProfiles(for: deviceID)
+    }
     
     func updateOrAppendDeviceHistory(for incomingPacket: BLEPacket) {
         guard let incomingParsedData = incomingPacket.parsedData else { return }

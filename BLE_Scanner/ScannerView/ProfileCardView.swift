@@ -12,7 +12,6 @@ struct ProfileCardView: View {
     @Binding var packet: BLEPacket
     
     let onEdit: (String) -> Void
-    let onComplete: (String, Double, Double) -> Void
     @State private var showRestartAlert = false
     
     private var isExecuting: Bool {
@@ -23,7 +22,6 @@ struct ProfileCardView: View {
         if let profileData = packet.profileData,
            let tx = profileData.avgTx,
            let rx = profileData.avgRx {
-            
             return (tx, rx)
         }
         return nil
@@ -95,8 +93,8 @@ struct ProfileCardView: View {
     }
     
     func startExecution() {
-        scanner.startAveragingRSSI(for: packet.id, deviceID: self.deviceID) { avgTx, avgRx in
-            onComplete(packet.id, avgTx, avgRx)
+        scanner.startAveragingRSSI(for: packet.id, deviceID: self.deviceID) { avgTx, avgRx, txs, rxs in
+            print("executed with \(avgTx), \(avgRx), \(txs), \(rxs)")
         }
     }
     

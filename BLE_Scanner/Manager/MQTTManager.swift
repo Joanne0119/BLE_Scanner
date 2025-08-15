@@ -61,6 +61,10 @@ class MQTTManager: ObservableObject {
     private let logDownloadTopic = "log/scanner/download"
     private let logRequestTopic = "log/scanner/request"
     
+    private let profileResultUploadTopic = "profile/result/upload"
+    private let profileResultDeleteTopic = "profile/result/delete"
+
+    
     private let suggestionUploadTopic = "suggestion/{type}/upload"
     private let suggestionDeleteTopic = "suggestion/{type}/delete"
     private let suggestionDownloadTopic = "suggestion/{type}/download"
@@ -702,6 +706,36 @@ class MQTTManager: ObservableObject {
     
     func requestAllLogs() {
         publish(to: logRequestTopic, payload: clientID)
+    }
+    
+//    MARK: - Profile
+    func publishProfileResult(
+            deviceID: String,
+            avgTx: Double,
+            avgRx: Double,
+            testMethod: String,
+            timestamp: Date,
+            testGroupID: String,
+            capturedTxs: [Int],
+            capturedRxs: [Int8]
+        ) {
+            let timestampString = MQTTManager.logDateFormatter.string(from: timestamp)
+            
+            // 將陣列轉換為用分號(;)分隔的字串，避免與外層的逗號衝突
+            let txsString = capturedTxs.map { String($0) }.joined(separator: ";")
+            let rxsString = capturedRxs.map { String($0) }.joined(separator: ";")
+            
+            // deviceID,avg_tx,avg_rx,testMethod,timestamp,testgroup,tx_array,rx_array
+            let payloadString = "\(deviceID),\(avgTx),\(avgRx),\(testMethod),\(timestampString),\(testGroupID),\(txsString),\(rxsString)"
+            
+            publish(to: profileResultUploadTopic, payload: payloadString)
+            print("Profile 結果 (含原始數據) 已發布")
+        }
+    
+    func publishDeleteAllProfiles(for deviceID: String) {
+        // 訊息內容就是 deviceID
+        publish(to: profileResultDeleteTopic, payload: deviceID)
+        print("Profile 刪除指令已發布 for deviceID: \(deviceID)")
     }
     
     

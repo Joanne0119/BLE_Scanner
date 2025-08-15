@@ -205,7 +205,7 @@ extension BLEScannerView {
                 }
                 
                 HStack {
-                    Button("常用遮罩掃描") {
+                    Button("Neighbor遮罩掃描") {
                         maskText = "FFFFFFFFFFFFFFFFFFFFFFFFFF"
                         handleStartScan()
                     }
