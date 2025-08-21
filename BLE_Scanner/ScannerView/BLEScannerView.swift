@@ -174,14 +174,14 @@ extension BLEScannerView {
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
                     
-//                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
-//                        Link(destination: url) {
-//                            Label("查看圖表", systemImage: "chart.bar.xaxis")
-//                        }
-//                        .font(.system(size: 25, weight: .medium))
-//                        .buttonStyle(.borderedProminent)
-//                        .tint(.purple)
-//                    }
+                    if let url = URL(string: "https://ble-frontend-seven.vercel.app/") {
+                        Link(destination: url) {
+                            Label("查看圖表", systemImage: "chart.bar.xaxis")
+                        }
+                        .font(.system(size: 25, weight: .medium))
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
+                    }
                 }
                 .padding()
                 
@@ -236,14 +236,14 @@ extension BLEScannerView {
                     .buttonStyle(.borderedProminent)
                     .tint(.green)
                     
-//                    if let url = URL(string: "http://152.42.241.75:5000/api/chart") {
-//                        Link(destination: url) {
-//                            Label("查看圖表", systemImage: "chart.bar.xaxis")
-//                        }
-//                        .font(.system(size: 25, weight: .medium))
-//                        .buttonStyle(.borderedProminent)
-//                        .tint(.purple)
-//                    }
+                    if let url = URL(string: "https://ble-frontend-seven.vercel.app/") {
+                        Link(destination: url) {
+                            Label("查看圖表", systemImage: "chart.bar.xaxis")
+                        }
+                        .font(.system(size: 25, weight: .medium))
+                        .buttonStyle(.borderedProminent)
+                        .tint(.purple)
+                    }
                 }
                 .padding()
             }

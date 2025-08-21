@@ -62,7 +62,7 @@ struct BLEPacketRowView: View {
                 Text("\(rssi)")
                     .font(.system(size: 37, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: 90, alignment: .leading)
             }
             .padding(.vertical, 8)
         }

@@ -81,7 +81,7 @@ struct ProfileCardView: View {
                     startExecution()
                 }
             } message: {
-                Text("您確定要清除這次的平均數據並重新執行嗎？")
+                Text("確定要清除這次的平均數據並重新執行嗎？")
             }
         }
     func handleButtonTap() {

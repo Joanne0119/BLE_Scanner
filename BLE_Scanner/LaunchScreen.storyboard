@@ -28,7 +28,7 @@
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="0.97254901960784312" green="0.97254901960784312" blue="0.97254901960784312" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="SGu-C5-pnl" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="1js-R6-sd9"/>
                             <constraint firstItem="SGu-C5-pnl" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="10" id="3ht-LG-94J"/>
@@ -50,6 +50,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="lunchScreenImage" width="1268" height="512"/>
+        <image name="lunchScreenImage" width="845.33331298828125" height="341.33334350585938"/>
     </resources>
 </document>

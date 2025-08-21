@@ -52,12 +52,16 @@ struct ProfileDetailView: View {
         Binding(
             get: {
                 let testID = currentPacket?.testGroupID ?? ""
-                return savedPacketsStore.packets.filter { $0.testGroupID == testID }
+                return savedPacketsStore.packets.filter {
+                    $0.testGroupID == testID && $0.deviceID == self.deviceID
+                }
             },
             set: { newPackets in
                 
                 let testID = currentPacket?.testGroupID ?? ""
-                savedPacketsStore.packets.removeAll { $0.testGroupID == testID }
+                savedPacketsStore.packets.removeAll {
+                    $0.testGroupID == testID && $0.deviceID == self.deviceID
+                }
                 savedPacketsStore.packets.append(contentsOf: newPackets)
             }
         )
@@ -137,11 +141,14 @@ struct ProfileDetailView: View {
             return
         }
 
-        let existingPackets = savedPacketsStore.packets.filter { $0.testGroupID == testID }
-        if !existingPackets.isEmpty {
-            print("testID \(testID) 的封包已存在，無需創建。")
-            return
-        }
+        let existingPackets = savedPacketsStore.packets.filter {
+                $0.testGroupID == testID && $0.deviceID == self.deviceID
+            }
+
+            if !existingPackets.isEmpty {
+                print("Device ID \(self.deviceID) 在 Test Group \(testID) 的封包已存在，無需創建。")
+                return
+            }
         
         print("為 testID \(testID) 首次創建初始測試封包...")
 

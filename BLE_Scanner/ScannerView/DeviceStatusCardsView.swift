@@ -172,12 +172,12 @@ struct DeviceCardView: View {
                 
                 VStack(alignment: .trailing) {
                     Text("\(String(format: "%.1f", device.receptionRate)) 次/秒")
-                        .font(isHistory ? .body : .system(size: 30, weight: .semibold, design: .rounded))
-                    
-                    if !isHistory {
-                        Text(suggestion.message)
-                            .font(.system(size: 30, weight: .semibold, design: .rounded))
-                    }
+                        .font(isHistory ? .body : .system(size: 36, weight: .semibold, design: .rounded))
+//                    
+//                    if !isHistory {
+//                        Text(suggestion.message)
+//                            .font(.system(size: 30, weight: .semibold, design: .rounded))
+//                    }
                 }
             }
         }
